@@ -1,0 +1,150 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body {
+    width: 100%;
+    min-height: 100%;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: black;
+    color: white;
+}
+
+.login-container {
+    min-height: 100vh;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    background-image: url("Login Page/background/background.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    isolation: isolate;
+}
+
+.login-container::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: -1;
+}
+
+.login-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 4%;
+}
+
+.website-logo {
+    color: #e08311;
+    font-size: 38px;
+    font-weight: 900;
+    text-decoration: none;
+}
+
+.sign-in-button {
+    padding: 9px 18px;
+    color: white;
+    background: #e08311;
+    border-radius: 4px;
+    text-decoration: none;
+}
+
+.sign-in-button:hover,
+.login-button:hover {
+    background: #e08311;
+}
+
+.login-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 30px 20px 80px;
+}
+
+.login-content h1 {
+    font-size: clamp(34px, 5vw, 60px);
+    line-height: 1.15;
+    margin-bottom: 20px;
+}
+
+.login-subtitle {
+    font-size: clamp(18px, 2.5vw, 26px);
+    margin-bottom: 30px;
+}
+
+#login-form {
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    text-align: left;
+}
+
+#login-form label {
+    font-size: 15px;
+    font-weight: bold;
+}
+
+#login-form input[type="text"],
+#login-form input[type="email"],
+#login-form input[type="password"] {
+    width: 100%;
+    padding: 14px;
+    color: white;
+    background: rgba(20, 20, 20, 0.85);
+    border: 1px solid #aaa;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+#login-form input:focus {
+    outline: 2px solid white;
+}
+
+.login-button {
+    width: 100%;
+    padding: 14px;
+    color: white;
+    background: #e08311;
+    border: none;
+    border-radius: 4px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+@media (max-width: 600px) {
+    .login-header {
+        padding: 20px;
+    }
+
+    .website-logo {
+        font-size: 28px;
+    }
+
+    .login-content {
+        padding: 30px 20px 50px;
+    }
+
+    .login-content h1 {
+        font-size: 34px;
+    }
+
+    .login-subtitle {
+        font-size: 18px;
+    }
+}
