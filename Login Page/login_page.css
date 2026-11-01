@@ -22,7 +22,7 @@ body {
     display: flex;
     flex-direction: column;
     position: relative;
-    background-image: url("Login Page/background/background.png");
+    background-image: url("../background/background.png");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -126,7 +126,30 @@ body {
     font-weight: bold;
     cursor: pointer;
 }
+.forgot-password {
+    text-align: right;
+    margin: 0 0 5px;
+    font-size: 14px;
+    color: #e08311;
+}
 
+.forgot-password a,
+.signup-link a {
+    color: #e08311;
+    text-decoration: none;
+}
+
+.forgot-password a:hover,
+.signup-link a:hover {
+    color: #e50914;
+    text-decoration: underline;
+}
+
+.signup-link {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 14px;
+}
 @media (max-width: 600px) {
     .login-header {
         padding: 20px;
