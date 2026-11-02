@@ -62,7 +62,7 @@ body {
     padding: 12px 24px;
     background-color: #f1f1f1;
     color: #111;
-    font-size: 16px;
+    font-size: 17px;
     font-weight: bold;
     text-decoration: none;
     border-radius: 8px;
@@ -75,11 +75,12 @@ body {
 }
 
 .about-link {
-    color: white;
-    font-size: 16px;
+    color: #e08311;
+    font-size: 19px;
     font-weight: bold;
     text-decoration: none;
     margin-left: auto;
+    position: relative;
     transition: color 0.3s ease;
 }
 
@@ -87,8 +88,25 @@ body {
     margin-left: 16px;
 }
 
-.about-link:hover {
-    color: #ccc;
+.about-link::after {
+    content: "";
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: white;
+    transition: width 0.3s ease;
+}
+
+.about-link:hover,
+.about-link:focus-visible {
+    color: #ffa726;
+}
+
+.about-link:hover::after,
+.about-link:focus-visible::after {
+    width: 100%;
 }
 
 .sign-in-button:hover,
@@ -103,7 +121,7 @@ body {
     justify-content: center;
     align-items: center;
     text-align: center;
-    padding: 100px 20px 35px;
+    padding: 100px 30px 58px;
 }
 
 .login-content h1 {
@@ -119,11 +137,16 @@ body {
 
 #login-form {
     width: 100%;
-    max-width: 400px;
+    max-width: 440px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
     text-align: left;
+    padding: 26px 28px;
+    background: rgba(0, 0, 0, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 20px;
+    box-shadow: 0 26px 42px rgba(0, 0, 0, 0.3);
 }
 
 #login-form label {
@@ -131,20 +154,30 @@ body {
     font-weight: bold;
 }
 
+.password-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+}
+
 #login-form input[type="text"],
 #login-form input[type="email"],
 #login-form input[type="password"] {
     width: 100%;
-    padding: 14px;
+    padding: 16px;
     color: white;
-    background: rgba(20, 20, 20, 0.85);
-    border: 1px solid #aaa;
-    border-radius: 4px;
+    background: rgba(17, 16, 16, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 6px;
     font-size: 16px;
 }
 
-#login-form input:focus {
-    outline: 2px solid white;
+#login-form input[type="text"]:focus,
+#login-form input[type="email"]:focus,
+#login-form input[type="password"]:focus {
+    outline: 2px solid #e08311;
+    outline-offset: 1px;
 }
 
 .password-container {
@@ -155,7 +188,7 @@ body {
 #login-form .password-container input[type="password"],
 #login-form .password-container input[type="text"] {
     width: 100%;
-    padding: 14px;
+    padding: 16px;
     padding-right: 45px;
 }
 
@@ -199,12 +232,15 @@ body {
     font-size: 18px;
     font-weight: bold;
     cursor: pointer;
-    transition: background 0.3s ease;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.login-button:hover {
+    transform: translateY(-1px);
 }
 
 .forgot-password {
-    text-align: right;
-    margin: 0 0 5px;
+    margin: 0;
     font-size: 14px;
 }
 
@@ -238,32 +274,88 @@ body {
 
 @media (max-width: 600px) {
     .login-header {
-        padding: 12px 20px;
+        padding: 12px 16px;
     }
 
     .website-logo {
-        font-size: 28px;
+        font-size: 22px;
     }
 
-    .sign-in-button {
-        padding: 10px 14px;
+    .about-link {
         font-size: 13px;
     }
 
+    .sign-in-button {
+        padding: 8px 10px;
+        font-size: 12px;
+        margin-left: 8px;
+    }
+
     .login-content {
-        padding: 100px 20px 50px;
+        padding: 60px 16px 25px;
     }
 
     .login-content h1 {
-        font-size: 34px;
+        font-size: 28px;
+        line-height: 1.15;
+        margin-bottom: 20px;
     }
 
     .login-subtitle {
-        font-size: 18px;
+        font-size: 17px;
+        margin-bottom: 26px;
+    }
+
+    #login-form {
+        width: 100%;
+        max-width: 400px;
+        padding: 16px;
+        gap: 6px;
+    }
+
+    #login-form label {
+        font-size: 13px;
+    }
+
+    #login-form input[type="text"],
+    #login-form input[type="email"],
+    #login-form input[type="password"] {
+        padding: 10px;
+        font-size: 16px;
+    }
+
+    #login-form .password-container input[type="password"],
+    #login-form .password-container input[type="text"] {
+        padding: 10px;
+        padding-right: 42px;
+    }
+
+    .password-container button {
+        right: 10px;
+    }
+
+    .login-button {
+        padding: 10px;
+        font-size: 16px;
+    }
+
+    .forgot-password {
+        font-size: 13px;
+        margin-bottom: 4px;
+    }
+
+    .signup-link {
+        font-size: 13px;
+        margin-top: 8px;
     }
 
     .login-footer {
         padding: 10px;
         font-size: 12px;
     }
+    #login-form .login-button {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px;
+}
 }
