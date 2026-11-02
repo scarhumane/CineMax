@@ -41,7 +41,13 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 4%;
+    padding: 10px 40px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.75);
+    z-index: 10;
 }
 
 .website-logo {
@@ -52,16 +58,42 @@ body {
 }
 
 .sign-in-button {
-    padding: 9px 18px;
-    color: white;
-    background: #e08311;
-    border-radius: 4px;
+    display: inline-block;
+    padding: 12px 24px;
+    background-color: #f1f1f1;
+    color: #111;
+    font-size: 16px;
+    font-weight: bold;
     text-decoration: none;
+    border-radius: 8px;
+    border: none;
+    transition: background-color 0.3s ease;
+}
+
+.sign-in-button:hover {
+    background-color: #d6d6d6;
+}
+
+.about-link {
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    text-decoration: none;
+    margin-left: auto;
+    transition: color 0.3s ease;
+}
+
+.sign-in-button {
+    margin-left: 16px;
+}
+
+.about-link:hover {
+    color: #ccc;
 }
 
 .sign-in-button:hover,
 .login-button:hover {
-    background: #e08311;
+    background: #c9730b;
 }
 
 .login-content {
@@ -71,7 +103,7 @@ body {
     justify-content: center;
     align-items: center;
     text-align: center;
-    padding: 30px 20px 80px;
+    padding: 100px 20px 35px;
 }
 
 .login-content h1 {
@@ -115,6 +147,48 @@ body {
     outline: 2px solid white;
 }
 
+.password-container {
+    position: relative;
+    width: 100%;
+}
+
+#login-form .password-container input[type="password"],
+#login-form .password-container input[type="text"] {
+    width: 100%;
+    padding: 14px;
+    padding-right: 45px;
+}
+
+.password-container button {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    background: none;
+    border: none;
+    color: #e08311;
+    cursor: pointer;
+}
+
+.password-container button svg {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2;
+}
+
+.password-container button:hover {
+    color: #ffa726;
+}
+
+.password-container button:focus-visible {
+    outline: 2px solid #e08311;
+    outline-offset: 3px;
+}
+
 .login-button {
     width: 100%;
     padding: 14px;
@@ -125,12 +199,13 @@ body {
     font-size: 18px;
     font-weight: bold;
     cursor: pointer;
+    transition: background 0.3s ease;
 }
+
 .forgot-password {
     text-align: right;
     margin: 0 0 5px;
     font-size: 14px;
-    color: #e08311;
 }
 
 .forgot-password a,
@@ -141,7 +216,7 @@ body {
 
 .forgot-password a:hover,
 .signup-link a:hover {
-    color: #e50914;
+    color: #ffa726;
     text-decoration: underline;
 }
 
@@ -150,17 +225,33 @@ body {
     margin-top: 10px;
     font-size: 14px;
 }
+
+.login-footer {
+    position: relative;
+    margin-top: auto;
+    padding: 12px 20px;
+    text-align: center;
+    background: black;
+    color: white;
+    font-size: 14px;
+}
+
 @media (max-width: 600px) {
     .login-header {
-        padding: 20px;
+        padding: 12px 20px;
     }
 
     .website-logo {
         font-size: 28px;
     }
 
+    .sign-in-button {
+        padding: 10px 14px;
+        font-size: 13px;
+    }
+
     .login-content {
-        padding: 30px 20px 50px;
+        padding: 100px 20px 50px;
     }
 
     .login-content h1 {
@@ -169,5 +260,10 @@ body {
 
     .login-subtitle {
         font-size: 18px;
+    }
+
+    .login-footer {
+        padding: 10px;
+        font-size: 12px;
     }
 }

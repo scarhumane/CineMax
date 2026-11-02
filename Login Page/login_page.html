@@ -3,49 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>CineMax</title>
+
     <link rel="stylesheet" href="login_page.css">
-    
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="login_page.js" defer></script>
 </head>
+
 <body>
-<div class="login-container">
+    <div class="login-container">
 
-    <header class="login-header">
-        <a href="login_page.html" class="website-logo">CINEMAX</a>
-        <a href="login_page.php" class="sign-in-button">Log in</a>
-    </header>
+        <header class="login-header">
+            <a href="login_page.html" class="website-logo">CINEMAX</a>
+            <a href="about_us.html" class="about-link">About</a>
+            <a href="subscribe.php" class="sign-in-button">Subscribe</a>
+        </header>
 
-    <main class="login-content">
+        <main class="login-content">
 
-        <h1>Welcome to CineMax</h1>
-        <p class="login-subtitle">Sign in to your CineMax Account</p>
+            <h1>Discover films worth talking about!</h1>
+            <p class="login-subtitle">Sign in to your CineMax Account</p>
 
-        <form id="login-form" action="/login_page.php" method="post">
+            <form id="login-form" action="login_page.php" method="post">
 
-            <label for="username">Username:</label>
-            <input type="text" id="username" name="username" required>
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" autocomplete="username" required>
 
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" required>
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" autocomplete="email" required>
 
-            <p class="forgot-password">
-                <a href="forgot_password.php">Forgot Password?</a>
-            </p>
+                <p class="forgot-password">
+                    <a href="forgot_password.php">Forgot Password?</a>
+                </p>
 
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" required>
+                <label for="password">Password:</label>
 
-            <input type="submit" value="Sign Up" class="login-button">
+                <div class="password-container">
+                    <input type="password" id="password" name="password" autocomplete="current-password" required>
 
-            <p class="signup-link">
-                Don't have an account?
-                <a href="signup.php">Sign Up</a>
-            </p>
+                    <button type="button" id="toggle-password" aria-label="Show password" aria-pressed="false">
+                        <i data-lucide="eye-off"></i>
+                    </button>
+                </div>
 
-        </form>
+                <input type="submit" value="Sign in" class="login-button">
 
-    </main>
+                <p class="signup-link">
+                    Don't have an account?
+                    <a href="signup.php">Sign Up</a>
+                </p>
 
-</div>
+            </form>
+        </main>
+
+        <footer class="login-footer">
+            <p>&copy; 2026 CineMax. All rights reserved.</p>
+        </footer>
+    </div>
 </body>
 </html>
