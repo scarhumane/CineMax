@@ -1,0 +1,9 @@
+{
+    "users": [
+        {
+            "username": "cinemafan",
+            "email": "cinemafan@example.com",
+            "password": "$2y$12$Qzbi2t9jviAO4.5lx0xhO.ZhajwB2vrBWK46P.KN3CnZSctLZDJzm"
+        }
+    ]
+}
