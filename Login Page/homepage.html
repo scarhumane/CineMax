@@ -14,24 +14,102 @@
 <body class="homepage-page">
     <div class="login-container">
 
-        <header class="login-header">
-            <a href="homepage.html" class="website-logo">CINEMAX</a>
-            <a href="subscribe.htm" class="subscribe-button">Subscribe <i data-lucide="arrow-up-right" aria-hidden="true"></i></a>
+        <header class="homepage-header">
+            <a href="homepage.html" class="website-logo">
+                CINEMAX
+            </a>
+
+            <nav class="homepage-nav-pill">
+                <a href="features .html">Features</a>
+                <a href="about_us.html">About Us</a>
+                <a href="subscribe.html" class="nav-subscribe">
+                    Subscribe ↗
+                </a>
+            </nav>
         </header>
 
-        <main class="login-content">
+        <main class="home-main" id="discover">
 
-            <h1>Discover films worth talking about!</h1>
-            <p class="login-subtitle">Sign in to your CineMax Account Now!</p>
-            <div class="homepage-actions">
-                <a href="about_us.html" class="about-button">About us</a>
-                <a href="login_page.html" class="sign-in-button">Sign In</a>
-            </div>
+            <section class="home-content">
+                <div>
+                    <h1>Discover films worth <em>talking about!</em></h1>
+
+                    <p class="home-lede">
+                        Sign in to explore a wide range of movies, from timeless classics to the latest releases, with recommendations, reviews, and insights to guide your way.
+                    </p>
+
+                    <div class="homepage-actions">
+                        <a href="#movies" class="explore-button">
+                            Explore Now
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7L8 5Z"/></svg>
+                        </a>
+
+                        <a href="login_page.html" class="sign-in-button">
+                            Sign In ↗
+                        </a>
+                    </div>
+                </div>
+
+                <aside class="toprated" id="movies" aria-labelledby="toprated-title">
+                    <div class="toprated-head">
+                        <h2 id="toprated-title">Top rated this week</h2>
+                        <a href="search.php?sort=top">See all</a>
+                    </div>
+                    <ol class="rank">
+                        <li>
+                            <span class="n">1</span>
+                            <div class="t"><b>The Dark Knight</b><span>2008 · Action, Crime</span></div>
+                            <span class="score"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.9 7.5.7-5.7 5 1.7 7.4L12 18l-6.5 4 1.7-7.4-5.7-5 7.5-.7L12 2Z"/></svg>9.0</span>
+                        </li>
+                        <li>
+                            <span class="n">2</span>
+                            <div class="t"><b>The Truman Show</b><span>1998 · Comedy, Drama</span></div>
+                            <span class="score"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.9 7.5.7-5.7 5 1.7 7.4L12 18l-6.5 4 1.7-7.4-5.7-5 7.5-.7L12 2Z"/></svg>8.2</span>
+                        </li>
+                        <li>
+                            <span class="n">3</span>
+                            <div class="t"><b>Dead Poets Society</b><span>1989 · Drama</span></div>
+                            <span class="score"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.9 7.5.7-5.7 5 1.7 7.4L12 18l-6.5 4 1.7-7.4-5.7-5 7.5-.7L12 2Z"/></svg>8.1</span>
+                        </li>
+                        <li>
+                            <span class="n">4</span>
+                            <div class="t"><b>Titanic</b><span>1997 · Drama, Romance</span></div>
+                            <span class="score"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.9 7.5.7-5.7 5 1.7 7.4L12 18l-6.5 4 1.7-7.4-5.7-5 7.5-.7L12 2Z"/></svg>7.9</span>
+                        </li>
+                        <li>
+                            <span class="n">5</span>
+                            <div class="t"><b>Home Alone</b><span>1990 · Comedy, Family</span></div>
+                            <span class="score"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.9 7.5.7-5.7 5 1.7 7.4L12 18l-6.5 4 1.7-7.4-5.7-5 7.5-.7L12 2Z"/></svg>7.7</span>
+                        </li>
+                    </ol>
+            </section>
+
+            <section class="home-features" aria-label="What CineMax offers">
+                <div class="home-feature">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9.5v5l4.5-2.5L10 9.5Z"/></svg>
+                    <h3>Watch anywhere</h3>
+                    <p>Stream on your phone, laptop or TV and pick up where you left off.</p>
+                </div>
+                <div class="home-feature">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.7 5.8 6.3.8-4.6 4.4 1.2 6.3L12 17.2 6.4 20.3l1.2-6.3L3 9.6l6.3-.8L12 3Z"/></svg>
+                    <h3>Rate and review</h3>
+                    <p>Score what you watch, read honest reviews and see how a film ranks.</p>
+                </div>
+                <div class="home-feature">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h12v17l-6-4-6 4V4Z"/></svg>
+                    <h3>Keep a watchlist</h3>
+                    <p>Save films for later and get picks based on what you rate highly.</p>
+                </div>
+            </section>
+
         </main>
 
         <footer class="login-footer">
+
             <p>&copy; 2026 CineMax. All rights reserved.</p>
+
         </footer>
+
     </div>
 </body>
 </html>
