@@ -35,7 +35,7 @@
                     <h1>Discover films worth <em>talking about!</em></h1>
 
                     <p class="home-lede">
-                        Sign in to explore a wide range of movies, from timeless classics to the latest releases, with recommendations, reviews, and insights to guide your way.
+                        Sign in to explore a wide range of movies, from timeless classics to the latest releases,<br class="lede-break"> with recommendations, reviews, and insights to guide your way.
                     </p>
 
                     <div class="homepage-actions">
@@ -50,38 +50,6 @@
                     </div>
                 </div>
 
-                <aside class="toprated" id="movies" aria-labelledby="toprated-title">
-                    <div class="toprated-head">
-                        <h2 id="toprated-title">Top rated this week</h2>
-                        <a href="search.php?sort=top">See all</a>
-                    </div>
-                    <ol class="rank">
-                        <li>
-                            <span class="n">1</span>
-                            <div class="t"><b>The Dark Knight</b><span>2008 · Action, Crime</span></div>
-                            <span class="score"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.9 7.5.7-5.7 5 1.7 7.4L12 18l-6.5 4 1.7-7.4-5.7-5 7.5-.7L12 2Z"/></svg>9.0</span>
-                        </li>
-                        <li>
-                            <span class="n">2</span>
-                            <div class="t"><b>The Truman Show</b><span>1998 · Comedy, Drama</span></div>
-                            <span class="score"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.9 7.5.7-5.7 5 1.7 7.4L12 18l-6.5 4 1.7-7.4-5.7-5 7.5-.7L12 2Z"/></svg>8.2</span>
-                        </li>
-                        <li>
-                            <span class="n">3</span>
-                            <div class="t"><b>Dead Poets Society</b><span>1989 · Drama</span></div>
-                            <span class="score"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.9 7.5.7-5.7 5 1.7 7.4L12 18l-6.5 4 1.7-7.4-5.7-5 7.5-.7L12 2Z"/></svg>8.1</span>
-                        </li>
-                        <li>
-                            <span class="n">4</span>
-                            <div class="t"><b>Titanic</b><span>1997 · Drama, Romance</span></div>
-                            <span class="score"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.9 7.5.7-5.7 5 1.7 7.4L12 18l-6.5 4 1.7-7.4-5.7-5 7.5-.7L12 2Z"/></svg>7.9</span>
-                        </li>
-                        <li>
-                            <span class="n">5</span>
-                            <div class="t"><b>Home Alone</b><span>1990 · Comedy, Family</span></div>
-                            <span class="score"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.9 7.5.7-5.7 5 1.7 7.4L12 18l-6.5 4 1.7-7.4-5.7-5 7.5-.7L12 2Z"/></svg>7.7</span>
-                        </li>
-                    </ol>
             </section>
 
             <section class="home-features" aria-label="What CineMax offers">
@@ -101,6 +69,45 @@
                     <p>Save films for later and get picks based on what you rate highly.</p>
                 </div>
             </section>
+
+            <aside class="toprated" id="movies" aria-labelledby="toprated-title">
+                <div class="toprated-head">
+                    <h2 id="toprated-title">Top rated this week</h2>
+                    <a href="search.php?sort=top">See all</a>
+                </div>
+                <ol class="rank">
+                    <li>
+                        <span class="rank-poster poster-dark-knight" aria-hidden="true"></span>
+                        <span class="n">1</span>
+                        <div class="t"><b>The Dark Knight</b><span>2008 · Action, Crime</span><p class="rank-summary">Batman faces the Joker, a criminal mastermind bent on plunging Gotham into chaos.</p></div>
+                        <span class="score"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.9 7.5.7-5.7 5 1.7 7.4L12 18l-6.5 4 1.7-7.4-5.7-5 7.5-.7L12 2Z"/></svg>9.0</span>
+                    </li>
+                    <li>
+                        <span class="rank-poster poster-truman-show" aria-hidden="true"></span>
+                        <span class="n">2</span>
+                        <div class="t"><b>The Truman Show</b><span>1998 · Comedy, Drama</span><p class="rank-summary">An ordinary man begins to suspect his picture-perfect life is actually a TV show.</p></div>
+                        <span class="score"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.9 7.5.7-5.7 5 1.7 7.4L12 18l-6.5 4 1.7-7.4-5.7-5 7.5-.7L12 2Z"/></svg>8.2</span>
+                    </li>
+                    <li>
+                        <span class="rank-poster poster-dead-poets" aria-hidden="true"></span>
+                        <span class="n">3</span>
+                        <div class="t"><b>Dead Poets Society</b><span>1989 · Drama</span><p class="rank-summary">An inspiring teacher encourages his students to think freely and seize the day.</p></div>
+                        <span class="score"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.9 7.5.7-5.7 5 1.7 7.4L12 18l-6.5 4 1.7-7.4-5.7-5 7.5-.7L12 2Z"/></svg>8.1</span>
+                    </li>
+                    <li>
+                        <span class="rank-poster poster-titanic" aria-hidden="true"></span>
+                        <span class="n">4</span>
+                        <div class="t"><b>Titanic</b><span>1997 · Drama, Romance</span><p class="rank-summary">A romance unfolds aboard the Titanic during its ill-fated maiden voyage.</p></div>
+                        <span class="score"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.9 7.5.7-5.7 5 1.7 7.4L12 18l-6.5 4 1.7-7.4-5.7-5 7.5-.7L12 2Z"/></svg>7.9</span>
+                    </li>
+                    <li>
+                        <span class="rank-poster poster-home-alone" aria-hidden="true"></span>
+                        <span class="n">5</span>
+                        <div class="t"><b>Home Alone</b><span>1990 · Comedy, Family</span><p class="rank-summary">Left behind for the holidays, Kevin turns his home into a trap-filled fortress.</p></div>
+                        <span class="score"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.9 7.5.7-5.7 5 1.7 7.4L12 18l-6.5 4 1.7-7.4-5.7-5 7.5-.7L12 2Z"/></svg>7.7</span>
+                    </li>
+                </ol>
+            </aside>
 
         </main>
 
