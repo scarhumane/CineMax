@@ -178,22 +178,52 @@ body::after {
 .login-content #login-form { grid-column: 2; grid-row: 1 / 5; align-self: center; justify-self: end; }
 
 /* ---------- Sign-up page: form centred ---------- */
-.signup-content { flex: 1; display: grid; place-items: center; padding-block: 24px 48px; }
+.signup-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-block: 24px 48px;
+}
+
+.signup-title {
+  font-family: var(--display);
+  font-size: clamp(40px, 5vw, 64px);
+  font-weight: 400;
+  margin: 0 0 8px;
+  text-align: center;
+}
+
+.signup-description {
+  color: var(--mist);
+  margin: 0 0 24px;
+  text-align: center;
+}
 
 /* ---------- Form card (login and sign up) ---------- */
-#login-form {
-  width: 100%; max-width: 380px; padding: 30px 28px 24px;
+#login-form,
+#signup-form {
+  width: 100%; max-width: 420px; padding: 30px 28px 24px;
   display: flex; flex-direction: column; gap: 8px;
   background: var(--glass); backdrop-filter: blur(14px);
   border: 1px solid var(--line); border-radius: 6px;
 }
-#login-form label { margin-top: 6px; font-family: var(--display); font-size: 17px; font-weight: 500; font-variant: small-caps; letter-spacing: 0.06em; }
-#login-form input[type="text"], #login-form input[type="email"], #login-form input[type="password"] {
+#login-form label,
+#signup-form label { margin-top: 6px; font-family: var(--display); font-size: 17px; font-weight: 500; font-variant: small-caps; letter-spacing: 0.06em; }
+#login-form input[type="text"],
+#login-form input[type="email"],
+#login-form input[type="password"],
+#signup-form input[type="text"],
+#signup-form input[type="email"],
+#signup-form input[type="password"] {
   width: 100%; padding: 11px 12px; border: 1px solid var(--line); border-radius: 3px;
   background: var(--field); color: var(--frost); font-family: var(--body); font-size: 14px; transition: border-color 0.2s;
 }
-#login-form input:focus { border-color: var(--ice); outline: none; }
-#login-form input:-webkit-autofill { -webkit-text-fill-color: var(--frost); box-shadow: 0 0 0 100px #0a1626 inset; }
+#login-form input:focus,
+#signup-form input:focus { border-color: var(--ice); outline: none; }
+#login-form input:-webkit-autofill,
+#signup-form input:-webkit-autofill { -webkit-text-fill-color: var(--frost); box-shadow: 0 0 0 100px #0a1626 inset; }
 .password-label-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 6px; }
 .password-label-row label { margin-top: 0; }
 .forgot-password { margin: 0; font-size: 12px; }
@@ -201,13 +231,16 @@ body::after {
 .forgot-password a:hover { color: var(--frost); }
 .password-container { position: relative; }
 .password-container input { padding-right: 44px; }
-#toggle-password {
+#toggle-password,
+#toggle-confirm-password {
   position: absolute; top: 50%; right: 6px; transform: translateY(-50%);
   width: 32px; height: 32px; display: grid; place-content: center; padding: 0;
   border: 0; background: none; color: var(--mist); cursor: pointer;
 }
-#toggle-password:hover { color: var(--frost); }
-#toggle-password svg { width: 18px; height: 18px; }
+#toggle-password:hover,
+#toggle-confirm-password:hover { color: var(--frost); }
+#toggle-password svg,
+#toggle-confirm-password svg { width: 18px; height: 18px; }
 .login-button {
   margin-top: 16px; padding: 12px; border: 0; border-radius: 4px; cursor: pointer;
   font-family: var(--body); font-size: 13px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #04121a;
@@ -233,6 +266,7 @@ body::after {
   .about-link { display: none; }
   .explore-button, .homepage-actions .sign-in-button { padding: 13px 22px; }
   .toprated { padding: 24px 18px; }
-  #login-form { padding: 24px 20px 20px; }
+  #login-form,
+  #signup-form { padding: 24px 20px 20px; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
