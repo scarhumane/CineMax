@@ -1,0 +1,13 @@
+<?php
+session_start();
+
+if (
+    !isset($_SESSION["logged_in"]) || $_SESSION["logged_in"] !== true
+) {
+    header("Location: login_page.html");
+    exit;
+}
+
+header("Location: ../04%20-%20Homepage/homepage.php");
+exit;
+?>

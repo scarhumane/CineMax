@@ -28,3 +28,14 @@ function setupPasswordToggle(inputId, buttonId) {
 
 setupPasswordToggle("password", "toggle-password");
 setupPasswordToggle("confirm_password", "toggle-confirm-password");
+
+const loginError = document.getElementById("login-error");
+
+if (loginError) {
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.get("error") === "invalid") {
+        loginError.textContent =
+            "Account not found or incorrect password.\nPlease check your details or sign up.";
+    }
+}

@@ -47,8 +47,8 @@ foreach ($data["users"] as $user) {
             $_SESSION["username"] = $user["username"];
             $_SESSION["email"] = $user["email"];
 
-            // Redirect to dashboard
-            header("Location: ../04%20-%20Dashboard/dashboard.php");
+            // Redirect to homepage
+            header("Location: ../04%20-%20Homepage/homepage.php");
             exit;
 
         } else {
@@ -57,5 +57,6 @@ foreach ($data["users"] as $user) {
     }
 }
 
-exit("Incorrect username/email or password.");
+header("Location: login_page.html?error=invalid");
+exit;
 ?>
