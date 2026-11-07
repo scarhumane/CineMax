@@ -66,7 +66,7 @@ body::after {
 .homepage-page .login-container { max-width: none; }
 .signup-page { max-width: none; }
 .login-header, .homepage-header { display: flex; align-items: center; gap: clamp(16px, 3vw, 40px); padding-block: 22px; }
-.website-logo { margin-right: auto; font-size: 24px; font-weight: 500; letter-spacing: 0.34em; text-transform: uppercase; }
+.website-logo { margin-right: auto; color: var(--ice); font-size: 24px; font-weight: 500; letter-spacing: 0.34em; text-transform: uppercase; }
 .about-link { font-size: 14px; color: #c3d6e4; transition: color 0.2s; }
 .about-link:hover { color: #fff; }
 .login-header .sign-in-button, .login-header .home-page-link {
@@ -289,30 +289,92 @@ body::after {
 
 /* FAQ SECTION */
 .faq-section {
-    margin-top: 60px;
-}
-
-.faq-section h1 {
-    margin-bottom: 8px;
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto 70px;
 }
 
 .faq-description {
-    color: var(--mist);
-    margin-bottom: 24px;
+    color: var(--ice);
+    text-align: center;
+    margin: 0 0 32px;
 }
 
-/* FAQ CONTAINER */
+.founder-section {
+    width: 100%;
+    max-width: 1100px;
+    margin: 65px auto 50px;
+}
+
+.founder-heading,
+.faq-heading {
+    text-align: center;
+}
+
+.founder-heading {
+    margin-bottom: 32px;
+}
+
+.section-label {
+    display: inline-block;
+    color: var(--ice);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    margin-bottom: 12px;
+}
+
+.founder-heading h1,
+.faq-heading h1 {
+    font-family: var(--display);
+    font-size: clamp(38px, 5vw, 56px);
+    font-weight: 400;
+    color: var(--frost);
+    margin: 0 0 10px;
+}
+
+.founder-card,
 .faq-container {
-    background: rgba(7, 16, 29, 0.88);
+    position: relative;
+    background: linear-gradient(
+        135deg,
+        rgba(12, 27, 43, 0.90),
+        rgba(4, 10, 19, 0.88)
+    );
     border: 1px solid var(--line);
-    border-radius: 16px;
+    border-radius: 12px;
+    backdrop-filter: blur(16px);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+}
+
+.faq-container {
     padding: 0 20px;
+}
+
+.founder-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 40px;
+    width: 100px;
+    height: 2px;
+    background: var(--ice);
 }
 
 /* INDIVIDUAL QUESTIONS */
 .faq-item {
     border-bottom: 1px solid var(--line);
     padding: 14px 0;
+}
+
+.faq-item[open] {
+    border-left: 2px solid rgba(92, 195, 220, 0.55);
+    padding-left: 12px;
+}
+
+.faq-item[open] summary {
+    color: var(--ice);
 }
 
 .faq-item:last-child {
@@ -362,34 +424,7 @@ body::after {
     color: var(--ice);
 }
 
-.founder-section {
-    width: 100%;
-    max-width: 1100px;
-    margin: 65px auto 70px;
-}
-
 /* Heading */
-
-.founder-heading {
-    text-align: center;
-    margin-bottom: 32px;
-}
-
-.founder-label {
-    display: inline-block;
-    color: var(--ice);
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 3px;
-    margin-bottom: 12px;
-}
-
-.founder-heading h1 {
-    font-family: var(--display);
-    font-size: clamp(38px, 5vw, 56px);
-    color: var(--frost);
-    margin: 0 0 10px;
-}
 
 .founder-heading > p {
     color: var(--mist);
@@ -400,33 +435,9 @@ body::after {
 /* Founder card */
 
 .founder-card {
-    position: relative;
     max-width: 1100px;
-    padding: 36px 40px 24px;
-    background: linear-gradient(
-        135deg,
-        rgba(12, 27, 43, 0.90),
-        rgba(4, 10, 19, 0.88)
-    );
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    backdrop-filter: blur(16px);
-    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.25);
-    overflow: hidden;
     margin: 0 auto;
     padding: 40px 48px 28px;
-}
-
-/* Subtle top accent */
-
-.founder-card::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 40px;
-    width: 100px;
-    height: 2px;
-    background: var(--ice);
 }
 
 /* Founder identity */
@@ -459,11 +470,12 @@ body::after {
     height: 100%;
     object-fit: cover;
     border-radius: 50%;
+    border: 1px solid var(--ice);
 }
 
 .founder-card-header h2 {
-    color: var(--frost);
-    font-size: 21px;
+    color: var(--ice);
+    font-size: 22px;
     margin: 0 0 5px;
 }
 
@@ -483,6 +495,11 @@ body::after {
 
 /* Story text */
 
+.founder-story {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
 .founder-story p {
     color: var(--mist);
     font-size: 16px;
@@ -499,8 +516,436 @@ body::after {
 .founder-story .founder-closing {
     color: var(--frost);
     font-style: italic;
-    margin-top: 26px;
+    border-top: 1px solid rgba(92, 195, 220, 0.25);
+    margin-top: 28px;
     margin-bottom: 10px;
+    padding-top: 18px;
+}
+
+/* Pricing page */
+
+.subscription-page {
+    min-height: 100vh;
+}
+
+/* MAIN CONTAINER */
+.subscription-page .subscription-container {
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 44px 0 50px;
+    flex: 1;
+}
+
+/* HEADING */
+.subscription-page .pricing-heading {
+    text-align: center;
+    margin-bottom: 55px;
+}
+
+.subscription-page .section-label {
+    display: inline-block;
+    color: var(--ice);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    margin-bottom: 12px;
+}
+
+.subscription-page .pricing-heading h1 {
+    font-family: var(--display);
+    font-size: clamp(48px, 6.6vw, 76px);
+    font-weight: 400;
+    line-height: 0.98;
+    letter-spacing: -0.015em;
+    color: var(--frost);
+    margin: 0 0 18px;
+}
+
+.subscription-page .heading-description {
+    color: #b9ccda;
+    font-size: clamp(16px, 1.5vw, 18px);
+    font-weight: 300;
+}
+
+/* BILLING TOGGLE */
+.subscription-page .billing-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 35px;
+    padding: 6px;
+    background: rgba(7, 16, 29, 0.72);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    backdrop-filter: blur(10px);
+}
+
+.subscription-page .billing-button {
+    border: none;
+    background: transparent;
+    color: var(--mist);
+    padding: 12px 22px;
+    border-radius: 999px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.subscription-page .billing-button.active {
+    background: var(--ember);
+    color: #04121a;
+    font-weight: 600;
+}
+
+.subscription-page .billing-button.active .save-label {
+    color: #04121a;
+}
+
+.subscription-page .save-label {
+    position: relative;
+    top: -10px;
+    font-size: 9px;
+    margin-left: 5px;
+    font-weight: 800;
+    color: var(--ember);
+}
+
+/* PRICING CARDS */
+.subscription-page .plans-container {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 25px;
+    align-items: stretch;
+}
+
+.subscription-page .plan-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 30px 26px 26px;
+    background: var(--glass);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    backdrop-filter: blur(16px);
+    transition: transform 0.2s, border-color 0.2s, background 0.2s;
+}
+
+.subscription-page .plan-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(92, 195, 220, 0.55);
+}
+
+/* POPULAR PLAN */
+.subscription-page .popular-plan {
+    border-color: rgba(92, 195, 220, 0.65);
+    box-shadow: 0 0 28px rgba(92, 195, 220, 0.1);
+}
+
+.subscription-page .popular-label {
+    position: absolute;
+    top: -13px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--ice);
+    color: #04121a;
+    padding: 7px 22px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    white-space: nowrap;
+}
+
+/* PLAN DETAILS */
+.subscription-page .plan-header h2 {
+    color: var(--ember);
+    font-family: var(--display);
+    font-size: 30px;
+    font-weight: 500;
+    line-height: 1.1;
+    margin-bottom: 8px;
+}
+
+.subscription-page .plan-header p {
+    color: var(--mist);
+    font-size: 13px;
+}
+
+.subscription-page .plan-price {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+    margin-top: 30px;
+}
+
+.subscription-page .price-amount {
+    color: var(--frost);
+    font-family: var(--display);
+    font-size: 40px;
+    font-weight: 500;
+}
+
+.subscription-page .price-period {
+    color: var(--mist);
+    font-size: 13px;
+}
+
+.subscription-page .plan-description {
+    color: #b9ccda;
+    font-size: 13px;
+    margin-top: 8px;
+    min-height: 35px;
+}
+
+.subscription-page .plan-divider {
+    height: 1px;
+    background: var(--line);
+    margin: 22px 0;
+}
+
+/* FEATURES */
+.subscription-page .plan-features {
+    list-style: none;
+    flex-grow: 1;
+    margin: 0;
+    padding: 0;
+}
+
+.subscription-page .plan-features li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    color: #b9ccda;
+    font-size: 13px;
+    line-height: 1.6;
+    padding: 13px 0;
+    border-bottom: 1px solid var(--line);
+}
+
+.subscription-page .plan-features li:last-child {
+    border-bottom: none;
+}
+
+.subscription-page .plan-features i {
+    width: 17px;
+    height: 17px;
+    min-width: 17px;
+    color: var(--ice);
+}
+
+/* BUTTONS */
+.subscription-page .select-plan-button {
+    width: 100%;
+    padding: 15px;
+    margin-top: 30px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--frost);
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.subscription-page .select-plan-button:hover {
+    border-color: var(--ice);
+    background: var(--ice);
+    color: #04121a;
+}
+
+.subscription-page .featured-button {
+    border-color: var(--ember);
+    background: var(--ember);
+    color: #04121a;
+}
+
+.subscription-page .featured-button:hover {
+    border-color: #f5d49d;
+    background: #f5d49d;
+}
+
+/* SELECTION MESSAGE */
+.subscription-page .plan-message {
+    text-align: center;
+    color: var(--ice);
+    font-size: 14px;
+    margin-top: 30px;
+    min-height: 20px;
+}
+
+.subscription-page .pricing-note {
+    color: #6d8699;
+    font-size: 12px;
+    text-align: center;
+    margin-top: 15px;
+}
+
+/* FOOTER */
+.subscription-page .subscription-footer {
+    padding: 24px 0 32px;
+    margin-top: auto;
+    border-top: 1px solid var(--line);
+}
+
+/* FORGET PASSWORD AND RESET*/
+
+.password-recovery-page .password-recovery-content {
+    flex: 1;
+    display: grid;
+    place-items: center;
+    padding: 32px 0 48px;
+}
+
+.password-recovery-page .password-recovery-card {
+    width: 100%;
+    max-width: 460px;
+    padding: 34px clamp(22px, 5vw, 36px) 28px;
+    background: var(--glass);
+    backdrop-filter: blur(14px);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+}
+
+.password-recovery-card h1 {
+    margin: 0 0 8px;
+    font-family: var(--display);
+    font-size: clamp(36px, 6vw, 48px);
+    font-weight: 400;
+    line-height: 1.05;
+}
+
+.password-recovery-card > p {
+    margin: 0 0 24px;
+    color: var(--mist);
+}
+
+.password-recovery-card form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.password-recovery-page .password-recovery-card label {
+    margin-top: 6px;
+    color: var(--frost);
+    font-family: var(--display);
+    font-size: 17px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+}
+
+.password-recovery-page .password-recovery-card input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 14px;
+    background: var(--field);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    color: var(--frost);
+    font-family: var(--body);
+    font-size: 14px;
+}
+
+.password-recovery-page .password-recovery-card input:focus {
+    border-color: var(--ice);
+    outline: none;
+}
+
+.password-recovery-page .password-recovery-card button,
+.password-recovery-page .recovery-action {
+    display: block;
+    width: 100%;
+    margin-top: 16px;
+    padding: 12px;
+    border: 0;
+    border-radius: 4px;
+    background: linear-gradient(180deg, #5cc3dc 0%, #2b97b5 100%);
+    box-shadow: 0 0 0 1px rgba(92, 195, 220, 0.4), 0 8px 24px rgba(43, 151, 181, 0.25);
+    color: #04121a;
+    font-family: var(--body);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-align: center;
+    text-transform: uppercase;
+    color: #04121a;
+    text-decoration: none;
+    cursor: pointer;
+    transition: filter 0.2s;
+}
+
+.password-recovery-page .password-recovery-card button:hover,
+.password-recovery-page .recovery-action:hover {
+    filter: brightness(1.1);
+}
+
+.password-recovery-page .password-recovery-back {
+    margin: 24px 0 0;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+    color: var(--mist);
+    text-align: center;
+    font-size: 13px;
+}
+
+.password-recovery-page .password-recovery-card > .password-recovery-back {
+    margin: 24px 0 0;
+}
+
+.password-recovery-page .password-recovery-back a,
+.password-recovery-page .recovery-link {
+    color: var(--ice);
+    text-decoration: none;
+}
+
+.password-recovery-page .password-recovery-back a:hover,
+.password-recovery-page .recovery-link:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.password-recovery-page .recovery-message {
+    margin: 16px 0;
+    color: var(--mist);
+}
+
+.password-recovery-page .recovery-error {
+    color: #ff7777;
+}
+
+@media (max-width: 900px) {
+    .subscription-page .plans-container {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px;
+    }
+
+    .subscription-page .popular-plan {
+        grid-column: 1 / -1;
+        grid-row: 1;
+    }
+}
+
+@media (max-width: 600px) {
+    .subscription-page .subscription-container {
+        padding: 36px 0 36px;
+    }
+
+    .subscription-page .pricing-heading {
+        margin-bottom: 42px;
+    }
+
+    .subscription-page .plans-container {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 26px;
+    }
+
+    .subscription-page .popular-plan {
+        grid-column: auto;
+        grid-row: auto;
+        margin-top: 8px;
+    }
 }
 
 /* ---------- Responsive ---------- */
