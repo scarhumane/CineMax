@@ -1,67 +1,135 @@
-
 <?php
+
 require_once __DIR__ . "/tmdb_api.php";
 
 header("Content-Type: application/json; charset=utf-8");
+header("Cache-Control: no-store");
+
+function sendJson(array $payload, int $status = 200): void
+{
+    http_response_code($status);
+
+    try {
+        echo json_encode(
+            $payload,
+            JSON_UNESCAPED_SLASHES
+                | JSON_UNESCAPED_UNICODE
+                | JSON_INVALID_UTF8_SUBSTITUTE
+                | JSON_THROW_ON_ERROR
+        );
+    } catch (JsonException $error) {
+        error_log("Unable to encode TMDB response: " . $error->getMessage());
+        http_response_code(500);
+        echo '{"error":"Unable to encode the movie service response."}';
+    }
+}
 
 $type = $_GET["type"] ?? "trending";
 
-// Validate page number
-$page = filter_input(INPUT_GET, "page", FILTER_VALIDATE_INT);
-
-if ($page === false || $page === null || $page < 1 || $page > 500) {
-    $page = 1;
+if (!is_string($type)) {
+    sendJson(["error" => "Invalid request type."], 400);
+    exit;
 }
 
-// Get and clean search query
-$query = trim($_GET["query"] ?? "");
+$pageValue = $_GET["page"] ?? "1";
+$page = filter_var($pageValue, FILTER_VALIDATE_INT);
 
-try {
-    switch ($type) {
+if ($page === false || $page < 1 || $page > 500) {
+    sendJson(["error" => "Page must be an integer from 1 to 500."], 400);
+    exit;
+}
 
-        case "trending":
-            $result = getTrendingMovies();
-            break;
+$queryValue = $_GET["query"] ?? "";
 
-        case "popular":
-            $result = getPopularMovies($page);
-            break;
+if (!is_string($queryValue)) {
+    sendJson(["error" => "Query must be a string."], 400);
+    exit;
+}
 
-        case "top-rated":
-            $result = getTopRatedMovies($page);
-            break;
+$query = trim($queryValue);
 
-        case "search":
-            $result = $query === ""
-                ? ["results" => []]
-                : searchMovies($query);
-            break;
+if (strlen($query) > 200) {
+    sendJson(["error" => "Query must be 200 characters or fewer."], 400);
+    exit;
+}
 
-        case "people":
-            $result = $query === ""
-                ? ["results" => []]
-                : searchPeople($query);
-            break;
+$personIdValue = $_GET["person_id"] ?? "";
+$personId = filter_var($personIdValue, FILTER_VALIDATE_INT);
 
-        default:
-            http_response_code(400);
-            $result = [
-                "error" => "Invalid request type."
-            ];
-            break;
+$genreValue = $_GET["genre"] ?? "";
+$genre = filter_var($genreValue, FILTER_VALIDATE_INT);
+$validGenres = [
+    12, 14, 16, 18, 27, 28, 35, 36, 37, 53,
+    80, 99, 878, 9648, 10402, 10749, 10751, 10752, 10770
+];
+
+if ($type === "discover" && (
+    $genre === false ||
+    !in_array($genre, $validGenres, true)
+)) {
+    sendJson(["error" => "A valid movie genre is required."], 400);
+    exit;
+}
+
+switch ($type) {
+    case "trending":
+        $result = getTrendingMovies();
+        break;
+
+    case "popular":
+        $result = getPopularMovies($page);
+        break;
+
+    case "top-rated":
+        $result = getTopRatedMovies($page);
+        break;
+
+    case "discover":
+        $result = getMoviesByGenre($genre, $page);
+        break;
+
+    case "search":
+        $result = $query === ""
+            ? ["results" => []]
+            : searchMovies($query);
+        break;
+
+    case "people":
+    $result = $query === ""
+        ? getPopularPeople($page)
+        : searchPeople($query, $page);
+    break;
+
+    case "person":
+    if (
+        $personId === false ||
+        $personId <= 0
+    ) {
+        sendJson(["error" => "A valid person ID is required."], 400);
+        exit;
     }
 
-    echo json_encode(
-        $result,
-        JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
-    );
-    
-} catch (Throwable $error) {
-    http_response_code(500);
+    $person = getPersonDetails($personId);
+    $credits = getPersonMovieCredits($personId);
 
-    error_log("TMDB ERROR: " . $error->getMessage());
-
-    echo json_encode([
-        "error" => $error->getMessage()
-    ]);
+    if (isset($person["error"])) {
+        $result = $person;
+    } elseif (isset($credits["error"])) {
+        $result = $credits;
+    } else {
+        $result = [
+            "person" => $person,
+            "credits" => $credits
+        ];
+    }
+    break;
 }
+
+$status = $result["_status"] ?? 200;
+unset($result["_status"]);
+
+if (isset($result["error"]) && $status === 200) {
+    $status = 502;
+}
+
+sendJson($result, $status);

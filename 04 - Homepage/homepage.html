@@ -22,14 +22,14 @@
                 CINEMAX
             </a>
 
-            <nav class="homepage-nav">
-                <a href="#home">Home</a>
-                <a href="#movies">Movies</a>
-                <a href="#genres">Genres</a>
-                <a href="#people">People</a>
-                <a href="#continue">Continue Watching</a>
-                <a href="#toprated">Top Rated</a>
-                <a href="#watchlist">My Watchlist</a>
+            <nav class="homepage-nav" aria-label="Main navigation">
+                <a href="#home" data-section="home" aria-current="page">Home</a>
+                <a href="#movies" data-section="movies">Movies</a>
+                <a href="#genres" data-section="genres">Genres</a>
+                <a href="#people" data-section="people">People</a>
+                <a href="#continue" data-section="continue">Continue Watching</a>
+                <a href="#toprated" data-section="toprated">Top Rated</a>
+                <a href="#watchlist" data-section="watchlist">My Watchlist</a>
             </nav>
 
             <div class="header-right">
@@ -37,16 +37,17 @@
                 <div class="search-container">
                     <i data-lucide="search"></i>
                     <input
-                        type="text"
+                        type="search"
                         id="homepage-search"
                         placeholder="Search movies or people..."
                         autocomplete="off"
+                        aria-label="Search movies or people"
                     >
                 </div>
 
                 <div class="profile-container">
-                    <div class="profile-avatar">Y</div>
-                    <span class="profile-name">Yuli</span>
+                    <div class="profile-avatar" aria-hidden="true">{{profile_initial}}</div>
+                    <span class="profile-name">{{profile_name}}</span>
                 </div>
 
             </div>
@@ -67,6 +68,12 @@
 
             </section>
 
+            <p
+                class="service-status"
+                id="movie-service-status"
+                role="status"
+                hidden
+            ></p>
 
             <!-- SEARCH RESULTS -->
             <section
@@ -76,7 +83,7 @@
             >
 
                 <div class="section-header">
-                    <h2>Search Results</h2>
+                    <h2 id="search-title">Search Results</h2>
                 </div>
 
                 <div
@@ -157,45 +164,41 @@
 
 
             <!-- PEOPLE -->
-            <section class="content-section" id="people">
+      
+<section class="content-section" id="people">
+    <div class="section-header">
 
-                <div class="section-header">
+        <h2>People</h2>
 
-                    <h2>People</h2>
+        <div class="people-controls">
 
-                    <div class="people-filters">
+            <label class="people-search" aria-label="Search people">
+                <i data-lucide="search"></i>
+                <input
+                    type="search"
+                    id="people-search"
+                    placeholder="Search people..."
+                    autocomplete="off"
+                    aria-label="Search people by name"
+                >
+            </label>
 
-                        <button
-                            class="filter-button active"
-                            data-role="all"
-                        >
-                            All
-                        </button>
+            <div class="people-filters">
+                <button type="button" class="filter-button active"
+                    data-role="all" aria-pressed="true">All</button>
 
-                        <button
-                            class="filter-button"
-                            data-role="actor"
-                        >
-                            Actors
-                        </button>
+                <button type="button" class="filter-button"
+                    data-role="actor" aria-pressed="false">Actors</button>
 
-                        <button
-                            class="filter-button"
-                            data-role="director"
-                        >
-                            Directors
-                        </button>
+                <button type="button" class="filter-button"
+                    data-role="director" aria-pressed="false">Directors</button>
+            </div>
 
-                    </div>
+        </div>
+    </div>
 
-                </div>
-
-                <div
-                    class="people-grid"
-                    id="people-list"
-                ></div>
-
-            </section>
+    <div class="people-grid" id="people-list"></div>
+</section>
 
 
             <!-- TOP RATED MOVIES -->
@@ -203,11 +206,32 @@
 
                 <div class="section-header">
                     <h2>Top Rated Movies</h2>
+                    <div class="row-controls" role="group" aria-label="Top rated movie controls">
+                        <button
+                            type="button"
+                            class="row-control"
+                            data-row="rank"
+                            data-dir="-1"
+                            aria-label="Scroll top rated movies left"
+                        >
+                            <i data-lucide="chevron-left"></i>
+                        </button>
+                        <button
+                            type="button"
+                            class="row-control"
+                            data-row="rank"
+                            data-dir="1"
+                            aria-label="Scroll top rated movies right"
+                        >
+                            <i data-lucide="chevron-right"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <ol
                     class="top-rated-list"
                     id="rank"
+                    aria-label="Top 10 highest-rated movies"
                 ></ol>
 
             </section>
@@ -239,25 +263,33 @@
 
         <!-- FOOTER -->
         <footer class="homepage-footer">
-
-            <div class="footer-content">
-
-                <a href="homepage.php" class="footer-logo">
-                    CINEMAX
-                </a>
-
-                <p>
-                    Discover films worth talking about.
-                </p>
-
-            </div>
-
-            <div class="footer-bottom">
-                <p>&copy; 2026 CineMax. All rights reserved.</p>
-            </div>
-
+            <p>&copy; {{current_year}} CineMax. All rights reserved.</p>
         </footer>
 
+    </div>
+
+    <div
+        class="modal"
+        id="movie-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title"
+        aria-hidden="true"
+        hidden
+    >
+        <div class="modal-overlay" data-close-modal></div>
+        <div class="modal-panel">
+            <button
+                type="button"
+                class="modal-close"
+                data-close-modal
+                aria-label="Close movie details"
+            >
+                <i data-lucide="x"></i>
+            </button>
+            <div class="modal-media"></div>
+            <div class="modal-body"></div>
+        </div>
     </div>
 
 </body>
