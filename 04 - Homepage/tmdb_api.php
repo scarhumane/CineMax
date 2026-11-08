@@ -1,3 +1,4 @@
+
 <?php
 
 require_once __DIR__ . "/tmdb_config.php";
@@ -19,7 +20,6 @@ function tmdbRequest(string $endpoint, array $parameters = []): array
     }
 
     $endpoint = "/" . ltrim($endpoint, "/");
-
     $parameters["api_key"] = TMDB_API_KEY;
 
     $url = rtrim(TMDB_BASE_URL, "/")
@@ -193,4 +193,31 @@ function getMovieGenres(): array
     return tmdbRequest("/genre/movie/list", [
         "language" => "en-US"
     ]);
+}
+
+function getMovieDetails(int $movieId): array
+{
+    if ($movieId <= 0) {
+        return [
+            "error" => "A valid movie ID is required.",
+            "_status" => 400
+        ];
+    }
+
+    return tmdbRequest("/movie/" . $movieId, [
+        "language" => "en-US",
+        "append_to_response" => "credits,videos,recommendations"
+    ]);
+}
+
+function getMovieWatchProviders(int $movieId): array
+{
+    if ($movieId <= 0) {
+        return [
+            "error" => "A valid movie ID is required.",
+            "_status" => 400
+        ];
+    }
+
+    return tmdbRequest("/movie/" . $movieId . "/watch/providers");
 }

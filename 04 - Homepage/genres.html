@@ -122,37 +122,31 @@
 
 
         <!-- MOVIE DETAILS MODAL -->
-        <div
-            class="movie-modal"
-            id="movie-modal"
-            aria-hidden="true"
+       <div
+    class="modal"
+    id="movie-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="modal-title"
+    aria-hidden="true"
+    hidden
+>
+    <div class="modal-overlay" data-close-modal></div>
+
+    <div class="modal-panel">
+        <button
+            type="button"
+            class="modal-close"
+            data-close-modal
+            aria-label="Close movie details"
         >
+            <i data-lucide="x"></i>
+        </button>
 
-            <div class="modal-backdrop" data-close-modal></div>
-
-            <div
-                class="modal-content"
-                role="dialog"
-                aria-modal="true"
-                aria-label="Movie details"
-            >
-
-                <button
-                    class="modal-close"
-                    type="button"
-                    data-close-modal
-                    aria-label="Close movie details"
-                >
-                    <i data-lucide="x"></i>
-                </button>
-
-                <div class="modal-media"></div>
-
-                <div class="modal-body"></div>
-
-            </div>
-
-        </div>
+        <div class="modal-media"></div>
+        <div class="modal-body"></div>
+    </div>
+</div>
 
 
         <!-- FOOTER -->

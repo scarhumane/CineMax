@@ -213,6 +213,28 @@ function createMovieCard(movie) {
     `;
 }
 
+/* RESULTS DISPLAY */
+
+function renderMovieResults(movies, description) {
+    if (!resultsContainer) return;
+
+    if (!movies.length) {
+        resultsContainer.innerHTML = loadingHTML(
+            description.noResults
+        );
+
+        return;
+    }
+
+    resultsContainer.innerHTML = `
+        <p class="search-results-count">
+            ${movies.length} movies found ${description.countText}
+        </p>
+
+        ${movies.map(createMovieCard).join("")}
+    `;
+}
+
 /* IMAGE FALLBACKS */
 
 document.addEventListener("error", event => {
@@ -382,13 +404,10 @@ async function showGenre(genreId) {
                 .filter(Boolean)
         );
 
-        if (resultsContainer) {
-            resultsContainer.innerHTML = movies.length
-                ? movies.map(createMovieCard).join("")
-                : loadingHTML(
-                    `No ${genre.name} movies were found.`
-                );
-        }
+        renderMovieResults(movies, {
+            countText: `in ${genre.name}`,
+            noResults: `No ${genre.name} movies were found.`
+        });
 
     } catch (error) {
         if (current !== movieRequestNumber) return;
@@ -426,7 +445,7 @@ async function searchGenreMovies(query) {
     movieRequestNumber++;
 
     if (resultsTitle) {
-        resultsTitle.textContent = `Search Results: ${term}`;
+        resultsTitle.textContent = "Search Results";
     }
 
     if (resultsContainer) {
@@ -450,13 +469,10 @@ async function searchGenreMovies(query) {
                 .filter(Boolean)
         );
 
-        if (resultsContainer) {
-            resultsContainer.innerHTML = movies.length
-                ? movies.map(createMovieCard).join("")
-                : loadingHTML(
-                    `No movies found for "${term}".`
-                );
-        }
+        renderMovieResults(movies, {
+            countText: `for "${escapeHTML(term)}"`,
+            noResults: `No movies found for "${term}".`
+        });
 
     } catch (error) {
         if (current !== searchRequestNumber) return;
