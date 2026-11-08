@@ -187,3 +187,10 @@ function getPersonMovieCredits(int $personId): array
         "language" => "en-US"
     ]);
 }
+
+function getMovieGenres(): array
+{
+    return tmdbRequest("/genre/movie/list", [
+        "language" => "en-US"
+    ]);
+}

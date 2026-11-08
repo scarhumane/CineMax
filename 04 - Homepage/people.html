@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>CineMax — People</title>
+
+    <link rel="stylesheet" href="homepage.css">
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="people.js" defer></script>
+</head>
+
+<body>
+
+    <div class="homepage-container">
+
+        <!-- HEADER -->
+        <header class="homepage-header">
+
+            <a href="homepage.php" class="website-logo">
+                CINEMAX
+            </a>
+
+            <nav class="homepage-nav">
+                <a href="homepage.php">Home</a>
+                <a href="homepage.php#movies">Movies</a>
+                <a href="genres.php">Genres</a>
+                <a href="people.php" class="active">People</a>
+                <a href="homepage.php#watchlist">Watchlist</a>
+            </nav>
+
+            <div class="header-right">
+
+                <div class="profile-container">
+
+                    <div class="profile-avatar" aria-hidden="true">
+                        {{profile_initial}}
+                    </div>
+
+                    <span class="profile-name">
+                        {{profile_name}}
+                    </span>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- MAIN CONTENT -->
+        <main>
+
+            <section class="content-section" id="people">
+
+                <!-- PAGE HEADER -->
+                <div class="section-header">
+
+                    <h1>Discover People</h1>
+
+
+                    <!-- SEARCH AND FILTERS -->
+                    <div class="people-controls">
+
+                        <label class="people-search">
+
+                            <i data-lucide="search"></i>
+
+                            <input
+                                type="search"
+                                id="people-search"
+                                placeholder="Search actors and directors..."
+                                autocomplete="off"
+                                aria-label="Search people by name"
+                            >
+
+                        </label>
+
+
+                        <!-- ROLE FILTERS -->
+                        <div class="people-filters">
+
+                            <button
+                                type="button"
+                                class="filter-button active"
+                                data-role="all"
+                                aria-pressed="true"
+                            >
+                                All
+                            </button>
+
+                            <button
+                                type="button"
+                                class="filter-button"
+                                data-role="actor"
+                                aria-pressed="false"
+                            >
+                                Actors
+                            </button>
+
+                            <button
+                                type="button"
+                                class="filter-button"
+                                data-role="director"
+                                aria-pressed="false"
+                            >
+                                Directors
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- PEOPLE RESULTS -->
+                <div
+                    class="people-grid"
+                    id="people-list"
+                    aria-live="polite"
+                ></div>
+
+            </section>
+
+        </main>
+
+
+        <!-- FOOTER -->
+        <footer class="homepage-footer">
+
+            <p>
+                &copy; {{current_year}} CineMax. All rights reserved.
+            </p>
+
+        </footer>
+
+    </div>
+
+
+    <!-- PERSON DETAILS MODAL -->
+    <div
+        class="modal"
+        id="movie-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-hidden="true"
+    >
+
+        <!-- BACKDROP -->
+        <div
+            class="modal-overlay"
+            data-close-modal
+        ></div>
+
+
+        <!-- MODAL PANEL -->
+        <div class="modal-panel">
+
+            <button
+                type="button"
+                class="modal-close"
+                data-close-modal
+                aria-label="Close details"
+            >
+                <i data-lucide="x"></i>
+            </button>
+
+
+            <!-- PERSON PROFILE IMAGE -->
+            <div class="modal-media"></div>
+
+
+            <!-- PERSON INFORMATION AND FILMOGRAPHY -->
+            <div class="modal-body"></div>
+
+        </div>
+
+    </div>
+
+
+    <!-- INITIALIZE LUCIDE ICONS -->
+    <script>
+        if (typeof lucide !== "undefined") {
+            lucide.createIcons();
+        }
+    </script>
+
+</body>
+
+</html>

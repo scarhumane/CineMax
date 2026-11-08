@@ -1,0 +1,166 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>CineMax — Genres</title>
+
+    <link rel="stylesheet" href="homepage.css">
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="genres.js" defer></script>
+</head>
+
+<body>
+
+    <div class="homepage-container">
+
+        <!-- HEADER -->
+        <header class="homepage-header">
+
+            <a href="homepage.php" class="website-logo">
+                CINEMAX
+            </a>
+
+            <nav class="homepage-nav">
+                <a href="homepage.php">Home</a>
+                <a href="homepage.php#movies">Movies</a>
+                <a href="genres.php" class="active">Genres</a>
+                <a href="people.php">People</a>
+                <a href="homepage.php#watchlist">Watchlist</a>
+            </nav>
+
+            <div class="header-right">
+                <div class="profile-container">
+
+                    <div class="profile-avatar" aria-hidden="true">
+                        {{profile_initial}}
+                    </div>
+
+                    <span class="profile-name">
+                        {{profile_name}}
+                    </span>
+
+                </div>
+            </div>
+
+        </header>
+
+
+        <!-- MAIN CONTENT -->
+        <main id="genres">
+
+            <section class="content-section">
+
+                <!-- PAGE INTRO -->
+                <div class="section-header">
+                    <h1>Explore Genres</h1>
+                    <p>Discover movies across different genres.</p>
+                </div>
+
+
+                <!-- GENRE SEARCH -->
+                <div class="search-container">
+                    <i data-lucide="search"></i>
+
+                    <input
+                        type="search"
+                        id="genre-search"
+                        placeholder="Search genres..."
+                        autocomplete="off"
+                        aria-label="Search genres"
+                    >
+                </div>
+
+
+                <!-- GENRE LIST -->
+                <div
+                    class="genres-grid"
+                    id="genres-list"
+                ></div>
+
+
+                <!-- SELECTED GENRE MOVIES -->
+                <section
+                    id="genre-results-section"
+                    class="content-section"
+                    hidden
+                >
+
+                    <div class="genre-results-header">
+
+                        <button
+                            type="button"
+                            id="back-to-genres"
+                            class="back-to-genres"
+                        >
+                            <i data-lucide="arrow-left"></i>
+                            Back to Genres
+                        </button>
+
+                        <div class="section-header">
+                            <h2 id="genre-results-title">
+                                Movies
+                            </h2>
+                        </div>
+
+                    </div>
+
+                    <div
+                        class="movie-grid"
+                        id="genre-movies"
+                    ></div>
+
+                </section>
+
+            </section>
+
+        </main>
+
+
+        <!-- MOVIE DETAILS MODAL -->
+        <div
+            class="movie-modal"
+            id="movie-modal"
+            aria-hidden="true"
+        >
+
+            <div class="modal-backdrop" data-close-modal></div>
+
+            <div
+                class="modal-content"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Movie details"
+            >
+
+                <button
+                    class="modal-close"
+                    type="button"
+                    data-close-modal
+                    aria-label="Close movie details"
+                >
+                    <i data-lucide="x"></i>
+                </button>
+
+                <div class="modal-media"></div>
+
+                <div class="modal-body"></div>
+
+            </div>
+
+        </div>
+
+
+        <!-- FOOTER -->
+        <footer class="homepage-footer">
+            <p>&copy; {{current_year}} CineMax. All rights reserved.</p>
+        </footer>
+
+    </div>
+
+</body>
+</html>

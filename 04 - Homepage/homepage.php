@@ -12,4 +12,4 @@ if (
     exit;
 }
 
-echo render_homepage();
+render_homepage();

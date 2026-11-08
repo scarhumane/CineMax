@@ -1,4 +1,3 @@
-
 const $ = id => document.getElementById(id);
 
 const reducedMotion = window.matchMedia(
@@ -28,6 +27,11 @@ const formatRating = rating => {
     return Number.isFinite(value) ? value.toFixed(1) : "N/A";
 };
 
+/* GENRE LOOKUP
+   Kept for displaying movie genre labels.
+   The homepage no longer displays a Genres section.
+*/
+
 const GENRE_NAMES = {
     28: "Action",
     12: "Adventure",
@@ -49,13 +53,6 @@ const GENRE_NAMES = {
     10752: "War",
     37: "Western"
 };
-
-const GENRE_IDS = Object.fromEntries(
-    Object.entries(GENRE_NAMES).map(([id, name]) => [
-        name,
-        Number(id)
-    ])
-);
 
 const movieIndex = new Map();
 
@@ -232,9 +229,7 @@ const SAMPLE_MOVIES = register([
 
 async function fetchTMDB(type, {
     query = "",
-    page = 1,
-    genre = null,
-    id = null
+    page = 1
 } = {}) {
     const parameters = new URLSearchParams({
         type,
@@ -243,14 +238,6 @@ async function fetchTMDB(type, {
 
     if (query) {
         parameters.set("query", query);
-    }
-
-    if (genre) {
-        parameters.set("genre", String(genre));
-    }
-
-    if (id !== null) {
-        parameters.set("person_id", String(id));
     }
 
     const response = await fetch(
@@ -308,34 +295,6 @@ function normalizeTMDBMovie(movie) {
     };
 }
 
-function normalizeTMDBPerson(person) {
-    const department = (
-        person.known_for_department || ""
-    ).toLowerCase();
-
-    const roles = department === "directing"
-        ? ["director"]
-        : department === "acting"
-            ? ["actor"]
-            : [];
-
-    const knownFor = (person.known_for || [])
-        .filter(item => item.media_type === "movie")
-        .map(item => item.title)
-        .filter(Boolean)
-        .join(", ");
-
-    return {
-        id: String(person.id),
-        name: person.name || "Unknown",
-        roles,
-        profile: person.profile_path
-            ? `${TMDB_IMAGE_BASE}w185${person.profile_path}`
-            : "",
-        knownFor
-    };
-}
-
 /* IMAGE FALLBACKS */
 
 document.addEventListener("error", event => {
@@ -343,23 +302,15 @@ document.addEventListener("error", event => {
 
     if (
         image.tagName !== "IMG" ||
-        !image.closest(".movie-poster, .continue-thumb, .person-avatar, .person-detail-image, .person-film-card")
+        !image.closest(".movie-poster, .continue-thumb")
     ) {
         return;
     }
 
-    const personAvatar = image.closest(".person-avatar");
-    const detailImage = image.closest(".person-detail-image");
-
     const placeholder = document.createElement("div");
 
-    placeholder.className = personAvatar || detailImage
-        ? "person-placeholder"
-        : "poster-placeholder";
-
-    placeholder.textContent = personAvatar || detailImage
-        ? image.alt.trim().charAt(0).toUpperCase()
-        : image.alt.replace(/ poster$/, "");
+    placeholder.className = "poster-placeholder";
+    placeholder.textContent = image.alt.replace(/ poster$/, "");
 
     image.replaceWith(placeholder);
 }, true);
@@ -537,63 +488,7 @@ function createTopCard(movie, rank) {
     `;
 }
 
-/* PEOPLE CARDS */
-function createPersonCard(person) {
-    const roles = (person.roles || [])
-        .map(role =>
-            role.charAt(0).toUpperCase() + role.slice(1)
-        )
-        .join(" · ");
-
-    const image = person.profile
-        ? `
-            <img
-                src="${escapeHTML(person.profile)}"
-                alt="${escapeHTML(person.name)}"
-                loading="lazy"
-                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-            >
-            <div class="person-placeholder" style="display: none;">
-                ${escapeHTML(person.name.charAt(0).toUpperCase())}
-            </div>
-        `
-        : `
-            <div class="person-placeholder">
-                ${escapeHTML(person.name.charAt(0).toUpperCase())}
-            </div>
-        `;
-
-    return `
-        <article
-            class="person-card"
-            tabindex="0"
-            role="button"
-            data-open-person="${escapeHTML(String(person.id))}"
-            aria-label="View details for ${escapeHTML(person.name)}"
-        >
-            <div class="person-avatar">
-                ${image}
-            </div>
-
-            <div class="person-info">
-                <h3>${escapeHTML(person.name)}</h3>
-
-                <p>
-                    ${escapeHTML(roles || "Film professional")}
-                </p>
-
-                <small>
-                    Known for:
-                    ${escapeHTML(
-                        person.knownFor || "No movie credits available"
-                    )}
-                </small>
-            </div>
-        </article>
-    `;
-}
-
-/* MODAL */
+/* MOVIE MODAL */
 
 let lastFocused = null;
 let modalRequestNumber = 0;
@@ -692,351 +587,6 @@ function openModal(movie) {
     });
 
     showModal();
-}
-
-/* PERSON DETAILS */
-
-function getPersonRoles(person, credits) {
-    const roles = new Set();
-
-    if (person.known_for_department?.toLowerCase() === "acting") {
-        roles.add("actor");
-    }
-
-    if (person.known_for_department?.toLowerCase() === "directing") {
-        roles.add("director");
-    }
-
-    const castCredits = credits?.cast || [];
-    const crewCredits = credits?.crew || [];
-
-    if (castCredits.length) {
-        roles.add("actor");
-    }
-
-    if (crewCredits.some(item =>
-        item.job?.toLowerCase() === "director"
-    )) {
-        roles.add("director");
-    }
-
-    return [...roles];
-}
-
-function normalizePersonCredit(credit) {
-    if (!credit || !credit.id || !credit.title) {
-        return null;
-    }
-
-    return normalizeTMDBMovie(credit);
-}
-
-function createPersonFilmCard(movie, role = "") {
-    return `
-        <button type="button"
-                class="person-film-card"
-                data-open-movie="${escapeHTML(movie.id)}">
-
-            <div class="person-film-poster">
-                ${movie.poster
-                    ? `<img src="${escapeHTML(movie.poster)}"
-                            alt="${escapeHTML(movie.title)} poster"
-                            loading="lazy">`
-                    : `<div class="poster-placeholder">
-                            ${escapeHTML(movie.title)}
-                       </div>`
-                }
-            </div>
-
-            <span class="person-film-title">
-                ${escapeHTML(movie.title)}
-            </span>
-
-            <small>
-                ${escapeHTML(movie.year)}
-                ${role ? ` · ${escapeHTML(role)}` : ""}
-            </small>
-        </button>
-    `;
-}
-
-async function openPersonDetails(personId) {
-    const modal = getModal();
-
-    if (!modal) return;
-
-    const media = modal.querySelector(".modal-media");
-    const body = modal.querySelector(".modal-body");
-
-    if (!media || !body) return;
-
-    const current = ++modalRequestNumber;
-
-    lastFocused = document.activeElement;
-
-    media.innerHTML = `
-        <div class="person-detail-image">
-            <div class="person-placeholder">...</div>
-        </div>
-    `;
-
-    body.innerHTML = `
-        <p class="hero-label">CineMax People</p>
-        <h2 id="modal-title">Loading profile...</h2>
-        <p class="no-results">Fetching information from TMDB...</p>
-    `;
-
-    showModal();
-
-    try {
-        const data = await fetchTMDB("person", {
-            id: personId
-        });
-
-        if (current !== modalRequestNumber) return;
-
-        const person = data.person;
-        const credits = data.credits || {};
-
-        if (!person || !person.id) {
-            throw new Error("Person details were not found.");
-        }
-
-        const roles = getPersonRoles(person, credits);
-
-        const roleText = roles.length
-            ? roles.map(role =>
-                role.charAt(0).toUpperCase() + role.slice(1)
-            ).join(" · ")
-            : "Film professional";
-
-        const profile = person.profile_path
-            ? `${TMDB_IMAGE_BASE}w500${person.profile_path}`
-            : "";
-
-        media.innerHTML = `
-            <div class="person-detail-image">
-                ${profile
-                    ? `<img src="${escapeHTML(profile)}"
-                            alt="${escapeHTML(person.name)}">`
-                    : `<div class="person-placeholder">
-                            ${escapeHTML((person.name || "?").charAt(0))}
-                       </div>`
-                }
-            </div>
-        `;
-
-        const currentYear = new Date().getFullYear();
-
-        function isValidCredit(credit) {
-            if (!credit || !credit.id || !credit.title) {
-                return false;
-            }
-
-            const character = (
-                credit.character || ""
-            ).toLowerCase();
-
-            const releaseYear = credit.release_date
-                ? Number(credit.release_date.slice(0, 4))
-                : null;
-
-            if (releaseYear && releaseYear > currentYear) {
-                return false;
-            }
-
-            if (
-                character.includes("self") ||
-                character.includes("uncredited")
-            ) {
-                return false;
-            }
-
-            return true;
-        }
-
-        const castMovies = (credits.cast || [])
-            .filter(isValidCredit)
-            .map(credit => ({
-                movie: normalizePersonCredit(credit),
-                role: credit.character || "Actor",
-                popularity: Number(credit.popularity || 0)
-            }))
-            .filter(item => item.movie);
-
-        const directorMovies = (credits.crew || [])
-            .filter(credit =>
-                isValidCredit(credit) &&
-                credit.job?.toLowerCase() === "director"
-            )
-            .map(credit => ({
-                movie: normalizePersonCredit(credit),
-                role: "Director",
-                popularity: Number(credit.popularity || 0)
-            }))
-            .filter(item => item.movie);
-
-        const allCredits = new Map();
-
-        [...castMovies, ...directorMovies].forEach(item => {
-            const id = String(item.movie.id);
-
-            if (!allCredits.has(id)) {
-                allCredits.set(id, item);
-            } else {
-                const existing = allCredits.get(id);
-
-                if (
-                    item.role === "Director" &&
-                    existing.role !== "Director"
-                ) {
-                    existing.role = "Actor · Director";
-                }
-
-                existing.popularity = Math.max(
-                    existing.popularity,
-                    item.popularity
-                );
-            }
-        });
-
-        const filmography = [...allCredits.values()]
-            .sort((a, b) => {
-                const yearA = a.movie.year === "N/A"
-                    ? 0 : a.movie.year;
-
-                const yearB = b.movie.year === "N/A"
-                    ? 0 : b.movie.year;
-
-                return yearB - yearA;
-            });
-
-        register(filmography.map(item => item.movie));
-
-        const knownFor = [...filmography]
-            .sort((a, b) => b.popularity - a.popularity)
-            .slice(0, 5);
-
-        const birthday = person.birthday
-            ? new Date(`${person.birthday}T00:00:00`)
-                .toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                    timeZone: "UTC"
-                })
-            : "Not available";
-
-        const birthplace = person.place_of_birth ||
-            "Not available";
-
-        const biography = (
-            person.biography ||
-            "No biography is available for this person."
-        ).trim();
-
-        const biographyLimit = 450;
-
-        const shortBiography = biography.length > biographyLimit
-            ? biography.slice(0, biographyLimit).trim() + "..."
-            : biography;
-
-        body.innerHTML = `
-            <p class="hero-label">CineMax People</p>
-
-            <h2 id="modal-title">
-                ${escapeHTML(person.name || "Unknown")}
-            </h2>
-
-            <p class="person-detail-role">
-                ${escapeHTML(roleText)}
-            </p>
-
-            <div class="person-detail-facts">
-                <p>
-                    <span>Birthday</span>
-                    ${escapeHTML(birthday)}
-                </p>
-
-                <p>
-                    <span>Place of birth</span>
-                    ${escapeHTML(birthplace)}
-                </p>
-            </div>
-
-            <section class="person-detail-section">
-                <h3>Biography</h3>
-
-                <p class="person-biography">
-                    ${escapeHTML(shortBiography)}
-                </p>
-
-                ${biography.length > biographyLimit ? `
-                    <details class="person-biography-more">
-                        <summary>Read full biography</summary>
-
-                        <p class="person-biography">
-                            ${escapeHTML(biography)}
-                        </p>
-                    </details>
-                ` : ""}
-            </section>
-
-            <section class="person-detail-section">
-                <h3>Known For</h3>
-
-                <div class="person-film-grid">
-                    ${knownFor.length
-                        ? knownFor.map(item =>
-                            createPersonFilmCard(
-                                item.movie,
-                                item.role
-                            )
-                        ).join("")
-                        : `<p class="no-results">
-                                No movie credits available.
-                           </p>`
-                    }
-                </div>
-            </section>
-
-            <section class="person-detail-section">
-                <h3>Filmography</h3>
-
-                <div class="person-film-grid">
-                    ${filmography.length
-                        ? filmography.map(item =>
-                            createPersonFilmCard(
-                                item.movie,
-                                item.role
-                            )
-                        ).join("")
-                        : `<p class="no-results">
-                                No movie credits available.
-                           </p>`
-                    }
-                </div>
-            </section>
-        `;
-
-        refreshIcons();
-
-    } catch (error) {
-        if (current !== modalRequestNumber) return;
-
-        console.error("Person details error:", error);
-
-        media.innerHTML = "";
-
-        body.innerHTML = `
-            <p class="hero-label">CineMax People</p>
-            <h2 id="modal-title">Unable to load profile</h2>
-
-            <p class="no-results">
-                ${escapeHTML(error.message || "Please try again later.")}
-            </p>
-        `;
-    }
 }
 
 function closeModal() {
@@ -1276,143 +826,6 @@ function renderTopRated() {
         .join("");
 }
 
-/* GENRES */
-
-const GENRES = [
-    "Action",
-    "Adventure",
-    "Comedy",
-    "Drama",
-    "Fantasy",
-    "Horror",
-    "Mystery",
-    "Romance",
-    "Sci-Fi",
-    "Thriller"
-];
-
-function renderGenres() {
-    const container = $("genres-list");
-
-    if (!container) return;
-
-    container.innerHTML = GENRES.map(genre => `
-        <button type="button"
-                class="genre-card"
-                data-genre="${escapeHTML(genre)}">
-            ${escapeHTML(genre)}
-        </button>
-    `).join("");
-}
-
-/* PEOPLE */
-
-let people = [];
-let activePeopleRole = "all";
-
-function renderPeople(role = activePeopleRole) {
-    const container = $("people-list");
-
-    if (!container) return;
-
-    activePeopleRole = role;
-
-    const filtered = people.filter(person =>
-        role === "all" || person.roles.includes(role)
-    );
-
-    container.innerHTML = filtered.length
-        ? filtered.map(createPersonCard).join("")
-        : loadingHTML("No matching people found.");
-}
-
-let peopleSearchTimer = null;
-let peopleRequestNumber = 0;
-
-async function loadPopularPeople() {
-    const current = ++peopleRequestNumber;
-    const container = $("people-list");
-
-    if (container) {
-        container.innerHTML = loadingHTML("Loading people...");
-    }
-
-    try {
-        const data = await fetchTMDB("people");
-
-        if (current !== peopleRequestNumber) return;
-
-        people = (data.results || [])
-            .map(normalizeTMDBPerson)
-            .filter(person => person.id && person.roles.length);
-
-        renderPeople();
-
-    } catch (error) {
-        if (current !== peopleRequestNumber) return;
-
-        console.error("Popular people error:", error);
-
-        if (container) {
-            container.innerHTML = loadingHTML(
-                "Unable to load people. Please try again later."
-            );
-        }
-    }
-}
-
-async function searchPeopleSection(query) {
-    const term = query.trim();
-    const current = ++peopleRequestNumber;
-    const container = $("people-list");
-
-    if (!term) {
-        await loadPopularPeople();
-        return;
-    }
-
-    if (container) {
-        container.innerHTML = loadingHTML("Searching people...");
-    }
-
-    try {
-        const data = await fetchTMDB("people", {
-            query: term
-        });
-
-        if (current !== peopleRequestNumber) return;
-
-        people = (data.results || [])
-            .map(normalizeTMDBPerson)
-            .filter(person => person.id && person.roles.length);
-
-        renderPeople();
-
-    } catch (error) {
-        if (current !== peopleRequestNumber) return;
-
-        console.error("People search error:", error);
-
-        if (container) {
-            container.innerHTML = loadingHTML(
-                "Unable to search people right now. Please try again."
-            );
-        }
-    }
-}
-
-const peopleSearch = $("people-search");
-
-if (peopleSearch) {
-    peopleSearch.addEventListener("input", () => {
-        clearTimeout(peopleSearchTimer);
-
-        peopleSearchTimer = setTimeout(() => {
-            searchPeopleSection(peopleSearch.value);
-        }, 350);
-    });
-}
-
 /* WATCHLIST DISPLAY */
 
 function renderWatchlist() {
@@ -1440,7 +853,7 @@ function renderWatchlist() {
 
 document.addEventListener("watchlist:change", renderWatchlist);
 
-/* SEARCH */
+/* MOVIE SEARCH */
 
 const searchInput = $("homepage-search");
 const resultsSection = $("search-results-section");
@@ -1489,13 +902,15 @@ async function performSearch(query) {
 
     const current = ++requestNumber;
 
-    showResults("Search Results", loadingHTML("Searching CineMax..."));
+    showResults(
+        "Search Results",
+        loadingHTML("Searching CineMax...")
+    );
 
     try {
-        const [movieData, peopleData] = await Promise.all([
-            fetchTMDB("search", { query: term }),
-            fetchTMDB("people", { query: term })
-        ]);
+        const movieData = await fetchTMDB("search", {
+            query: term
+        });
 
         if (current !== requestNumber) return;
 
@@ -1505,28 +920,9 @@ async function performSearch(query) {
                 .filter(Boolean)
         );
 
-        const foundPeople = (peopleData.results || [])
-            .map(normalizeTMDBPerson)
-            .filter(person => person.id && person.roles.length);
-
-        let html = "";
-
-        if (foundMovies.length) {
-            html += `<h3>Movies</h3>${moviesRow(foundMovies)}`;
-        }
-
-        if (foundPeople.length) {
-            html += `
-                <h3>People</h3>
-                <div class="people-grid">
-                    ${foundPeople.map(createPersonCard).join("")}
-                </div>
-            `;
-        }
-
-        if (!html) {
-            html = loadingHTML(`No movies or people found for "${term}".`);
-        }
+        const html = foundMovies.length
+            ? `<h3>Movies</h3>${moviesRow(foundMovies)}`
+            : loadingHTML(`No movies found for "${term}".`);
 
         showResults("Search Results", html);
 
@@ -1552,69 +948,12 @@ if (searchInput) {
     });
 }
 
-/* GENRE SEARCH */
-
-async function showGenre(genre) {
-    const current = ++requestNumber;
-
-    showResults(
-        `${genre} Movies`,
-        loadingHTML(`Loading ${genre} movies...`)
-    );
-
-    if (resultsSection) {
-        resultsSection.scrollIntoView({
-            behavior: reducedMotion ? "auto" : "smooth"
-        });
-    }
-
-    try {
-        const data = await fetchTMDB("discover", {
-            genre: GENRE_IDS[genre]
-        });
-
-        if (current !== requestNumber) return;
-
-        const found = register(
-            (data.results || [])
-                .map(normalizeTMDBMovie)
-                .filter(Boolean)
-        );
-
-        showResults(
-            `${genre} Movies`,
-            found.length
-                ? moviesRow(found)
-                : loadingHTML(`No ${genre} movies found.`)
-        );
-
-    } catch (error) {
-        if (current !== requestNumber) return;
-
-        console.warn("Genre discover unavailable:", error);
-
-        if (searchInput) {
-            searchInput.value = genre;
-        }
-
-        performSearch(genre);
-    }
-}
-
 /* CLICK EVENTS */
 
 document.addEventListener("click", event => {
     if (!(event.target instanceof Element)) return;
 
     const target = event.target;
-
-    const personCard = target.closest("[data-open-person]");
-
-    if (personCard) {
-        event.preventDefault();
-        openPersonDetails(personCard.dataset.openPerson);
-        return;
-    }
 
     const openButton = target.closest("[data-open-movie]");
 
@@ -1667,27 +1006,6 @@ document.addEventListener("click", event => {
         return;
     }
 
-    const roleButton = target.closest("[data-role]");
-
-    if (roleButton) {
-        document.querySelectorAll("[data-role]").forEach(button => {
-            const active = button === roleButton;
-
-            button.classList.toggle("active", active);
-            button.setAttribute("aria-pressed", String(active));
-        });
-
-        renderPeople(roleButton.dataset.role);
-        return;
-    }
-
-    const genreButton = target.closest("[data-genre]");
-
-    if (genreButton) {
-        showGenre(genreButton.dataset.genre);
-        return;
-    }
-
     const removeButton = target.closest("[data-remove-watchlist]");
 
     if (removeButton) {
@@ -1703,19 +1021,6 @@ document.addEventListener("click", event => {
 /* KEYBOARD EVENTS */
 
 document.addEventListener("keydown", event => {
-    if (
-        (event.key === "Enter" || event.key === " ") &&
-        event.target instanceof Element
-    ) {
-        const personCard = event.target.closest("[data-open-person]");
-
-        if (personCard && event.target === personCard) {
-            event.preventDefault();
-            openPersonDetails(personCard.dataset.openPerson);
-            return;
-        }
-    }
-
     if (event.key === "Escape") {
         closeModal();
         return;
@@ -1861,11 +1166,8 @@ buildHero();
 renderContinueWatching();
 renderTrending();
 renderTopRated();
-renderGenres();
-renderPeople();
 renderWatchlist();
 watchSections();
 refreshIcons();
 
 loadTMDB();
-loadPopularPeople();

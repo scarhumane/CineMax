@@ -22,14 +22,12 @@
                 CINEMAX
             </a>
 
-            <nav class="homepage-nav" aria-label="Main navigation">
-                <a href="#home" data-section="home" aria-current="page">Home</a>
-                <a href="#movies" data-section="movies">Movies</a>
-                <a href="#genres" data-section="genres">Genres</a>
-                <a href="#people" data-section="people">People</a>
-                <a href="#continue" data-section="continue">Continue Watching</a>
-                <a href="#toprated" data-section="toprated">Top Rated</a>
-                <a href="#watchlist" data-section="watchlist">My Watchlist</a>
+            <nav class="homepage-nav">
+            <a href="homepage.php" class="active">Home</a>
+            <a href="homepage.php#movies">Movies</a>
+            <a href="genres.php">Genres</a>
+            <a href="people.php">People</a>
+            <a href="homepage.php#watchlist">Watchlist</a>
             </nav>
 
             <div class="header-right">
@@ -146,60 +144,6 @@
                 ></div>
 
             </section>
-
-
-            <!-- GENRES -->
-            <section class="content-section" id="genres">
-
-                <div class="section-header">
-                    <h2>Explore Genres</h2>
-                </div>
-
-                <div
-                    class="genres-grid"
-                    id="genres-list"
-                ></div>
-
-            </section>
-
-
-            <!-- PEOPLE -->
-      
-<section class="content-section" id="people">
-    <div class="section-header">
-
-        <h2>People</h2>
-
-        <div class="people-controls">
-
-            <label class="people-search" aria-label="Search people">
-                <i data-lucide="search"></i>
-                <input
-                    type="search"
-                    id="people-search"
-                    placeholder="Search people..."
-                    autocomplete="off"
-                    aria-label="Search people by name"
-                >
-            </label>
-
-            <div class="people-filters">
-                <button type="button" class="filter-button active"
-                    data-role="all" aria-pressed="true">All</button>
-
-                <button type="button" class="filter-button"
-                    data-role="actor" aria-pressed="false">Actors</button>
-
-                <button type="button" class="filter-button"
-                    data-role="director" aria-pressed="false">Directors</button>
-            </div>
-
-        </div>
-    </div>
-
-    <div class="people-grid" id="people-list"></div>
-</section>
-
 
             <!-- TOP RATED MOVIES -->
             <section class="content-section" id="toprated">

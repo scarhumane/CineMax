@@ -18,8 +18,13 @@ function sendJson(array $payload, int $status = 200): void
                 | JSON_THROW_ON_ERROR
         );
     } catch (JsonException $error) {
-        error_log("Unable to encode TMDB response: " . $error->getMessage());
+        error_log(
+            "Unable to encode TMDB response: " .
+            $error->getMessage()
+        );
+
         http_response_code(500);
+
         echo '{"error":"Unable to encode the movie service response."}';
     }
 }
@@ -31,13 +36,31 @@ if (!is_string($type)) {
     exit;
 }
 
-$pageValue = $_GET["page"] ?? "1";
-$page = filter_var($pageValue, FILTER_VALIDATE_INT);
 
-if ($page === false || $page < 1 || $page > 500) {
-    sendJson(["error" => "Page must be an integer from 1 to 500."], 400);
+/* Page */
+
+$pageValue = $_GET["page"] ?? "1";
+
+$page = filter_var(
+    $pageValue,
+    FILTER_VALIDATE_INT
+);
+
+if (
+    $page === false ||
+    $page < 1 ||
+    $page > 500
+) {
+    sendJson(
+        ["error" => "Page must be an integer from 1 to 500."],
+        400
+    );
+
     exit;
 }
+
+
+/* Search query */
 
 $queryValue = $_GET["query"] ?? "";
 
@@ -49,86 +72,181 @@ if (!is_string($queryValue)) {
 $query = trim($queryValue);
 
 if (strlen($query) > 200) {
-    sendJson(["error" => "Query must be 200 characters or fewer."], 400);
+    sendJson(
+        ["error" => "Query must be 200 characters or fewer."],
+        400
+    );
+
     exit;
 }
 
-$personIdValue = $_GET["person_id"] ?? "";
-$personId = filter_var($personIdValue, FILTER_VALIDATE_INT);
+
+/* Person ID
+   Accept both "id" and "person_id".
+*/
+
+$personIdValue = $_GET["person_id"] ?? $_GET["id"] ?? "";
+
+$personId = filter_var(
+    $personIdValue,
+    FILTER_VALIDATE_INT
+);
+
+
+/* Genre ID */
 
 $genreValue = $_GET["genre"] ?? "";
-$genre = filter_var($genreValue, FILTER_VALIDATE_INT);
-$validGenres = [
-    12, 14, 16, 18, 27, 28, 35, 36, 37, 53,
-    80, 99, 878, 9648, 10402, 10749, 10751, 10752, 10770
-];
 
-if ($type === "discover" && (
-    $genre === false ||
-    !in_array($genre, $validGenres, true)
-)) {
-    sendJson(["error" => "A valid movie genre is required."], 400);
+$genre = filter_var(
+    $genreValue,
+    FILTER_VALIDATE_INT
+);
+
+if (
+    $type === "discover" &&
+    (
+        $genre === false ||
+        $genre <= 0
+    )
+) {
+    sendJson(
+        ["error" => "A valid movie genre is required."],
+        400
+    );
+
     exit;
 }
 
 switch ($type) {
+
+    /* TRENDING MOVIES */
+
     case "trending":
+
         $result = getTrendingMovies();
+
         break;
+
+
+    /* POPULAR MOVIES */
 
     case "popular":
+
         $result = getPopularMovies($page);
+
         break;
+
+
+    /* TOP-RATED MOVIES */
 
     case "top-rated":
+
         $result = getTopRatedMovies($page);
+
         break;
+
+
+    /* MOVIES BY GENRE */
 
     case "discover":
-        $result = getMoviesByGenre($genre, $page);
+
+        $result = getMoviesByGenre(
+            $genre,
+            $page
+        );
+
         break;
 
+
+    /* SEARCH MOVIES */
+
     case "search":
+
         $result = $query === ""
             ? ["results" => []]
             : searchMovies($query);
+
         break;
 
+
+    /* MOVIE GENRES */
+
+    case "genres":
+
+        $result = getMovieGenres();
+
+        break;
+
+
+    /* POPULAR PEOPLE / PEOPLE SEARCH */
+
     case "people":
-    $result = $query === ""
-        ? getPopularPeople($page)
-        : searchPeople($query, $page);
-    break;
+
+        $result = $query === ""
+            ? getPopularPeople($page)
+            : searchPeople($query, $page);
+
+        break;
+
+
+    /* PERSON DETAILS AND MOVIE CREDITS */
 
     case "person":
-    if (
-        $personId === false ||
-        $personId <= 0
-    ) {
-        sendJson(["error" => "A valid person ID is required."], 400);
-        exit;
-    }
 
-    $person = getPersonDetails($personId);
-    $credits = getPersonMovieCredits($personId);
+        if (
+            $personId === false ||
+            $personId <= 0
+        ) {
+            sendJson(
+                ["error" => "A valid person ID is required."],
+                400
+            );
 
-    if (isset($person["error"])) {
-        $result = $person;
-    } elseif (isset($credits["error"])) {
-        $result = $credits;
-    } else {
+            exit;
+        }
+
+        $person = getPersonDetails($personId);
+
+        if (isset($person["error"])) {
+            $result = $person;
+            break;
+        }
+
+        $credits = getPersonMovieCredits($personId);
+
+        if (isset($credits["error"])) {
+            $result = $credits;
+            break;
+        }
+
         $result = [
             "person" => $person,
             "credits" => $credits
         ];
-    }
-    break;
+
+        break;
+
+
+    /* UNKNOWN REQUEST */
+
+    default:
+
+        sendJson(
+            ["error" => "Unknown request type."],
+            400
+        );
+
+        exit;
 }
 
 $status = $result["_status"] ?? 200;
+
 unset($result["_status"]);
 
-if (isset($result["error"]) && $status === 200) {
+if (
+    isset($result["error"]) &&
+    $status === 200
+) {
     $status = 502;
 }
 
