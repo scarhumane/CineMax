@@ -1,303 +1,227 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+ 
     <title>Features | CineMax</title>
-
+ 
     <link rel="stylesheet" href="login_page.css">
-
+ 
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="features_page.js" defer></script>
-    
+ 
 </head>
-
+ 
 <body class="homepage-page features-page">
     <div class="login-container">
-
-    <!-- NAVIGATION -->
-    <header class="homepage-header">
-        <a href="landing_page.html" class="website-logo">CINEMAX</a>
-        <nav class="homepage-nav-pill" aria-label="Main navigation">
-            <a href="landing_page.html">Home</a>
-            <a href="features_page.html" aria-current="page">Features</a>
-            <a href="about_us.html">About Us</a>
-            <a href="subscription_page.html" class="nav-subscribe">Subscribe ↗</a>
-        </nav>
-    </header>
-
-
-    <!-- FEATURES PAGE BANNER -->
-    <section class="features-banner">
-
-        <div class="features-banner-content">
-
-            <span class="features-label">
-                THE CINEMAX EXPERIENCE
-            </span>
-
-            <h1>
-                Your Next Great Movie
-                <span>Starts Here.</span>
-            </h1>
-
-            <p>
-                Discover movies, explore stories, share your opinions,
-                and connect with people who love films as much as you do.
-            </p>
-
-            <a href="signup_page.html" class="features-cta">
-                Get Started
-                <i data-lucide="arrow-right"></i>
-            </a>
-
-        </div>
-
-    </section>
-
-
-    <!-- FEATURES INTRODUCTION -->
-    <section class="features-intro">
-
-        <span class="features-label">WHAT WE OFFER</span>
-
-        <h2>
-            Discover What Makes
-            <span>CineMax Different.</span>
-        </h2>
-
-        <p>
-            More than just discovering movies, CineMax brings together
-            everything you need to explore, appreciate, and talk about films.
-        </p>
-
-    </section>
-
-
-    <!-- FEATURE CARDS -->
-    <section class="features-grid">
-
-        <div class="feature-card">
-            <div class="feature-icon">
-                <i data-lucide="clapperboard"></i>
-            </div>
-
-            <h3>Movie Discovery</h3>
-
-            <p>
-                Explore a wide collection of films and discover
-                new titles that match your interests.
-            </p>
-        </div>
-
-
-        <div class="feature-card">
-            <div class="feature-icon">
-                <i data-lucide="star"></i>
-            </div>
-
-            <h3>Ratings & Reviews</h3>
-
-            <p>
-                Share your opinions, rate movies, and see
-                what other viewers think about each film.
-            </p>
-        </div>
-
-
-        <div class="feature-card">
-            <div class="feature-icon">
-                <i data-lucide="bookmark"></i>
-            </div>
-
-            <h3>Personal Watchlist</h3>
-
-            <p>
-                Keep track of movies you want to watch
-                and build your own collection of films.
-            </p>
-        </div>
-
-
-        <div class="feature-card">
-            <div class="feature-icon">
-                <i data-lucide="film"></i>
-            </div>
-
-            <h3>Movie Information</h3>
-
-            <p>
-                Explore movie details, genres, release dates,
-                cast members, and more.
-            </p>
-        </div>
-
-
-        <div class="feature-card">
-            <div class="feature-icon">
-                <i data-lucide="messages-square"></i>
-            </div>
-
-            <h3>Community Discussions</h3>
-
-            <p>
-                Connect with fellow movie enthusiasts
-                and exchange thoughts about films.
-            </p>
-        </div>
-
-
-        <div class="feature-card">
-            <div class="feature-icon">
-                <i data-lucide="trending-up"></i>
-            </div>
-
-            <h3>Trending & Top Rated</h3>
-
-            <p>
-                Discover popular films and highly rated
-                titles worth adding to your watchlist.
-            </p>
-        </div>
-
-
-        <div class="feature-card">
-            <div class="feature-icon">
-                <i data-lucide="tv"></i>
-            </div>
-
-            <h3>Watch Anywhere</h3>
-
-            <p>
-                Stream on your phone, laptop, or TV and pick up
-                where you left off.
-            </p>
-        </div>
-
-
-        <div class="feature-card">
-            <div class="feature-icon">
-                <i data-lucide="message-square"></i>
-            </div>
-
-            <h3>Rate and Review</h3>
-
-            <p>
-                Score what you watch, read reviews, and see
-                how a film ranks.
-            </p>
-        </div>
-
-
-        <div class="feature-card">
-            <div class="feature-icon">
-                <i data-lucide="bookmark-plus"></i>
-            </div>
-
-            <h3>Keep a Watchlist</h3>
-
-            <p>
-                Save films for later and get picks based on
-                what you rate highly.
-            </p>
-        </div>
-
-    </section>
-
-
-    <!-- HIGHLIGHT SECTION -->
-    <section class="features-highlight">
-
-        <aside class="toprated features-discovery-example" aria-labelledby="features-toprated-title">
-            <div class="toprated-head">
-                <h2 id="features-toprated-title">Top rated this week</h2>
-                <a href="top_rated.php">See all</a>
-            </div>
-            <ol class="rank">
-                <li>
-                    <span class="rank-poster poster-dark-knight" aria-hidden="true"></span>
-                    <span class="n">1</span>
-                    <div class="t"><b>The Dark Knight</b><span>2008 · Action, Crime</span></div>
-                    <span class="score"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.9 7.5.7-5.7 5 1.7 7.4L12 18l-6.5 4 1.7-7.4-5.7-5 7.5-.7L12 2Z"/></svg>9.0</span>
-                </li>
-                <li>
-                    <span class="rank-poster poster-truman-show" aria-hidden="true"></span>
-                    <span class="n">2</span>
-                    <div class="t"><b>The Truman Show</b><span>1998 · Comedy, Drama</span></div>
-                    <span class="score"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.9 7.5.7-5.7 5 1.7 7.4L12 18l-6.5 4 1.7-7.4-5.7-5 7.5-.7L12 2Z"/></svg>8.2</span>
-                </li>
-                <li>
-                    <span class="rank-poster poster-dead-poets" aria-hidden="true"></span>
-                    <span class="n">3</span>
-                    <div class="t"><b>Dead Poets Society</b><span>1989 · Drama</span></div>
-                    <span class="score"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.9 7.5.7-5.7 5 1.7 7.4L12 18l-6.5 4 1.7-7.4-5.7-5 7.5-.7L12 2Z"/></svg>8.1</span>
-                </li>
-                <li>
-                    <span class="rank-poster poster-titanic" aria-hidden="true"></span>
-                    <span class="n">4</span>
-                    <div class="t"><b>Titanic</b><span>1997 · Drama, Romance</span></div>
-                    <span class="score"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.9 7.5.7-5.7 5 1.7 7.4L12 18l-6.5 4 1.7-7.4-5.7-5 7.5-.7L12 2Z"/></svg>7.9</span>
-                </li>
-                <li>
-                    <span class="rank-poster poster-home-alone" aria-hidden="true"></span>
-                    <span class="n">5</span>
-                    <div class="t"><b>Home Alone</b><span>1990 · Comedy, Family</span></div>
-                    <span class="score"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.9 7.5.7-5.7 5 1.7 7.4L12 18l-6.5 4 1.7-7.4-5.7-5 7.5-.7L12 2Z"/></svg>7.7</span>
-                </li>
-            </ol>
-        </aside>
-
-        <div class="features-highlight-content">
-
-            <span class="features-label">
-                YOUR MOVIE JOURNEY
-            </span>
-
-            <h2>
-                Find Your Next
-                <span>Favorite Film.</span>
-            </h2>
-
-            <p>
-                Whether you're searching for a hidden gem,
-                exploring popular releases, or looking for
-                something new to watch, CineMax makes
-                discovering films an experience worth enjoying.
-            </p>
-
-        </div>
-
-    </section>
-
-
-    <!-- CALL TO ACTION -->
-    <section class="features-bottom">
-
-        <h2>
-            Every Great Film Deserves
-            <span>To Be Discovered.</span>
-        </h2>
-
-        <p>
-            Start exploring the world of cinema with CineMax.
-        </p>
-
-        <a href="signup_page.html" class="features-cta">
-            Join CineMax
-            <i data-lucide="arrow-right"></i>
-        </a>
-
-    </section>
-
-
-    <!-- FOOTER -->
-    <footer class="features-footer">
-        <p>© 2026 CineMax. All rights reserved.</p>
-    </footer>
-
+ 
+        <!-- NAVIGATION -->
+        <header class="homepage-header">
+            <a href="landing_page.html" class="website-logo">CINEMAX</a>
+            <nav class="homepage-nav-pill" aria-label="Main navigation">
+                <a href="landing_page.html">Home</a>
+                <a href="features_page.html" aria-current="page">Features</a>
+                <a href="about_us.html">About Us</a>
+                <a href="subscription_page.html" class="nav-subscribe">Subscribe ↗</a>
+            </nav>
+        </header>
+ 
+        <main class="features-main">
+ 
+ 
+            <!-- INTRODUCTION -->
+            <section class="features-intro">
+ 
+                <span class="section-label">WHAT WE OFFER</span>
+ 
+                <h2>Discover what makes <em>CineMax different.</em></h2>
+ 
+                <p>
+                    More than just discovering movies, CineMax brings together
+                    everything you need to explore, appreciate, and talk about films.
+                </p>
+ 
+            </section>
+ 
+ 
+            <!-- FEATURE CARDS -->
+            <section class="features-grid">
+ 
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i data-lucide="clapperboard"></i>
+                    </div>
+ 
+                    <h3>Movie Discovery</h3>
+ 
+                    <p>
+                        Explore a wide collection of films, with genres,
+                        release dates, cast members, and more.
+                    </p>
+                </div>
+ 
+ 
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i data-lucide="star"></i>
+                    </div>
+ 
+                    <h3>Ratings &amp; Reviews</h3>
+ 
+                    <p>
+                        Score what you watch, share your opinions, and see
+                        what other viewers think about each film.
+                    </p>
+                </div>
+ 
+ 
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i data-lucide="bookmark"></i>
+                    </div>
+ 
+                    <h3>Personal Watchlist</h3>
+ 
+                    <p>
+                        Keep track of movies you want to watch
+                        and build your own collection of films.
+                    </p>
+                </div>
+ 
+ 
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i data-lucide="messages-square"></i>
+                    </div>
+ 
+                    <h3>Community Discussions</h3>
+ 
+                    <p>
+                        Connect with fellow movie enthusiasts
+                        and exchange thoughts about films.
+                    </p>
+                </div>
+ 
+ 
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i data-lucide="trending-up"></i>
+                    </div>
+ 
+                    <h3>Trending &amp; Top Rated</h3>
+ 
+                    <p>
+                        Discover popular films and highly rated
+                        titles worth adding to your watchlist.
+                    </p>
+                </div>
+ 
+ 
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i data-lucide="tv"></i>
+                    </div>
+ 
+                    <h3>Watch Anywhere</h3>
+ 
+                    <p>
+                        Stream on your phone, laptop, or TV and pick up
+                        where you left off.
+                    </p>
+                </div>
+ 
+            </section>
+ 
+ 
+            <!-- HIGHLIGHT -->
+            <section class="features-highlight">
+ 
+                <aside class="toprated features-discovery-example" aria-labelledby="features-toprated-title">
+                    <div class="toprated-head">
+                        <h2 id="features-toprated-title">Top rated this week</h2>
+                        <a href="top_rated.php">See all</a>
+                    </div>
+                    <ol class="rank">
+                        <li>
+                            <span class="rank-poster poster-dark-knight" aria-hidden="true"></span>
+                            <span class="n">1</span>
+                            <div class="t"><b>The Dark Knight</b><span>2008 · Action, Crime</span></div>
+                            <span class="score"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.9 7.5.7-5.7 5 1.7 7.4L12 18l-6.5 4 1.7-7.4-5.7-5 7.5-.7L12 2Z"/></svg>9.0</span>
+                        </li>
+                        <li>
+                            <span class="rank-poster poster-truman-show" aria-hidden="true"></span>
+                            <span class="n">2</span>
+                            <div class="t"><b>The Truman Show</b><span>1998 · Comedy, Drama</span></div>
+                            <span class="score"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.9 7.5.7-5.7 5 1.7 7.4L12 18l-6.5 4 1.7-7.4-5.7-5 7.5-.7L12 2Z"/></svg>8.2</span>
+                        </li>
+                        <li>
+                            <span class="rank-poster poster-dead-poets" aria-hidden="true"></span>
+                            <span class="n">3</span>
+                            <div class="t"><b>Dead Poets Society</b><span>1989 · Drama</span></div>
+                            <span class="score"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.9 7.5.7-5.7 5 1.7 7.4L12 18l-6.5 4 1.7-7.4-5.7-5 7.5-.7L12 2Z"/></svg>8.1</span>
+                        </li>
+                        <li>
+                            <span class="rank-poster poster-titanic" aria-hidden="true"></span>
+                            <span class="n">4</span>
+                            <div class="t"><b>Titanic</b><span>1997 · Drama, Romance</span></div>
+                            <span class="score"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.9 7.5.7-5.7 5 1.7 7.4L12 18l-6.5 4 1.7-7.4-5.7-5 7.5-.7L12 2Z"/></svg>7.9</span>
+                        </li>
+                        <li>
+                            <span class="rank-poster poster-home-alone" aria-hidden="true"></span>
+                            <span class="n">5</span>
+                            <div class="t"><b>Home Alone</b><span>1990 · Comedy, Family</span></div>
+                            <span class="score"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.9 7.5.7-5.7 5 1.7 7.4L12 18l-6.5 4 1.7-7.4-5.7-5 7.5-.7L12 2Z"/></svg>7.7</span>
+                        </li>
+                    </ol>
+                </aside>
+ 
+                <div class="features-highlight-content">
+ 
+                    <span class="section-label">YOUR MOVIE JOURNEY</span>
+ 
+                    <h2>Find your next <em>favorite film.</em></h2>
+ 
+                    <p>
+                        Whether you're searching for a hidden gem,
+                        exploring popular releases, or looking for
+                        something new to watch, CineMax makes
+                        discovering films an experience worth enjoying.
+                    </p>
+ 
+                </div>
+ 
+            </section>
+ 
+ 
+            <!-- CALL TO ACTION -->
+            <section class="features-bottom">
+ 
+                <h2>Every great film deserves <em>to be discovered.</em></h2>
+ 
+                <p>
+                    Start exploring the world of cinema with CineMax.
+                </p>
+ 
+                <div class="homepage-actions">
+                    <a href="signup_page.html" class="explore-button">
+                        Join CineMax
+                        <i data-lucide="arrow-right"></i>
+                    </a>
+                </div>
+ 
+            </section>
+ 
+        </main>
+ 
+ 
+        <!-- FOOTER -->
+        <footer class="login-footer">
+            <p>&copy; 2026 CineMax. All rights reserved.</p>
+        </footer>
+ 
     </div>
-
+ 
 </body>
 </html>
+ 

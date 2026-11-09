@@ -1303,6 +1303,7 @@ function clearResults() {
     }
 }
 
+
 async function performSearch(query) {
     const term = query.trim();
 
@@ -1316,16 +1317,10 @@ async function performSearch(query) {
     setSearchMode(true);
 
     showResults(
-    "Search Results",
-    `
-        <p class="search-results-count">
-            ${foundMovies.length} movies found for
-            "${escapeHTML(term)}"
-        </p>
+        "Search Results",
+        loadingHTML(`Searching for "${term}"...`)
+    );
 
-        ${foundMovies.map(movie => createMovieCard(movie)).join("")}
-    `
-);
     try {
         const movieData = await fetchTMDB("search", {
             query: term
@@ -1365,7 +1360,9 @@ async function performSearch(query) {
                     "${escapeHTML(term)}"
                 </p>
 
-                ${foundMovies.map(movie => createMovieCard(movie)).join("")}
+                ${foundMovies.map(movie =>
+                    createMovieCard(movie)
+                ).join("")}
             `
         );
 
@@ -1376,7 +1373,9 @@ async function performSearch(query) {
 
         showResults(
             "Search Unavailable",
-            loadingHTML("Unable to search right now. Please try again.")
+            loadingHTML(
+                "Unable to search right now. Please try again."
+            )
         );
     }
 }

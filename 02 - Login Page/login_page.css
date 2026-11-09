@@ -74,7 +74,7 @@ body::after {
 }
 .login-header .sign-in-button:hover, .login-header .home-page-link:hover { border-color: rgba(214, 233, 245, 0.5); background: rgba(7, 16, 29, 0.85); }
 
-.login-footer { margin-top: auto; padding: 24px 0 32px; border-top: 1px solid var(--line); font-size: 12px; color: var(--mist); }
+.login-footer { margin-top: 20px; padding: 16px 0 20px; border-top: 1px solid var(--line); font-size: 12px; color: var(--mist); }
 .login-footer p { margin: 0; }
 
 /* ---------- Homepage header pill ---------- */
@@ -90,12 +90,13 @@ body::after {
 .homepage-nav-pill .nav-subscribe:hover { color: #07121c; background: var(--ice); }
 
 /* ---------- Homepage ---------- */
-.home-main { padding-block: clamp(16px, 4vh, 48px) 0; }
+.home-main { flex: 1; display: flex; flex-direction: column; padding-block: clamp(16px, 4vh, 48px) 0; }
 .landing-banner {
+  flex: 1;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   align-items: center;
-  min-height: max(560px, calc(100svh - 150px));
+  min-height: 0;
   align-content: center;
 }
 .landing-banner h1 {
@@ -968,166 +969,194 @@ input::placeholder {
     }
 }
 
-.features-page {
-    background: #080d18;
-    color: #f5f7fb;
-}
-
 body.features-page {
     min-height: 100vh;
-    display: block;
     overflow-x: hidden;
 }
 
-/* FEATURES BANNER */
-
-.features-banner {
-    min-height: 480px;
-    display: flex;
-    align-items: center;
-    padding: 70px 10%;
+/* A little more shade than the landing page, so long text stays readable over the poster wall */
+body.features-page::after {
     background:
-        linear-gradient(90deg, #080d18 10%, rgba(8,13,24,0.88) 55%, rgba(8,13,24,0.4)),
-        url("../01 - background/background.png") center/cover no-repeat;
+        linear-gradient(rgba(3, 7, 14, 0.45), rgba(3, 7, 14, 0.45)),
+        radial-gradient(ellipse at bottom right, rgba(3, 7, 14, 0.6) 0%, rgba(3, 7, 14, 0.25) 35%, rgba(3, 7, 14, 0) 70%),
+        radial-gradient(ellipse at top right, rgba(3, 7, 14, 0.96) 0%, rgba(3, 7, 14, 0.78) 38%, rgba(3, 7, 14, 0) 72%),
+        linear-gradient(90deg, rgba(3, 7, 14, 0.9) 0%, rgba(3, 7, 14, 0.7) 35%, rgba(3, 7, 14, 0.1) 70%, rgba(3, 7, 14, 0.25) 100%),
+        linear-gradient(0deg, rgba(3, 7, 14, 0.98) 0%, rgba(3, 7, 14, 0.48) 38%, rgba(3, 7, 14, 0) 68%);
 }
 
-.features-banner-content {
-    max-width: 700px;
+.features-main {
+    flex: 1;
+    width: 100%;
+    padding-bottom: 8px;
+}
+
+/* ---------- Banner (same look as the landing banner) ---------- */
+.features-banner {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: clamp(400px, 60svh, 600px);
+    padding-block: clamp(24px, 5vh, 56px);
 }
 
 .features-banner h1 {
+    margin: 0 0 22px;
     font-family: var(--display);
-    font-size: clamp(42px, 6vw, 72px);
     font-weight: 400;
-    line-height: 1.05;
-    margin: 22px 0;
+    font-size: clamp(48px, 6.6vw, 92px);
+    line-height: 0.98;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
 }
 
-.features-label {
-    color: var(--ice);
-    font-size: 12px;
-    letter-spacing: 3px;
-    font-weight: 700;
-}
-
-.features-banner h1 span,
-.features-intro h2 span,
-.features-highlight h2 span,
-.features-bottom h2 span {
+.features-banner h1 em,
+.features-intro h2 em,
+.features-highlight-content h2 em,
+.features-bottom h2 em {
+    font-style: italic;
     color: var(--ember);
 }
 
-.features-banner p,
-.features-intro p,
-.features-highlight p,
-.features-bottom p {
-    color: #aeb9c9;
-    line-height: 1.8;
-    font-size: 15px;
-    max-width: 570px;
+.features-banner .home-lede {
+    max-width: 60ch;
+    text-wrap: balance;
 }
 
-/* BUTTON */
+.features-banner .homepage-actions {
+    margin-top: 8px;
+}
 
+/* Buttons are the landing page's .explore-button and .sign-in-button.
+   This keeps the old .features-cta name working with the same look. */
 .features-cta {
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    margin-top: 25px;
-    padding: 14px 25px;
-    background: var(--ice);
-    color: #07111d;
-    text-decoration: none;
+    padding: 14px 26px;
+    border-radius: 999px;
+    background: var(--ember);
+    color: #04121a;
+    font-size: 14px;
+    font-weight: 500;
+    transition: filter 0.2s;
+}
+
+.features-cta:hover { filter: brightness(1.08); }
+
+.features-label {
+    color: var(--ice);
+    font-size: 12px;
     font-weight: 700;
-    border-radius: 6px;
-    transition: 0.3s;
+    letter-spacing: 3px;
 }
 
-.features-cta:hover {
-    background: #85d9e8;
-    transform: translateY(-3px);
+/* ---------- Shared section layout ---------- */
+.features-intro,
+.features-grid,
+.features-highlight,
+.features-bottom {
+    width: 100%;
+    max-width: 1100px;
+    margin-inline: auto;
 }
 
-/* INTRODUCTION */
-
-.features-intro {
-    text-align: center;
-    padding: 90px 20px 45px;
+.features-intro h2,
+.features-highlight-content h2,
+.features-bottom h2 {
+    margin: 0 0 16px;
+    color: var(--frost);
+    font-family: var(--display);
+    font-size: clamp(36px, 4.6vw, 54px);
+    font-weight: 400;
+    line-height: 1.02;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
 }
 
-.features-intro h2 {
-    font-size: 36px;
-    margin: 18px 0;
-}
-
-.features-intro p {
+.features-intro p,
+.features-highlight-content p,
+.features-bottom p {
+    max-width: 58ch;
     margin: 0 auto;
+    color: #b9ccda;
+    font-size: clamp(16px, 1.5vw, 18px);
+    font-weight: 300;
+    line-height: 1.75;
 }
 
-/* FEATURE GRID */
+/* ---------- Introduction ---------- */
+.features-intro {
+    margin-top: clamp(48px, 7vw, 88px);
+    text-align: center;
+}
 
+/* ---------- Feature cards (same glass as the pricing cards) ---------- */
 .features-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 22px;
-    width: min(100% - 48px, 1200px);
-    margin: 0 auto;
-    padding: 30px 0 100px;
+    gap: 24px;
+    margin-top: 40px;
 }
 
 .feature-card {
-    background: rgba(255,255,255,0.035);
-    border: 1px solid rgba(92,195,220,0.16);
-    border-radius: 12px;
-    padding: 32px;
-    transition: 0.3s;
+    padding: 28px 26px 26px;
+    background: var(--glass);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    backdrop-filter: blur(16px);
+    transition: transform 0.2s, border-color 0.2s;
 }
 
 .feature-card:hover {
-    transform: translateY(-7px);
-    border-color: var(--ice);
-    background: rgba(92,195,220,0.06);
+    transform: translateY(-4px);
+    border-color: rgba(92, 195, 220, 0.55);
 }
 
 .feature-icon {
-    width: 52px;
-    height: 52px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 10px;
-    background: rgba(92,195,220,0.12);
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(92, 195, 220, 0.4);
+    border-radius: 50%;
+    background: rgba(92, 195, 220, 0.13);
     color: var(--ice);
-    margin-bottom: 22px;
 }
 
+.feature-icon svg,
 .feature-icon i {
-    width: 25px;
-    height: 25px;
+    width: 22px;
+    height: 22px;
 }
 
 .feature-card h3 {
-    font-size: 19px;
-    margin-bottom: 12px;
+    margin: 0 0 8px;
+    color: var(--frost);
+    font-family: var(--display);
+    font-size: 25px;
+    font-weight: 500;
+    line-height: 1.1;
 }
 
 .feature-card p {
-    color: #aeb9c9;
-    line-height: 1.7;
+    margin: 0;
+    color: var(--mist);
     font-size: 14px;
+    line-height: 1.7;
 }
 
-/* HIGHLIGHT */
-
+/* ---------- Highlight: top rated card + text ---------- */
 .features-highlight {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
     align-items: center;
-    gap: 60px;
-    padding: 70px max(24px, calc((100% - 1200px) / 2));
-    background: #0c1423;
+    gap: clamp(32px, 6vw, 72px);
+    margin-top: clamp(64px, 8vw, 110px);
 }
 
+.features-highlight .toprated,
 .features-discovery-example {
     max-width: none;
     margin: 0;
@@ -1139,87 +1168,82 @@ body.features-page {
     line-height: 1;
 }
 
-.features-highlight h2 {
-    font-size: 38px;
-    line-height: 1.25;
-    margin: 20px 0;
-}
+.features-highlight-content p { margin: 0; }
 
-/* BOTTOM CTA */
-
+/* ---------- Closing call to action ---------- */
 .features-bottom {
+    position: relative;
+    margin-top: clamp(64px, 8vw, 110px);
+    padding: clamp(40px, 6vw, 72px) clamp(24px, 5vw, 56px);
+    overflow: hidden;
     text-align: center;
-    padding: 100px 20px;
+    background: linear-gradient(135deg, rgba(12, 27, 43, 0.90), rgba(4, 10, 19, 0.88));
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    backdrop-filter: blur(16px);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.25);
 }
 
-.features-bottom h2 {
-    font-size: 38px;
-    line-height: 1.3;
+.features-bottom::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 100px;
+    height: 2px;
+    transform: translateX(-50%);
+    background: var(--ice);
 }
 
-.features-bottom p {
-    margin: 15px auto;
+.features-bottom .homepage-actions {
+    justify-content: center;
+    margin-top: 28px;
 }
 
-/* FOOTER */
+/* ---------- Footer (same as the landing page) ---------- */
+.features-page .login-footer {
+    margin-top: clamp(56px, 7vw, 96px);
+}
 
 .features-footer {
-    display: flex;
-    justify-content: space-between;
-    gap: 20px;
-    padding: 10px 10px;
-    margin-top: auto;
-    border-top: 1px solid rgba(255,255,255,0.08);
-    color: #8290a3;
+    padding: 16px 0 20px;
+    border-top: 1px solid var(--line);
+    color: var(--mist);
     font-size: 12px;
 }
 
+/* ---------- Features responsive ---------- */
 @media (max-width: 900px) {
+    body.features-page::after {
+        background:
+            linear-gradient(rgba(3, 7, 14, 0.4), rgba(3, 7, 14, 0.4)),
+            linear-gradient(0deg, rgba(3, 7, 14, 0.9) 0%, rgba(3, 7, 14, 0.55) 60%, rgba(3, 7, 14, 0.7) 100%);
+    }
+
     .features-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .features-highlight {
-        gap: 32px;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 36px;
     }
+
+    .features-highlight-content { order: -1; }
 }
 
 @media (max-width: 600px) {
     .features-banner {
-        min-height: 420px;
-        padding: 56px 7%;
+        min-height: 0;
+        padding-block: 36px 8px;
     }
 
     .features-grid {
         grid-template-columns: minmax(0, 1fr);
-        width: min(100% - 36px, 440px);
-        padding-bottom: 64px;
+        gap: 16px;
     }
 
-    .feature-card {
-        padding: 26px;
-    }
-
-    .features-highlight {
-        grid-template-columns: minmax(0, 1fr);
-        gap: 28px;
-        padding: 48px 7%;
-    }
-
-    .features-bottom {
-        padding: 68px 20px;
-    }
-
-    .features-bottom h2,
-    .features-highlight h2 {
-        font-size: 32px;
-    }
-
-    .features-footer {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-    }
+    .feature-card { padding: 24px 22px; }
 }
 
 
@@ -1253,41 +1277,5 @@ body.features-page {
 
     .founder-card-header h2 {
         font-size: 18px;
-    }
-}
-
-@media (max-width: 850px) {
-
-    .features-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .features-highlight {
-        grid-template-columns: 1fr;
-        gap: 35px;
-    }
-}
-
-@media (max-width: 550px) {
-
-    .features-grid {
-        grid-template-columns: 1fr;
-        padding-left: 6%;
-        padding-right: 6%;
-    }
-
-    .features-banner {
-        padding: 65px 7%;
-    }
-
-    .features-intro h2,
-    .features-highlight h2,
-    .features-bottom h2 {
-        font-size: 29px;
-    }
-
-    .features-footer {
-        flex-direction: column;
-        text-align: center;
     }
 }
