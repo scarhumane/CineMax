@@ -59,7 +59,7 @@ planButtons.forEach(button => {
         const selectedPlan = button.dataset.plan;
 
         planMessage.textContent =
-            `You've selected ${selectedPlan}! Subscription checkout is for demonstration only.`;
+            `You've selected ${selectedPlan}! Please proceed to checkout.`;
 
     });
 
