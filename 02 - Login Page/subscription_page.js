@@ -11,7 +11,6 @@ billingButtons.forEach(button => {
 
         const selectedBilling = button.dataset.billing;
 
-        // Update active button
         billingButtons.forEach(btn => {
             btn.classList.remove("active");
             btn.setAttribute("aria-pressed", "false");
@@ -20,7 +19,6 @@ billingButtons.forEach(button => {
         button.classList.add("active");
         button.setAttribute("aria-pressed", "true");
 
-        // Update prices
         prices.forEach(price => {
 
             price.textContent =
@@ -28,7 +26,6 @@ billingButtons.forEach(button => {
 
         });
 
-        // Update billing periods
         periods.forEach((period, index) => {
 
             if (index === 0) {
@@ -47,7 +44,7 @@ billingButtons.forEach(button => {
 });
 
 
-// SELECT PLAN BUTTONS
+
 
 const planButtons = document.querySelectorAll(".select-plan-button");
 const planMessage = document.getElementById("plan-message");
@@ -58,15 +55,53 @@ planButtons.forEach(button => {
 
         const selectedPlan = button.dataset.plan;
 
-        planMessage.textContent =
-            `You've selected ${selectedPlan}! Please proceed to checkout.`;
+       
+        const activeBillingButton = document.querySelector(
+            ".billing-button.active"
+        );
+
+        const selectedBilling = activeBillingButton
+            ? activeBillingButton.dataset.billing
+            : "monthly";
+
+       
+        planButtons.forEach(btn => {
+            btn.disabled = true;
+        });
+
+        button.textContent = "Processing...";
+        planMessage.textContent = "";
+
+       
+        const form = document.createElement("form");
+
+        form.method = "POST";
+        form.action = "select_plan.php";
+
+        const planInput = document.createElement("input");
+        planInput.type = "hidden";
+        planInput.name = "plan";
+        planInput.value = selectedPlan;
+
+        const billingInput = document.createElement("input");
+        billingInput.type = "hidden";
+        billingInput.name = "billing_period";
+        billingInput.value = selectedBilling;
+
+        form.appendChild(planInput);
+        form.appendChild(billingInput);
+
+        document.body.appendChild(form);
+
+       
+        form.submit();
 
     });
 
 });
 
 
-// LOAD LUCIDE ICONS
+
 if (typeof lucide !== "undefined") {
     lucide.createIcons();
 }

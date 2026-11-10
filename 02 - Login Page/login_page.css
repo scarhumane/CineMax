@@ -1369,6 +1369,463 @@ body.features-page .login-footer {
     position: relative;
     top: 30px;
 }
+
+.billing-page {
+    min-height: 100vh;
+}
+
+/* MAIN CONTAINER */
+
+.billing-page .billing-container {
+    width: 90%;
+    max-width: 850px;
+    margin: 0 auto;
+    padding: 45px 0 55px;
+    flex: 1;
+}
+
+/* PAGE HEADING */
+
+.billing-page .pricing-heading {
+    text-align: center;
+    margin-bottom: 38px;
+}
+
+.billing-page .pricing-heading h1 {
+    font-family: var(--display);
+    font-size: clamp(42px, 6vw, 68px);
+    font-weight: 400;
+    line-height: 1;
+    color: var(--frost);
+    margin: 0 0 16px;
+}
+
+.billing-page .heading-description {
+    color: #b9ccda;
+    font-size: 16px;
+    font-weight: 300;
+    margin: 0;
+}
+
+/* CHECKOUT CARD */
+
+.billing-page .plan-card {
+    width: 100%;
+    max-width: 650px;
+    margin: 0 auto;
+    padding: 35px 40px;
+    background: var(--glass);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.25);
+}
+
+/* SELECTED PLAN */
+
+.billing-page .plan-header {
+    margin-bottom: 15px;
+}
+
+.billing-page .plan-header h2 {
+    margin: 0 0 8px;
+    color: var(--mist);
+    font-family: var(--body);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.billing-page .plan-header p {
+    margin: 0;
+    color: var(--ember);
+    font-family: var(--display);
+    font-size: 30px;
+    font-weight: 500;
+}
+
+.billing-page .plan-price {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin: 12px 0 25px;
+}
+
+.billing-page .price-amount {
+    color: var(--frost);
+    font-family: var(--display);
+    font-size: 46px;
+    font-weight: 500;
+}
+
+.billing-page .price-period {
+    color: var(--mist);
+    font-size: 14px;
+}
+
+.billing-page .plan-divider {
+    width: 100%;
+    height: 1px;
+    background: var(--line);
+    margin: 25px 0;
+}
+
+/* SECTION HEADINGS */
+
+.billing-page form h3 {
+    margin: 0 0 18px;
+    color: var(--frost);
+    font-family: var(--display);
+    font-size: 24px;
+    font-weight: 500;
+}
+
+/* PAYMENT METHODS */
+
+.billing-page .payment-methods {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.billing-page .payment-option {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    min-height: 55px;
+    padding: 12px 10px;
+    background: rgba(3, 7, 14, 0.55);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    color: var(--mist);
+    font-size: 13px;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.billing-page .payment-option:hover {
+    border-color: rgba(92, 195, 220, 0.6);
+    background: rgba(92, 195, 220, 0.08);
+    color: var(--frost);
+}
+
+.billing-page .payment-option:has(input:checked) {
+    border-color: var(--ice);
+    background: rgba(92, 195, 220, 0.12);
+    color: var(--frost);
+}
+
+.billing-page .payment-option input {
+    width: 15px;
+    height: 15px;
+    margin: 0;
+    accent-color: var(--ice);
+    cursor: pointer;
+}
+
+/* PAYMENT DETAILS */
+
+.billing-page .payment-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+.billing-page .payment-fields label {
+    margin-top: 8px;
+    color: var(--frost);
+    font-family: var(--display);
+    font-size: 17px;
+    font-weight: 500;
+    font-variant: small-caps;
+    letter-spacing: 0.06em;
+}
+
+.billing-page .payment-fields input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 13px 14px;
+    background: var(--field);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    color: var(--frost);
+    font-family: var(--body);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.billing-page .payment-fields input::placeholder {
+    color: var(--mist);
+    font-family: var(--display);
+    opacity: 0.85;
+}
+
+.billing-page .payment-fields input:focus {
+    border-color: var(--ice);
+}
+
+/* PAYMENT MESSAGE */
+
+.billing-page .plan-message {
+    margin: 22px 0;
+    padding: 14px 16px;
+    border-left: 2px solid var(--ice);
+    background: rgba(92, 195, 220, 0.07);
+    color: var(--mist);
+    font-size: 12px;
+    line-height: 1.8;
+}
+
+/* CONFIRM PAYMENT BUTTON */
+
+.billing-page .select-plan-button {
+    width: 100%;
+    margin-top: 5px;
+    padding: 14px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: var(--body);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.13em;
+    transition: filter 0.2s ease, transform 0.2s ease;
+}
+
+.billing-page .featured-button {
+    color: #04121a;
+    background: linear-gradient(
+        180deg,
+        #5cc3dc 0%,
+        #2b97b5 100%
+    );
+    box-shadow:
+        0 0 0 1px rgba(92, 195, 220, 0.4),
+        0 8px 24px rgba(43, 151, 181, 0.2);
+}
+
+.billing-page .featured-button:hover {
+    filter: brightness(1.1);
+    transform: translateY(-2px);
+}
+
+/* BACK TO PLANS */
+
+.billing-page .plan-card > p:last-child {
+    margin: 22px 0 0;
+    text-align: center;
+}
+
+.billing-page .plan-card > p:last-child a {
+    color: var(--mist);
+    font-size: 13px;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    transition: color 0.2s ease;
+}
+
+.billing-page .plan-card > p:last-child a:hover {
+    color: var(--ice);
+}
+
+/* FOOTER */
+
+.billing-page .subscription-footer {
+    margin-top: 20px;
+}
+
+/* RESPONSIVE DESIGN */
+
+@media (max-width: 600px) {
+    .billing-page .billing-container {
+        width: 92%;
+        padding-top: 30px;
+    }
+
+    .billing-page .plan-card {
+        padding: 28px 22px;
+    }
+
+    .billing-page .payment-methods {
+        grid-template-columns: 1fr;
+    }
+
+    .billing-page .pricing-heading h1 {
+        font-size: 43px;
+    }
+
+    .billing-page .price-amount {
+        font-size: 40px;
+    }
+}
+
+#login-form,
+#signup-form,
+.password-recovery-card form {
+    font-family: var(--body);
+}
+
+/* Form labels */
+#login-form label,
+#signup-form label,
+.password-recovery-page .password-recovery-card label {
+    font-family: var(--body);
+    font-size: 20px;
+    font-weight: 600;
+    font-variant: normal;
+    letter-spacing: 0.01em;
+    text-transform: none;
+    color: #F0C27A;
+}
+
+/* Input text */
+#login-form input,
+#signup-form input,
+.password-recovery-page .password-recovery-card input {
+    font-family: var(--body);
+    font-size: 15px;
+    font-weight: 400;
+    font-variant: normal;
+    letter-spacing: 0.01em;
+}
+
+/* Input placeholders */
+#login-form input::placeholder,
+#signup-form input::placeholder,
+.password-recovery-page .password-recovery-card input::placeholder {
+    font-family: var(--body);
+    font-size: 14px;
+    font-weight: 400;
+    font-variant: normal;
+    letter-spacing: 0.01em;
+    text-transform: none;
+    opacity: 1;
+}
+
+/* Forgot password link and supporting text */
+.forgot-password,
+.forgot-password a,
+.signup-link,
+.signup-link a,
+.password-recovery-page .password-recovery-back,
+.password-recovery-page .password-recovery-back a {
+    font-family: var(--body);
+}
+
+/* Form buttons */
+.login-button,
+.password-recovery-page .password-recovery-card button,
+.password-recovery-page .recovery-action {
+    font-family: var(--body);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+@media (max-width: 380px) {
+    .billing-page .plan-card {
+        padding: 24px 17px;
+    }
+}
+ /*billing page */
+.billing-page .subscription-container,
+.billing-page .plan-card,
+.billing-page .plan-card form {
+    font-family: var(--body);
+}
+
+/* Keep cinematic headings */
+.billing-page .pricing-heading h1,
+.billing-page .plan-header h2 {
+    font-family: var(--display);
+}
+
+/* Plan name */
+.billing-page .plan-header p {
+    font-family: var(--body);
+    font-size: 29px;
+    font-weight: 600;
+}
+
+/* Price */
+.billing-page .price-amount {
+    font-family: var(--display);
+}
+
+/* Billing period */
+.billing-page .price-period {
+    font-family: var(--body);
+    font-size: 25px;
+}
+
+/* Form section headings */
+.billing-page form h3 {
+    font-family: var(--body);
+    font-size: 18px;
+    font-weight: 600;
+}
+
+/* Payment method labels */
+.billing-page .payment-option,
+.billing-page .payment-option span {
+    font-family: var(--body);
+    font-size: 15px;
+    font-weight: 500;
+}
+
+/* Payment detail labels */
+.billing-page .payment-fields label {
+    font-family: var(--body);
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+
+/* Payment inputs */
+.billing-page .payment-fields input {
+    font-family: var(--body);
+    font-size: 15px;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+}
+
+/* Input placeholders */
+.billing-page .payment-fields input::placeholder {
+    font-family: var(--body);
+    font-size: 14px;
+    font-weight: 400;
+    text-transform: none;
+}
+
+/* Payment notice */
+.billing-page .plan-message {
+    font-family: var(--body);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* Confirm Payment button */
+.billing-page .select-plan-button {
+    font-family: var(--body);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+}
+
+/* Back to subscription link */
+.billing-page .plan-card > p,
+.billing-page .plan-card > p a {
+    font-family: var(--body);
+    font-size: 14px;
+}
+
+/* Footer */
+.billing-page .subscription-footer {
+    font-family: var(--body);
+}
 /* ---------- Responsive ---------- */
 @media (max-width: 900px) {
   body::after { background: linear-gradient(0deg, rgba(3, 7, 14, 0.9) 0%, rgba(3, 7, 14, 0.55) 60%, rgba(3, 7, 14, 0.7) 100%); }

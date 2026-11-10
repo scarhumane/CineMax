@@ -262,8 +262,9 @@ main {
 
 /* HERO */
 
+
 .hero-section {
-    margin-top: 29px;
+    margin-top: 60px;
 }
 
 .hero-stage {
@@ -297,6 +298,8 @@ main {
     transition: opacity 0.7s ease, visibility 0.7s;
 }
 
+/* MOVIE BACKDROP */
+
 .hero-slide::after {
     content: "";
     position: absolute;
@@ -305,13 +308,18 @@ main {
     background-image: var(--hero-backdrop, none);
     background-position: center;
     background-size: cover;
+    background-repeat: no-repeat;
     filter: brightness(1.35);
 }
+
+/* ACTIVE SLIDE */
 
 .hero-slide.active {
     opacity: 1;
     visibility: visible;
 }
+
+/* DARK CINEMATIC OVERLAY */
 
 .hero-slide::before {
     content: "";
@@ -334,12 +342,28 @@ main {
         );
 }
 
+/* HERO CONTENT */
+
 .hero-content {
     position: relative;
     z-index: 2;
     width: min(680px, 60%);
     padding: clamp(32px, 5vw, 80px);
+    opacity: 0;
+    visibility: hidden;
+    transition:
+        opacity 0.5s ease,
+        visibility 0.5s ease;
 }
+
+/* Show text only after JavaScript confirms the backdrop is ready */
+
+.hero-slide.backdrop-ready .hero-content {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* HERO TEXT */
 
 .hero-label {
     display: inline-block;
@@ -382,6 +406,8 @@ main {
     letter-spacing: 0.5px;
 }
 
+/* HERO BUTTON */
+
 .hero-button {
     display: inline-flex;
     align-items: center;
@@ -402,6 +428,8 @@ main {
     background: transparent;
     color: var(--ember);
 }
+
+/* HERO ARROWS */
 
 .hero-arrow {
     position: absolute;
@@ -443,6 +471,8 @@ main {
     width: 20px;
     height: 20px;
 }
+
+/* HERO DOTS */
 
 .dots {
     display: flex;
@@ -686,6 +716,10 @@ main {
 
 .continue-thumb img.from-poster {
     object-position: center 22%;
+}
+
+#continue.content-section {
+    padding-top: 80px !important;
 }
 
 .progress-container {

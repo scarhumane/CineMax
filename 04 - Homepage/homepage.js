@@ -1,4 +1,3 @@
-
 const $ = id => document.getElementById(id);
 
 const reducedMotion = window.matchMedia(
@@ -68,7 +67,7 @@ function getMovie(id) {
     return movieIndex.get(String(id));
 }
 
-/* SAMPLE MOVIES */
+/* SAMPLE MOVIES (only used as a fallback if the API fails) */
 
 const SAMPLE_MOVIES = register([
     {
@@ -287,7 +286,7 @@ function normalizeTMDBMovie(movie) {
             ? `${TMDB_IMAGE_BASE}w500${movie.poster_path}`
             : "",
         backdrop: movie.backdrop_path
-            ? `${TMDB_IMAGE_BASE}original${movie.backdrop_path}`
+            ? `${TMDB_IMAGE_BASE}w1280${movie.backdrop_path}`
             : "",
         backdropSmall: movie.backdrop_path
             ? `${TMDB_IMAGE_BASE}w780${movie.backdrop_path}`
@@ -304,6 +303,7 @@ document.addEventListener("error", event => {
     const image = event.target;
 
     if (
+        !image ||
         image.tagName !== "IMG" ||
         !image.closest(".movie-poster, .continue-thumb")
     ) {
@@ -430,12 +430,12 @@ function createMovieCard(movie, extraContent = "") {
                     <h3>${escapeHTML(movie.title)}</h3>
 
                     <p class="movie-meta">
-                        ${escapeHTML(movie.year)} ·
+                        ${escapeHTML(movie.year)} \u00B7
                         ${escapeHTML((movie.genres || []).slice(0, 2).join(", "))}
                     </p>
 
                     <p class="movie-rating">
-                        ★ ${formatRating(movie.rating)}
+                        \u2605 ${formatRating(movie.rating)}
                     </p>
                 </div>
             </a>
@@ -517,10 +517,14 @@ function savePersonalRating(movieId, rating) {
 
     ratings[String(movieId)] = rating;
 
-    localStorage.setItem(
-        PERSONAL_RATING_KEY,
-        JSON.stringify(ratings)
-    );
+    try {
+        localStorage.setItem(
+            PERSONAL_RATING_KEY,
+            JSON.stringify(ratings)
+        );
+    } catch (error) {
+        console.warn("Unable to save your rating:", error);
+    }
 }
 
 function showModal() {
@@ -572,7 +576,7 @@ function renderPersonalRating(movie) {
                         data-rating-movie="${escapeHTML(movie.id)}"
                         aria-label="${star} out of 5 stars"
                         aria-pressed="${star === currentRating}">
-                        ★
+                        \u2605
                     </button>
                 `).join("")}
             </div>
@@ -650,9 +654,7 @@ function renderProviders(providerData) {
                                 loading="lazy">`
                             : ""}
 
-                        <span>
-                            ${escapeHTML(provider.provider_name)}
-                        </span>
+                        <span>${escapeHTML(provider.provider_name)}</span>
                     </a>
                 `).join("")}
             </div>
@@ -672,7 +674,6 @@ function renderCast(cast) {
     return `
         <section class="modal-section">
             <h3>Cast</h3>
-
             <div class="modal-cast-grid">
                 ${cast.slice(0, 12).map(person => `
                     <article class="modal-cast-item">
@@ -684,12 +685,8 @@ function renderCast(cast) {
                             : `<div class="cast-placeholder">
                                 <i data-lucide="user"></i>
                             </div>`}
-
                         <p>${escapeHTML(person.name)}</p>
-
-                        <span>
-                            ${escapeHTML(person.character || "")}
-                        </span>
+                        <span>${escapeHTML(person.character || "")}</span>
                     </article>
                 `).join("")}
             </div>
@@ -708,9 +705,7 @@ function renderRecommendations(recommendations) {
         return `
             <section class="modal-section">
                 <h3>More Like This</h3>
-                <p class="modal-muted">
-                    No recommendations available.
-                </p>
+                <p class="modal-muted">No recommendations available.</p>
             </section>
         `;
     }
@@ -718,14 +713,12 @@ function renderRecommendations(recommendations) {
     return `
         <section class="modal-section">
             <h3>More Like This</h3>
-
             <div class="modal-recommendations">
                 ${movies.slice(0, 8).map(movie => `
                     <button
                         type="button"
                         class="recommendation-card"
                         data-open-movie="${escapeHTML(movie.id)}">
-
                         ${movie.poster
                             ? `<img
                                 src="${escapeHTML(movie.poster)}"
@@ -734,7 +727,6 @@ function renderRecommendations(recommendations) {
                             : `<div class="poster-placeholder">
                                 ${escapeHTML(movie.title)}
                             </div>`}
-
                         <span>${escapeHTML(movie.title)}</span>
                         <small>${escapeHTML(movie.year)}</small>
                     </button>
@@ -746,7 +738,6 @@ function renderRecommendations(recommendations) {
 
 function renderMovieDetails(movie, details) {
     const modal = getModal();
-
     const media = modal.querySelector(".modal-media");
     const body = modal.querySelector(".modal-body");
     const panel = modal.querySelector(".modal-panel");
@@ -829,9 +820,9 @@ function renderMovieDetails(movie, details) {
 
         <p class="modal-meta">
             ${escapeHTML(movieYear)}
-            · ${escapeHTML(runtime)}
-            · <span class="modal-rating">
-                ★ ${formatRating(details.vote_average)}
+            \u00B7 ${escapeHTML(runtime)}
+            \u00B7 <span class="modal-rating">
+                \u2605 ${formatRating(details.vote_average)}
             </span>
         </p>
 
@@ -849,7 +840,6 @@ function renderMovieDetails(movie, details) {
             ${director
                 ? `<p><span>Director</span>${escapeHTML(director.name)}</p>`
                 : ""}
-
             ${writers.length
                 ? `<p><span>Written by</span>
                     ${escapeHTML(writers.map(person => person.name).join(", "))}
@@ -867,17 +857,13 @@ function renderMovieDetails(movie, details) {
                     <i data-lucide="play"></i>
                     Watch Trailer
                    </a>`
-                : `<span class="modal-muted">
-                    No trailer available.
-                   </span>`}
+                : `<span class="modal-muted">No trailer available.</span>`}
 
             <button type="button" class="modal-watch"></button>
         </div>
 
         ${renderPersonalRating(watchlistMovie)}
-
         ${renderProviders(details.watch_providers)}
-
         ${renderCast(cast)}
 
         <section class="modal-section">
@@ -932,15 +918,11 @@ async function openModal(movie) {
             id: movie.id
         });
 
-        if (
-            requestId !== modalRequestNumber ||
-            modal.hidden
-        ) {
+        if (requestId !== modalRequestNumber || modal.hidden) {
             return;
         }
 
         renderMovieDetails(movie, details);
-
     } catch (error) {
         if (requestId !== modalRequestNumber) return;
 
@@ -966,7 +948,6 @@ function closeModal() {
     modal.hidden = true;
     modal.classList.remove("active");
     modal.setAttribute("aria-hidden", "true");
-
     document.body.classList.remove("modal-open");
 
     modal.querySelector(".modal-panel")
@@ -977,14 +958,10 @@ function closeModal() {
     }
 }
 
-/* PERSONAL RATING EVENTS */
-
 document.addEventListener("click", event => {
     if (!(event.target instanceof Element)) return;
 
-    const ratingButton = event.target.closest(
-        "[data-personal-rating]"
-    );
+    const ratingButton = event.target.closest("[data-personal-rating]");
 
     if (!ratingButton) return;
 
@@ -998,9 +975,7 @@ document.addEventListener("click", event => {
     const movie = getMovie(movieId);
 
     if (movie) {
-        const section = ratingButton.closest(
-            ".personal-rating-section"
-        );
+        const section = ratingButton.closest(".personal-rating-section");
 
         if (section) {
             section.outerHTML = renderPersonalRating(movie);
@@ -1008,21 +983,144 @@ document.addEventListener("click", event => {
     }
 });
 
-/* PAGE CONTENT */
+/* HOME DATA STATE */
 
 let tmdbTrending = [];
 let tmdbTopRated = [];
 
-let heroMovies = [
-    "truman-show",
-    "dead-poets",
-    "dark-knight",
-    "inception",
-    "titanic"
-].map(getMovie).filter(Boolean);
+// true once loadTMDB() has finished (success or failure).
+// Until then, the rows show a loading message instead of sample movies.
+let homeLoaded = false;
 
+/* HOME CACHE (makes reloads instant) */
+
+const HOME_CACHE_KEY = "cinemax-home-cache-v1";
+const HOME_CACHE_MAX_AGE = 30 * 60 * 1000; // 30 minutes
+
+function readHomeCache() {
+    try {
+        const cache = JSON.parse(localStorage.getItem(HOME_CACHE_KEY));
+
+        if (!cache || Date.now() - cache.time > HOME_CACHE_MAX_AGE) {
+            return null;
+        }
+
+        if (!Array.isArray(cache.trending) || !cache.trending.length) {
+            return null;
+        }
+
+        if (!Array.isArray(cache.topRated)) {
+            cache.topRated = [];
+        }
+
+        return cache;
+    } catch {
+        return null;
+    }
+}
+
+function writeHomeCache(trending, topRated) {
+    try {
+        localStorage.setItem(HOME_CACHE_KEY, JSON.stringify({
+            time: Date.now(),
+            trending,
+            topRated
+        }));
+    } catch (error) {
+        console.warn("Unable to cache home data:", error);
+    }
+}
+
+/* HERO CAROUSEL */
+
+// Starts empty so the sample movies never flash before the real ones.
+let heroMovies = [];
 let heroIndex = 0;
 let heroTimer = null;
+
+const heroImageCache = new Map();
+let heroBuildNumber = 0;
+let heroSlideRequest = 0;
+
+function showHeroSkeleton() {
+    const hero = $("cinemaShowcase");
+
+    if (hero && !heroMovies.length) {
+        hero.innerHTML = `
+            <div class="hero-slide active hero-skeleton"
+                 aria-busy="true"></div>
+        `;
+    }
+}
+
+function fallbackHero() {
+    heroMovies = [
+        "truman-show",
+        "dead-poets",
+        "dark-knight",
+        "inception",
+        "titanic"
+    ].map(getMovie).filter(Boolean);
+
+    buildHero();
+}
+
+// Only rebuilds the hero when the featured movies actually changed.
+async function setHero(movies) {
+    const picks = movies.filter(movie => movie.backdrop).slice(0, 5);
+
+    if (!picks.length) return false;
+
+    const same =
+        picks.length === heroMovies.length &&
+        picks.every((movie, index) => movie.id === heroMovies[index].id);
+
+    if (same) return true;
+
+    const firstReady = await preloadHeroImages(picks);
+
+    if (!firstReady) return false;
+
+    heroMovies = picks;
+    buildHero();
+
+    return true;
+}
+
+function preloadHeroImage(url) {
+    if (!url) return Promise.resolve(false);
+
+    if (heroImageCache.has(url)) {
+        return heroImageCache.get(url);
+    }
+
+    const image = new Image();
+
+    image.fetchPriority = "high";
+    image.src = url;
+
+    const loading = image.decode()
+        .then(() => true)
+        .catch(() => false);
+
+    heroImageCache.set(url, loading);
+
+    return loading;
+}
+
+async function preloadHeroImages(movies) {
+    const firstMovie = movies.find(movie => movie.backdrop);
+
+    if (!firstMovie) return false;
+
+    const firstReady = await preloadHeroImage(firstMovie.backdrop);
+
+    movies
+        .filter(movie => movie !== firstMovie && movie.backdrop)
+        .forEach(movie => preloadHeroImage(movie.backdrop));
+
+    return firstReady;
+}
 
 function buildHero() {
     const hero = $("cinemaShowcase");
@@ -1030,7 +1128,12 @@ function buildHero() {
 
     if (!hero || !dots || !heroMovies.length) return;
 
+    const buildNumber = ++heroBuildNumber;
+
+    clearInterval(heroTimer);
+
     heroIndex = 0;
+    heroSlideRequest++;
 
     hero.innerHTML = heroMovies.map((movie, index) => `
         <div class="hero-slide ${index === 0 ? "active" : ""}"
@@ -1041,6 +1144,7 @@ function buildHero() {
 
             <div class="hero-content">
                 <p class="hero-label">Featured film</p>
+
                 <h1>${escapeHTML(movie.title)}</h1>
 
                 <p class="hero-description">
@@ -1049,9 +1153,9 @@ function buildHero() {
 
                 <p class="hero-meta">
                     ${escapeHTML(movie.year)}
-                    · ★ ${formatRating(movie.rating)}
+                    \u00B7 \u2605 ${formatRating(movie.rating)}
                     ${movie.genres.length
-                        ? " · " + escapeHTML(movie.genres.slice(0, 3).join(", "))
+                        ? " \u00B7 " + escapeHTML(movie.genres.slice(0, 3).join(", "))
                         : ""}
                 </p>
 
@@ -1087,23 +1191,64 @@ function buildHero() {
         </button>
     `).join("");
 
+    const slides = [...hero.querySelectorAll(".hero-slide")];
+
+    heroMovies.forEach(async (movie, index) => {
+        const slide = slides[index];
+
+        if (!slide) return;
+
+        const ready = movie.backdrop
+            ? await preloadHeroImage(movie.backdrop)
+            : true;
+
+        if (buildNumber !== heroBuildNumber || !slide.isConnected) return;
+
+        slide.classList.add("backdrop-ready");
+
+        if (!ready) {
+            console.warn(`Backdrop unavailable for ${movie.title}`);
+        }
+    });
+
     refreshIcons();
     startHeroTimer();
 }
 
-function showHeroSlide(index) {
+async function showHeroSlide(index) {
+    const hero = $("cinemaShowcase");
+    const dots = $("dots");
     const count = heroMovies.length;
 
-    if (!count) return;
+    if (!hero || !dots || !count) return;
 
-    heroIndex = (index + count) % count;
+    const request = ++heroSlideRequest;
+    const nextIndex = (index + count) % count;
+    const movie = heroMovies[nextIndex];
+    const slide = hero.querySelectorAll(".hero-slide")[nextIndex];
 
-    $("cinemaShowcase").querySelectorAll(".hero-slide").forEach((slide, i) => {
-        slide.classList.toggle("active", i === heroIndex);
-        slide.setAttribute("aria-hidden", String(i !== heroIndex));
+    if (!slide) return;
+
+    const ready = movie.backdrop
+        ? await preloadHeroImage(movie.backdrop)
+        : true;
+
+    if (request !== heroSlideRequest || !slide.isConnected) return;
+
+    slide.classList.add("backdrop-ready");
+
+    if (!ready) {
+        console.warn(`Backdrop unavailable for ${movie.title}`);
+    }
+
+    heroIndex = nextIndex;
+
+    hero.querySelectorAll(".hero-slide").forEach((item, i) => {
+        item.classList.toggle("active", i === heroIndex);
+        item.setAttribute("aria-hidden", String(i !== heroIndex));
     });
 
-    $("dots").querySelectorAll(".hero-dot").forEach((dot, i) => {
+    dots.querySelectorAll(".hero-dot").forEach((dot, i) => {
         dot.classList.toggle("active", i === heroIndex);
         dot.setAttribute("aria-current", String(i === heroIndex));
     });
@@ -1112,7 +1257,9 @@ function showHeroSlide(index) {
 function startHeroTimer() {
     clearInterval(heroTimer);
 
-    if (reducedMotion || heroMovies.length < 2) return;
+    if (reducedMotion || heroMovies.length < 2) {
+        return;
+    }
 
     heroTimer = setInterval(() => {
         showHeroSlide(heroIndex + 1);
@@ -1143,14 +1290,62 @@ const continueWatching = [
     { title: "Inception", year: 2010, progress: 80 }
 ];
 
+const CONTINUE_CACHE_KEY = "cinemax-continue-cache-v1";
+const CONTINUE_CACHE_MAX_AGE = 24 * 60 * 60 * 1000; // 24 hours
+
+function readContinueCache() {
+    try {
+        const cache = JSON.parse(localStorage.getItem(CONTINUE_CACHE_KEY));
+
+        if (
+            !cache ||
+            Date.now() - cache.time > CONTINUE_CACHE_MAX_AGE ||
+            !Array.isArray(cache.items) ||
+            !cache.items.length
+        ) {
+            return null;
+        }
+
+        return cache.items;
+    } catch {
+        return null;
+    }
+}
+
+function writeContinueCache(items) {
+    try {
+        localStorage.setItem(CONTINUE_CACHE_KEY, JSON.stringify({
+            time: Date.now(),
+            items
+        }));
+    } catch (error) {
+        console.warn("Unable to cache Continue Watching:", error);
+    }
+}
+
 const loadingHTML = text => `
     <p class="no-results">${escapeHTML(text)}</p>
 `;
+
+function paintContinueWatching(container, items) {
+    container.innerHTML = items.map(item =>
+        createContinueCard(item.movie, item.progress)
+    ).join("");
+}
 
 async function renderContinueWatching() {
     const container = $("continue-movies");
 
     if (!container) return;
+
+    // Instant render from cache, no network needed.
+    const cached = readContinueCache();
+
+    if (cached) {
+        cached.forEach(item => register([item.movie]));
+        paintContinueWatching(container, cached);
+        return;
+    }
 
     container.innerHTML = loadingHTML("Loading your movies...");
 
@@ -1187,21 +1382,31 @@ async function renderContinueWatching() {
             console.error("Continue Watching error:", result.reason)
         );
 
-    container.innerHTML = available.length
-        ? available.map(item =>
-            createContinueCard(item.movie, item.progress)
-        ).join("")
-        : results.some(result => result.status === "rejected")
+    if (available.length) {
+        paintContinueWatching(container, available);
+
+        // Only cache a complete result.
+        if (available.length === continueWatching.length) {
+            writeContinueCache(available);
+        }
+    } else {
+        container.innerHTML = results.some(result => result.status === "rejected")
             ? loadingHTML("Unable to load your movies right now.")
             : loadingHTML("No movies available.");
+    }
 }
 
-/* TRENDING AND TOP RATED */
+/* HOME ROWS */
 
 function renderTrending() {
     const container = $("trending");
 
     if (!container) return;
+
+    if (!tmdbTrending.length && !homeLoaded) {
+        container.innerHTML = loadingHTML("Loading trending movies...");
+        return;
+    }
 
     const pool = tmdbTrending.length
         ? tmdbTrending
@@ -1218,6 +1423,11 @@ function renderTopRated() {
 
     if (!container) return;
 
+    if (!tmdbTopRated.length && !homeLoaded) {
+        container.innerHTML = `<li>${loadingHTML("Loading top rated movies...")}</li>`;
+        return;
+    }
+
     const pool = tmdbTopRated.length
         ? tmdbTopRated
         : SAMPLE_MOVIES.filter(movie => movie.topRated);
@@ -1228,8 +1438,6 @@ function renderTopRated() {
         .map((movie, index) => createTopCard(movie, index + 1))
         .join("");
 }
-
-/* WATCHLIST DISPLAY */
 
 function renderWatchlist() {
     const container = $("watchlist-movies");
@@ -1256,7 +1464,7 @@ function renderWatchlist() {
 
 document.addEventListener("watchlist:change", renderWatchlist);
 
-/* MOVIE SEARCH - BROWSING MODE */
+/* SEARCH */
 
 const searchInput = $("homepage-search");
 const resultsSection = $("search-results-section");
@@ -1302,7 +1510,6 @@ function clearResults() {
         searchInput.value = "";
     }
 }
-
 
 async function performSearch(query) {
     const term = query.trim();
@@ -1365,7 +1572,6 @@ async function performSearch(query) {
                 ).join("")}
             `
         );
-
     } catch (error) {
         if (current !== requestNumber) return;
 
@@ -1373,9 +1579,7 @@ async function performSearch(query) {
 
         showResults(
             "Search Unavailable",
-            loadingHTML(
-                "Unable to search right now. Please try again."
-            )
+            loadingHTML("Unable to search right now. Please try again.")
         );
     }
 }
@@ -1399,7 +1603,7 @@ if (searchInput) {
     });
 }
 
-/* CLICK EVENTS */
+/* GLOBAL CLICK + KEYBOARD HANDLERS */
 
 document.addEventListener("click", event => {
     if (!(event.target instanceof Element)) return;
@@ -1410,7 +1614,6 @@ document.addEventListener("click", event => {
 
     if (openButton) {
         event.preventDefault();
-
         openModal(getMovie(openButton.dataset.openMovie));
         return;
     }
@@ -1427,10 +1630,7 @@ document.addEventListener("click", event => {
 
         if (row) {
             row.scrollBy({
-                left:
-                    Number(rowButton.dataset.dir) *
-                    row.clientWidth *
-                    0.85,
+                left: Number(rowButton.dataset.dir) * row.clientWidth * 0.85,
                 behavior: reducedMotion ? "auto" : "smooth"
             });
         }
@@ -1441,10 +1641,7 @@ document.addEventListener("click", event => {
     const heroNav = target.closest("[data-hero-nav]");
 
     if (heroNav) {
-        showHeroSlide(
-            heroIndex + Number(heroNav.dataset.heroNav)
-        );
-
+        showHeroSlide(heroIndex + Number(heroNav.dataset.heroNav));
         startHeroTimer();
         return;
     }
@@ -1468,8 +1665,6 @@ document.addEventListener("click", event => {
         clearResults();
     }
 });
-
-/* KEYBOARD EVENTS */
 
 document.addEventListener("keydown", event => {
     if (event.key === "Escape") {
@@ -1504,7 +1699,7 @@ document.addEventListener("keydown", event => {
     }
 });
 
-/* NAVIGATION HIGHLIGHT */
+/* NAV SECTION HIGHLIGHT */
 
 function watchSections() {
     const links = [
@@ -1542,7 +1737,7 @@ function watchSections() {
     sections.forEach(section => observer.observe(section));
 }
 
-/* LOAD TMDB DATA */
+/* LOAD LIVE TMDB DATA */
 
 async function loadTMDB() {
     const [trendingResult, topRatedResult] = await Promise.allSettled([
@@ -1557,15 +1752,6 @@ async function loadTMDB() {
                 .filter(Boolean)
                 .map(movie => ({ ...movie, trending: true }))
         );
-
-        const withBackdrop = tmdbTrending
-            .filter(movie => movie.backdrop)
-            .slice(0, 5);
-
-        if (withBackdrop.length) {
-            heroMovies = withBackdrop;
-            buildHero();
-        }
     } else {
         console.error(
             "Trending movies could not be loaded:",
@@ -1585,6 +1771,19 @@ async function loadTMDB() {
             "Top rated movies could not be loaded:",
             topRatedResult.reason
         );
+    }
+
+    if (tmdbTrending.length) {
+        await setHero(tmdbTrending);
+    }
+
+    // API failed (or had no backdrops) and there was no cache.
+    if (!heroMovies.length) {
+        fallbackHero();
+    }
+
+    if (tmdbTrending.length && tmdbTopRated.length) {
+        writeHomeCache(tmdbTrending, tmdbTopRated);
     }
 
     const failures = [trendingResult, topRatedResult]
@@ -1607,18 +1806,32 @@ async function loadTMDB() {
         status.hidden = false;
     }
 
+    homeLoaded = true;
+
     renderTrending();
     renderTopRated();
 }
 
 /* INITIALIZE PAGE */
 
-buildHero();
-renderContinueWatching();
-renderTrending();
-renderTopRated();
 renderWatchlist();
 watchSections();
-refreshIcons();
+renderContinueWatching();
 
+showHeroSkeleton();
+
+const cachedHome = readHomeCache();
+
+if (cachedHome) {
+    // Show the last known real data immediately, then refresh in the background.
+    tmdbTrending = register(cachedHome.trending);
+    tmdbTopRated = register(cachedHome.topRated);
+
+    setHero(tmdbTrending);
+}
+
+renderTrending();
+renderTopRated();
+
+refreshIcons();
 loadTMDB();

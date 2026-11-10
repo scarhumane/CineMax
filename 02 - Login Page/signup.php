@@ -1,21 +1,24 @@
 <?php
+
 $usersFile = __DIR__ . '/../03 - Data/users.json';
 
-// Only accept form submissions
+
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
-    header("Location: signup.html");
+    header("Location: signup_page.html");
     exit;
 }
 
-// Get form information
 $username = trim($_POST["username"] ?? "");
 $email = trim($_POST["email"] ?? "");
 $password = $_POST["password"] ?? "";
 $confirmPassword = $_POST["confirm_password"] ?? "";
 
-// Validate fields
-if ($username === "" || $email === "" ||
-    $password === "" || $confirmPassword === "") {
+if (
+    $username === "" ||
+    $email === "" ||
+    $password === "" ||
+    $confirmPassword === ""
+) {
     exit("Please complete all fields.");
 }
 
@@ -31,7 +34,6 @@ if ($password !== $confirmPassword) {
     exit("Passwords do not match.");
 }
 
-// Read existing users
 if (!file_exists($usersFile)) {
     exit("User data file not found.");
 }
@@ -39,42 +41,53 @@ if (!file_exists($usersFile)) {
 $jsonData = file_get_contents($usersFile);
 $data = json_decode($jsonData, true);
 
-if (!is_array($data) || !isset($data["users"]) ||
-    !is_array($data["users"])) {
+if (
+    !is_array($data) ||
+    !isset($data["users"]) ||
+    !is_array($data["users"])
+) {
     exit("Unable to read user data.");
 }
 
-// Check for existing username or email
 foreach ($data["users"] as $user) {
-    if (strtolower($user["username"]) === strtolower($username)) {
+
+    $existingUsername = $user["username"] ?? "";
+    $existingEmail = $user["email"] ?? "";
+
+    if (strtolower($existingUsername) === strtolower($username)) {
         exit("Username already exists.");
     }
 
-    if (strtolower($user["email"]) === strtolower($email)) {
+    if (strtolower($existingEmail) === strtolower($email)) {
         exit("Email is already registered.");
     }
 }
 
-// Hash password before saving
 $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
-// Create new account
 $newUser = [
     "username" => $username,
     "email" => $email,
     "password" => $hashedPassword,
-    "role" => "user"
+    "role" => "user",
+    "subscription_plan" => null,
+    "billing_period" => null
 ];
 
-// Add account to JSON
 $data["users"][] = $newUser;
 
+
 $updatedData = json_encode($data, JSON_PRETTY_PRINT);
+
+if ($updatedData === false) {
+    exit("Unable to process user data.");
+}
 
 if (file_put_contents($usersFile, $updatedData, LOCK_EX) === false) {
     exit("Unable to save your account.");
 }
 
-echo "Account created successfully!";
-echo '<p><a href="login_page.html">Go to Log In</a></p>';
+header("Location: login_page.html?registered=success");
+exit;
+
 ?>

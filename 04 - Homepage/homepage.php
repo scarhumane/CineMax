@@ -12,4 +12,14 @@ if (
     exit;
 }
 
+if (
+    !isset($_SESSION["subscription_plan"]) ||
+    empty($_SESSION["subscription_plan"])
+) {
+    header("Location: ../02 - Login Page/subscription_page.html");
+    exit;
+}
+
 render_homepage();
+
+?>
