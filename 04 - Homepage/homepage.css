@@ -2407,6 +2407,129 @@ main {
     object-fit: cover;
 }
 
+.profile-menu {
+    position: relative;
+}
+
+.profile-trigger {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: transparent;
+    border: none;
+    color: var(--frost);
+    cursor: pointer;
+    font: inherit;
+}
+
+.profile-avatar {
+    width: 48px;
+    height: 48px;
+    border: 1px solid rgba(92, 195, 220, 0.4);
+    border-radius: 50%;
+    background: rgba(92, 195, 220, 0.12);
+    color: var(--ice);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Cormorant Garamond", serif;
+    font-size: 25px;
+}
+
+.profile-trigger > i {
+    width: 16px;
+    height: 16px;
+    color: var(--mist);
+    transition: transform 0.2s ease;
+}
+
+.profile-menu.open .profile-trigger > i {
+    transform: rotate(180deg);
+}
+
+.profile-dropdown {
+    position: absolute;
+    top: calc(100% + 14px);
+    right: 0;
+    width: 230px;
+    padding: 14px;
+    background: #0b1421;
+    border: 1px solid rgba(147, 171, 189, 0.2);
+    border-radius: 12px;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px);
+    transition: 0.2s ease;
+}
+
+.profile-menu.open .profile-dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.profile-dropdown-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 5px 3px 12px;
+}
+
+.profile-dropdown-header div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.profile-dropdown-header strong {
+    color: var(--frost);
+    font-size: 14px;
+}
+
+.profile-dropdown-header span:not(.profile-avatar) {
+    color: var(--mist);
+    font-size: 12px;
+}
+
+.profile-dropdown-divider {
+    height: 1px;
+    background: rgba(147, 171, 189, 0.15);
+    margin: 8px 0;
+}
+
+.profile-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 11px 9px;
+    color: var(--frost);
+    text-decoration: none;
+    font-size: 14px;
+    border-radius: 7px;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.profile-dropdown-item:hover {
+    background: rgba(92, 195, 220, 0.1);
+    color: var(--ice);
+}
+
+.profile-dropdown-item i {
+    width: 17px;
+    height: 17px;
+}
+
+.profile-dropdown-item.logout-item {
+    color: #e58b8b;
+}
+
+.profile-dropdown-item.logout-item:hover {
+    background: rgba(229, 139, 139, 0.1);
+}
+
 @media (max-width: 900px) {
     .homepage-container.is-searching #search-results {
         grid-template-columns: repeat(3, minmax(0, 1fr));
