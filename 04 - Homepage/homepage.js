@@ -22,6 +22,44 @@ function escapeHTML(value) {
     })[character]);
 }
 
+// Logout
+
+const profileMenu = document.querySelector(".profile-menu");
+const profileTrigger = document.getElementById("profile-trigger");
+
+if (profileMenu && profileTrigger) {
+
+    profileTrigger.addEventListener("click", () => {
+
+        const isOpen = profileMenu.classList.toggle("open");
+
+        profileTrigger.setAttribute(
+            "aria-expanded",
+            String(isOpen)
+        );
+
+    });
+
+    document.addEventListener("click", event => {
+
+        if (!profileMenu.contains(event.target)) {
+            profileMenu.classList.remove("open");
+            profileTrigger.setAttribute("aria-expanded", "false");
+        }
+
+    });
+
+    document.addEventListener("keydown", event => {
+
+        if (event.key === "Escape") {
+            profileMenu.classList.remove("open");
+            profileTrigger.setAttribute("aria-expanded", "false");
+        }
+
+    });
+
+}
+
 const formatRating = rating => {
     const value = Number(rating || 0);
     return Number.isFinite(value) ? value.toFixed(1) : "N/A";
@@ -1065,7 +1103,7 @@ function fallbackHero() {
     buildHero();
 }
 
-// Only rebuilds the hero when the featured movies actually changed.
+// Only rebuilds the hero(carosel) when the featured movies actually changed.
 async function setHero(movies) {
     const picks = movies.filter(movie => movie.backdrop).slice(0, 5);
 
