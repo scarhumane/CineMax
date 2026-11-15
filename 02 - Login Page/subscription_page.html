@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,212 +14,364 @@
 
 <body class="homepage-page subscription-page">
     <div class="login-container">
+
+        <!-- HEADER -->
         <header class="homepage-header">
-            <a href="landing_page.html" class="website-logo">CINEMAX</a>
+            <a href="landing_page.html" class="website-logo">
+                CINEMAX
+            </a>
+
             <nav class="homepage-nav-pill" aria-label="Main navigation">
                 <a href="landing_page.html">Home</a>
                 <a href="features_page.html">Features</a>
-                <a href="about_us.html" class="nav-subscribe">About Us</a>
+                <a href="about_us.html">About Us</a>
             </nav>
         </header>
 
+
+        <!-- MAIN SUBSCRIPTION CONTENT -->
         <main class="subscription-container">
 
-        <section class="pricing-heading">
-            <p class="section-label">CINEMAX MEMBERSHIP</p>
-            <h1>Find Your Perfect Plan</h1>
-            <p class="heading-description">
-                Choose the perfect viewing experience for your movie nights.
+            <!-- PRICING INTRODUCTION -->
+            <section class="pricing-heading">
+
+                <p class="section-label">CINEMAX MEMBERSHIP</p>
+
+                <h1>Find Your Perfect Plan</h1>
+
+                <p class="heading-description">
+                    Choose the perfect viewing experience for your movie nights.
+                </p>
+
+                <!-- BILLING TOGGLE -->
+                <div class="billing-toggle">
+
+                    <button class="billing-button active"
+                            data-billing="monthly"
+                            aria-pressed="true">
+                        Monthly
+                    </button>
+
+                    <button class="billing-button"
+                            data-billing="yearly"
+                            aria-pressed="false">
+                        Yearly
+                        <span class="save-label">SAVE MORE</span>
+                    </button>
+
+                </div>
+
+            </section>
+
+
+            <!-- SUBSCRIPTION PLANS -->
+            <section class="plans-container">
+
+
+                <!-- CINEMAX BASIC -->
+
+                <article class="plan-card">
+
+                    <div class="plan-header">
+                        <h2>CineMax Basic</h2>
+                        <p>For casual movie viewers.</p>
+                    </div>
+
+                    <div class="plan-price">
+
+                        <span class="price-amount"
+                              data-monthly="₱0"
+                              data-yearly="₱0">
+                            ₱0
+                        </span>
+
+                        <span class="price-period">/ forever</span>
+
+                    </div>
+
+                    <p class="plan-description">
+                        Enjoy discovering and watching movies at no cost.
+                    </p>
+
+                    <div class="plan-divider"></div>
+
+
+                    <!-- BASIC FEATURES -->
+                    <ul class="plan-features">
+
+                        <li>
+                            <i data-lucide="check"></i>
+                            Watch all available movies
+                        </li>
+
+                        <li>
+                            <i data-lucide="check"></i>
+                            Standard video quality (up to 720p)
+                        </li>
+
+                        <li>
+                            <i data-lucide="check"></i>
+                            1 active streaming session per account
+                        </li>
+
+                        <li>
+                            <i data-lucide="check"></i>
+                            Save up to 10 movies in your watchlist
+                        </li>
+
+                        <li>
+                            <i data-lucide="check"></i>
+                            Default profile with basic display name
+                        </li>
+
+                        <li>
+                            <i data-lucide="check"></i>
+                            Browse movies by genre
+                        </li>
+
+                        <li>
+                            <i data-lucide="check"></i>
+                            View movie details, cast, and release dates
+                        </li>
+
+                        <li>
+                            <i data-lucide="check"></i>
+                            View movie ratings and read public reviews
+                        </li>
+
+                    </ul>
+
+
+                    <button class="select-plan-button"
+                            data-plan="CineMax Basic">
+                        Get Started
+                    </button>
+
+                </article>
+
+
+
+                <!-- CINEMAX PLUS -->
+
+                <article class="plan-card popular-plan">
+
+                    <div class="popular-label">MOST POPULAR</div>
+
+                    <div class="plan-header">
+                        <h2>CineMax Plus</h2>
+                        <p>For regular movie enthusiasts.</p>
+                    </div>
+
+                    <div class="plan-price">
+
+                        <span class="price-amount"
+                              data-monthly="₱199"
+                              data-yearly="₱990">
+                            ₱199
+                        </span>
+
+                        <span class="price-period">/ month</span>
+
+                    </div>
+
+                    <p class="plan-description">
+                        Enjoy a more personalized and convenient movie experience.
+                    </p>
+
+                    <div class="plan-divider"></div>
+
+
+                    <!-- PLUS FEATURES -->
+                    <ul class="plan-features">
+
+                        <li>
+                            <i data-lucide="check"></i>
+                            Watch all available movies
+                        </li>
+
+                        <li>
+                            <i data-lucide="check"></i>
+                            2 active streaming sessions per account
+                        </li>
+
+                        <li>
+                            <i data-lucide="check"></i>
+                            Save up to 50 movies in your watchlist
+                        </li>
+
+                        <li>
+                            <i data-lucide="check"></i>
+                            Advanced movie search and filters
+                        </li>
+
+                        <li>
+                            <i data-lucide="check"></i>
+                            Upload profile picture and change display name
+                        </li>
+
+                        <li>
+                            <i data-lucide="check"></i>
+                            Exclusive Plus membership badge
+                        </li>
+
+                        <li>
+                            <i data-lucide="check"></i>
+                            Personalized genre preferences
+                        </li>
+
+                        <li>
+                            <i data-lucide="check"></i>
+                            Movie recommendations based on selected genres and watchlist
+                        </li>
+
+                        <li>
+                            <i data-lucide="check"></i>
+                            Create personal movie lists
+                        </li>
+
+                        <li>
+                            <i data-lucide="check"></i>
+                            Rate movies and write detailed reviews
+                        </li>
+
+                    </ul>
+
+
+                    <button class="select-plan-button featured-button"
+                            data-plan="CineMax Plus">
+                        Get Started
+                    </button>
+
+                </article>
+
+
+
+                <!-- CINEMAX ULTIMATE -->
+
+                <article class="plan-card">
+
+                    <div class="plan-header">
+                        <h2>CineMax Ultimate</h2>
+                        <p>For dedicated movie fans and collectors.</p>
+                    </div>
+
+                    <div class="plan-price">
+
+                        <span class="price-amount"
+                              data-monthly="₱249"
+                              data-yearly="₱1,490">
+                            ₱249
+                        </span>
+
+                        <span class="price-period">/ month</span>
+
+                    </div>
+
+                    <p class="plan-description">
+                        Experience the complete CineMax movie experience.
+                    </p>
+
+                    <div class="plan-divider"></div>
+
+
+                    <!-- ULTIMATE FEATURES -->
+                    <ul class="plan-features">
+
+                        <li>
+                            <i data-lucide="check"></i>
+                            Watch all available movies
+                        </li>
+
+                        <li>
+                            <i data-lucide="check"></i>
+                            4 active streaming sessions per account
+                        </li>
+
+                        <li>
+                            <i data-lucide="check"></i>
+                            Unlimited watchlist capacity
+                        </li>
+
+                        <li>
+                            <i data-lucide="check"></i>
+                            Everything included in CineMax Plus
+                        </li>
+
+                        <li>
+                            <i data-lucide="check"></i>
+                            Enhanced recommendations based on viewing history, ratings, and preferences
+                        </li>
+
+                        <li>
+                            <i data-lucide="check"></i>
+                            Additional advanced movie filtering options
+                        </li>
+
+                        <li>
+                            <i data-lucide="check"></i>
+                            Create unlimited personal movie collections
+                        </li>
+
+                        <li>
+                            <i data-lucide="check"></i>
+                            Customize collections with titles, descriptions, and movie posters
+                        </li>
+
+                        <li>
+                            <i data-lucide="check"></i>
+                            Share public movie collections through shareable links
+                        </li>
+
+                        <li>
+                            <i data-lucide="check"></i>
+                            Exclusive Ultimate membership badge
+                        </li>
+
+                        <li>
+                            <i data-lucide="check"></i>
+                            Movie comparison feature
+                        </li>
+
+                        <li>
+                            <i data-lucide="check"></i>
+                            Advanced viewing statistics and movie history
+                        </li>
+
+                        <li>
+                            <i data-lucide="check"></i>
+                            Exclusive profile customization
+                        </li>
+
+                    </ul>
+
+
+                    <button class="select-plan-button"
+                            data-plan="CineMax Ultimate">
+                        Get Started
+                    </button>
+
+                </article>
+
+
+            </section>
+
+
+            <!-- PLAN SELECTION MESSAGE -->
+            <p id="plan-message"
+               class="plan-message"
+               role="status"
+               aria-live="polite">
             </p>
 
-            <div class="billing-toggle">
-                <button class="billing-button active"
-                        data-billing="monthly"
-                        aria-pressed="true">
-                    Monthly
-                </button>
-
-                <button class="billing-button"
-                        data-billing="yearly"
-                        aria-pressed="false">
-                    Yearly
-                    <span class="save-label">SAVE MORE</span>
-                </button>
-            </div>
-        </section>
-
-        <section class="plans-container">
-
-            <article class="plan-card">
-
-                <div class="plan-header">
-                    <h2>CineMax Basic</h2>
-                    <p>For casual movie explorers.</p>
-                </div>
-
-                <div class="plan-price">
-                    <span class="price-amount"
-                          data-monthly="₱0"
-                          data-yearly="₱0">₱0</span>
-                    <span class="price-period">/ forever</span>
-                </div>
-
-                <p class="plan-description">
-                    Enjoy discovering movies at no cost.
-                </p>
-
-                <div class="plan-divider"></div>
-
-                <ul class="plan-features">
-                    <li>
-                        <i data-lucide="check"></i>
-                        Full HD 1080p video quality
-                    </li>
-                    <li>
-                        <i data-lucide="check"></i>
-                        1 device at a time
-                    </li>
-                    <li>
-                        <i data-lucide="check"></i>
-                        Phone and tablet support
-                    </li>
-                    <li>
-                        <i data-lucide="check"></i>
-                        Browse movies and genres
-                    </li>
-                    <li>
-                        <i data-lucide="check"></i>
-                        View movie ratings and details
-                    </li>
-                </ul>
-
-                <button class="select-plan-button"
-                        data-plan="CineMax Basic">
-                    Get Started
-                </button>
-
-            </article>
-
-            <article class="plan-card popular-plan">
-
-                <div class="popular-label">MOST POPULAR</div>
-
-                <div class="plan-header">
-                    <h2>CinePlus</h2>
-                    <p>For passionate movie lovers.</p>
-                </div>
-
-                <div class="plan-price">
-                    <span class="price-amount"
-                          data-monthly="₱199"
-                          data-yearly="₱990">₱199</span>
-                    <span class="price-period">/ month</span>
-                </div>
-
-                <p class="plan-description">
-                    More flexibility for your movie experience.
-                </p>
-
-                <div class="plan-divider"></div>
-
-                <ul class="plan-features">
-                    <li>
-                        <i data-lucide="check"></i>
-                        Full HD 1080p video quality
-                    </li>
-                    <li>
-                        <i data-lucide="check"></i>
-                        2 devices at the same time
-                    </li>
-                    <li>
-                        <i data-lucide="check"></i>
-                        TV, computer, phone and tablet
-                    </li>
-                    <li>
-                        <i data-lucide="check"></i>
-                        Browse movies and genres
-                    </li>
-                    <li>
-                        <i data-lucide="check"></i>
-                        Create personal watchlists
-                    </li>
-                    <li>
-                        <i data-lucide="check"></i>
-                        Rate and review movies
-                    </li>
-                </ul>
-
-                <button class="select-plan-button featured-button"
-                        data-plan="CinePlus">
-                    Get Started
-                </button>
-
-            </article>
-
-            <article class="plan-card">
-
-                <div class="plan-header">
-                    <h2>CineMax Ultimate</h2>
-                    <p>For the ultimate movie experience.</p>
-                </div>
-
-                <div class="plan-price">
-                    <span class="price-amount"
-                          data-monthly="₱249"
-                          data-yearly="₱1,490">₱249</span>
-                    <span class="price-period">/ month</span>
-                </div>
-
-                <p class="plan-description">
-                    Experience cinema at its finest.
-                </p>
-
-                <div class="plan-divider"></div>
-
-                <ul class="plan-features">
-                    <li>
-                        <i data-lucide="check"></i>
-                        4K Ultra HD video quality
-                    </li>
-                    <li>
-                        <i data-lucide="check"></i>
-                        4 devices at the same time
-                    </li>
-                    <li>
-                        <i data-lucide="check"></i>
-                        Support for all devices
-                    </li>
-                    <li>
-                        <i data-lucide="check"></i>
-                        Everything in CinePlus
-                    </li>
-                    <li>
-                        <i data-lucide="check"></i>
-                        Advanced movie filters
-                    </li>
-                    <li>
-                        <i data-lucide="check"></i>
-                        Custom movie collections
-                    </li>
-                </ul>
-
-                <button class="select-plan-button"
-                        data-plan="CineMax Ultimate">
-                    Get Started
-                </button>
-
-            </article>
-
-        </section>
-
-        <p id="plan-message" class="plan-message"
-           role="status" aria-live="polite"></p>
 
         </main>
 
+
+        <!-- FOOTER -->
         <footer class="login-footer subscription-footer">
             <p>© 2026 CineMax. All rights reserved.</p>
         </footer>
+
     </div>
 
 </body>

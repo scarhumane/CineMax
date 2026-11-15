@@ -1,8 +1,9 @@
+
 <?php
+
 session_start();
 
 // 1. CHECK LOGIN
-
 if (
     !isset($_SESSION["logged_in"]) ||
     $_SESSION["logged_in"] !== true ||
@@ -12,60 +13,69 @@ if (
     exit;
 }
 
-// 2. ONLY ACCEPT FORM SUBMISSIONS
-
+// 2. ONLY ACCEPT POST REQUESTS
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     header("Location: subscription_page.html");
     exit;
 }
 
 // 3. GET SELECTED PLAN AND BILLING PERIOD
-
 $plan = $_SESSION["pending_plan"] ?? "";
 $billingPeriod = $_SESSION["pending_billing_period"] ?? "";
 
 $allowedPlans = [
-    "CinePlus",
+    "CineMax Basic",
+    "CineMax Plus",
     "CineMax Ultimate"
 ];
 
-$allowedPeriods = [
-    "monthly",
-    "yearly"
-];
+$isFreePlan = ($plan === "CineMax Basic");
 
-if (
-    !in_array($plan, $allowedPlans, true) ||
-    !in_array($billingPeriod, $allowedPeriods, true)
-) {
-    header("Location: subscription_page.html");
-    exit;
+// Validate plan
+if (!in_array($plan, $allowedPlans, true)) {
+    showError("Invalid subscription plan.");
 }
 
-// 4. VALIDATE SIMULATED PAYMENT DETAILS
-
-$paymentMethod = $_POST["payment_method"] ?? "";
-$customerName = trim($_POST["customer_name"] ?? "");
-$paymentReference = trim($_POST["payment_reference"] ?? "");
-
-$allowedMethods = [
-    "Card",
-    "GCash",
-    "Maya"
-];
-
+// Validate billing period
 if (
-    !in_array($paymentMethod, $allowedMethods, true) ||
-    $customerName === "" ||
-    $paymentReference === "" ||
-    strlen($customerName) > 100 ||
-    strlen($paymentReference) > 50
+    ($isFreePlan && $billingPeriod !== "forever") ||
+    (!$isFreePlan && !in_array($billingPeriod, ["monthly", "yearly"], true))
 ) {
-    showError("Please provide valid payment details.");
+    showError("Invalid billing period.");
+}
+
+// 4. VALIDATE PAYMENT DETAILS
+if ($isFreePlan) {
+
+    // Basic is free
+    $paymentMethod = "Free";
+    $customerName = "";
+    $paymentReference = "";
+
+} else {
+
+    $paymentMethod = $_POST["payment_method"] ?? "";
+    $customerName = trim($_POST["customer_name"] ?? "");
+    $paymentReference = trim($_POST["payment_reference"] ?? "");
+
+    $allowedMethods = [
+        "Card",
+        "GCash",
+        "Maya"
+    ];
+
+    if (
+        !in_array($paymentMethod, $allowedMethods, true) ||
+        $customerName === "" ||
+        $paymentReference === "" ||
+        strlen($customerName) > 100 ||
+        strlen($paymentReference) > 50
+    ) {
+        showError("Please provide valid payment details.");
+    }
 }
 
 // 5. LOAD USERS JSON
-
 $usersFile = __DIR__ . '/../03 - Data/users.json';
 
 if (!file_exists($usersFile)) {
@@ -89,7 +99,6 @@ if (
 }
 
 // 6. FIND THE LOGGED-IN USER
-
 $loggedInEmail = strtolower(trim($_SESSION["email"]));
 $userFound = false;
 
@@ -100,11 +109,28 @@ foreach ($data["users"] as &$user) {
         strtolower(trim($user["email"])) === $loggedInEmail
     ) {
 
-        // 7. SAVE SUBSCRIPTION TO USER ACCOUNT
-
+        // 7. SAVE SUBSCRIPTION INFORMATION
         $user["subscription_plan"] = $plan;
         $user["billing_period"] = $billingPeriod;
         $user["subscription_status"] = "active";
+
+        // Save payment information for paid plans only
+        if (!$isFreePlan) {
+
+            $user["payment_method"] = $paymentMethod;
+            $user["payment_reference"] = $paymentReference;
+
+            $user["customer_name"] = $customerName;
+
+        } else {
+
+            unset(
+                $user["payment_method"],
+                $user["payment_reference"],
+                $user["customer_name"]
+            );
+
+        }
 
         $userFound = true;
         break;
@@ -118,41 +144,43 @@ if (!$userFound) {
 }
 
 // 8. SAVE UPDATED JSON
-
 $updatedJson = json_encode(
     $data,
-    JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+    JSON_PRETTY_PRINT |
+    JSON_UNESCAPED_SLASHES |
+    JSON_UNESCAPED_UNICODE
 );
 
 if ($updatedJson === false) {
     showError("Unable to prepare subscription data.");
 }
 
-if (file_put_contents($usersFile, $updatedJson, LOCK_EX) === false) {
+if (
+    file_put_contents(
+        $usersFile,
+        $updatedJson,
+        LOCK_EX
+    ) === false
+) {
     showError("Unable to save your subscription.");
 }
 
-
 // 9. UPDATE PHP SESSION
-
 $_SESSION["subscription_plan"] = $plan;
 $_SESSION["billing_period"] = $billingPeriod;
 $_SESSION["subscription_status"] = "active";
+$_SESSION["has_subscription"] = true;
 
 // Clear pending checkout information
 unset($_SESSION["pending_plan"]);
 unset($_SESSION["pending_billing_period"]);
 
-
 // 10. REDIRECT TO HOMEPAGE
-
 header("Location: ../04 - Homepage/homepage.php");
 exit;
 
 
-
 // ERROR DISPLAY
-
 function showError($message) {
 
     http_response_code(400);
@@ -174,7 +202,7 @@ function showError($message) {
     echo "<body style='background:#050a14;color:#d6e9f5;font-family:Arial,sans-serif;padding:60px 20px;text-align:center;'>";
 
     echo "<h1>Something went wrong</h1>";
-    echo "<p>{$safeMessage}</p>";
+    echo "<p>" . $safeMessage . "</p>";
     echo "<a href='billing_page.php' style='color:#5cc3dc;'>Return to Checkout</a>";
 
     echo "</body>";
@@ -182,4 +210,5 @@ function showError($message) {
 
     exit;
 }
+
 ?>
