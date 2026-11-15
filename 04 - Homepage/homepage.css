@@ -2513,8 +2513,8 @@ main {
 }
 
 .profile-dropdown-item:hover {
-    background: rgba(92, 195, 220, 0.1);
-    color: var(--ice);
+    background: var(--ember-soft);
+    color: var(--ember);
 }
 
 .profile-dropdown-item i {

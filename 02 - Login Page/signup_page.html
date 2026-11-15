@@ -3,82 +3,223 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Sign Up | CineMax</title>
 
     <link rel="stylesheet" href="login_page.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Hanken+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
+
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="login_page.js" defer></script>
+    <script src="signup_page.js" defer></script>
 </head>
 
-<body>
-    <div class="login-container signup-page">
+<body class="cinema-login-page cinema-signup-page">
 
-        <header class="homepage-header">
-            <a href="landing_page.html" class="website-logo">CINEMAX</a>
+    <div class="cinema-login-background" aria-hidden="true"></div>
+    <div class="cinema-login-overlay" aria-hidden="true"></div>
+    <div class="cinema-login-light" aria-hidden="true"></div>
+    <div class="cinema-login-grain" aria-hidden="true"></div>
 
-            <nav class="homepage-nav-pill">
+    <div class="cinema-login-container">
+
+        <!-- Header -->
+        <header class="cinema-login-header">
+
+            <a href="landing_page.html" class="cinema-login-logo">
+                CINEMAX
+            </a>
+
+            <nav class="cinema-login-nav" aria-label="Main navigation">
                 <a href="landing_page.html">Home</a>
+                <a href="signup_page.html" aria-current="page">Sign Up</a>
                 <a href="features_page.html">Features</a>
                 <a href="about_us.html">About Us</a>
-                <a href="subscription_page.html" class="nav-subscribe">Subscribe ↗</a>
+                <a href="subscription_page.html" class="cinema-login-subscribe">
+                    Subscribe <span>↗</span>
+                </a>
             </nav>
+
         </header>
 
-       <main class="signup-content">
+        <!-- Sign Up -->
+        <main class="cinema-login-main cinema-signup-main">
 
-    <h1 class="signup-title">Create your Account</h1>
+            <section class="cinema-login-card cinema-signup-card">
 
-    <p class="signup-description">
-        Join CineMax and discover films worth talking about!
-    </p>
+                <div class="cinema-login-ticket-line"></div>
 
-    <form id="signup-form" action="signup.php" method="post">
+                <div class="cinema-login-admit">
+                    <i data-lucide="ticket"></i>
+                    <span>JOIN THE EXPERIENCE</span>
+                </div>
 
-        <label for="username">Username</label>
-        <input type="text" id="username" name="username" placeholder="Enter your username"
-               autocomplete="username" required>
+                <div class="cinema-login-heading">
+                    <h1>
+                        Create your<br>
+                        <em>CineMax account.</em>
+                    </h1>
 
-        <label for="email">Email Address</label>
-        <input type="email" id="email" name="email" placeholder="Enter your email address"
-               autocomplete="email" required>
+                    <p>
+                        Join CineMax and discover films worth talking about.
+                    </p>
+                </div>
 
-        <label for="password">Password</label>
-        <div class="password-container">
-            <input type="password" id="password" name="password" placeholder="Enter your password"
-                   autocomplete="new-password" minlength="8" required>
+                <form id="signup-form" action="signup.php" method="post" novalidate>
 
-            <button type="button" id="toggle-password"
-                    aria-label="Show password" aria-pressed="false">
-                <i data-lucide="eye-off"></i>
-            </button>
-        </div>
+                    <!-- Username -->
+                    <div class="cinema-login-field">
+                        <input
+                            type="text"
+                            id="username"
+                            name="username"
+                            placeholder=" "
+                            autocomplete="username"
+                            required
+                        >
+                        <label for="username">Username</label>
+                    </div>
 
-        <label for="confirm_password">Confirm Password</label>
-        <div class="password-container">
-            <input type="password" id="confirm_password"
-                   name="confirm_password" placeholder="Confirm your password"
-                   autocomplete="new-password" minlength="8" required>
+                    <!-- Email -->
+                    <div class="cinema-login-field">
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            placeholder=" "
+                            autocomplete="email"
+                            required
+                        >
+                        <label for="email">Email Address</label>
+                    </div>
 
-            <button type="button" id="toggle-confirm-password"
-                    aria-label="Show password" aria-pressed="false">
-                <i data-lucide="eye-off"></i>
-            </button>
-        </div>
+                    <!-- Password -->
+                    <div class="cinema-login-field cinema-password-field">
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            placeholder=" "
+                            autocomplete="new-password"
+                            minlength="8"
+                            required
+                            aria-describedby="password-strength"
+                        >
 
-        <input type="submit" value="Create Account"
-               class="login-button">
+                        <label for="password">Password</label>
 
-        <p class="signup-link">
-            Already have an account?
-            <a href="login_page.html">Log In</a>
-        </p>
+                        <button
+                            type="button"
+                            id="toggle-password"
+                            class="cinema-password-toggle"
+                            aria-label="Show password"
+                            aria-pressed="false"
+                        >
+                            <i data-lucide="eye-off"></i>
+                        </button>
+                    </div>
 
-    </form>
-</main>
-        <footer class="login-footer">
+                    <!-- Password Strength -->
+                    <div class="password-strength" id="password-strength">
+
+                        <div class="strength-heading">
+                            <span>Password strength</span>
+                            <span id="strength-text" aria-live="polite">Not entered</span>
+                        </div>
+
+                        <div
+                            class="strength-meter"
+                            role="progressbar"
+                            aria-label="Password strength"
+                            aria-valuemin="0"
+                            aria-valuemax="5"
+                            aria-valuenow="0"
+                            id="strength-meter"
+                        >
+                            <span class="strength-segment"></span>
+                            <span class="strength-segment"></span>
+                            <span class="strength-segment"></span>
+                            <span class="strength-segment"></span>
+                            <span class="strength-segment"></span>
+                        </div>
+
+                        <ul class="password-requirements">
+                            <li id="req-length">At least 8 characters</li>
+                            <li id="req-lowercase">One lowercase letter (a–z)</li>
+                            <li id="req-uppercase">One uppercase letter (A–Z)</li>
+                            <li id="req-number">One number (0–9)</li>
+                            <li id="req-special">One special character (! @ # $ %)</li>
+                        </ul>
+
+                    </div>
+
+                    <!-- Confirm Password -->
+                    <div class="cinema-login-field cinema-password-field">
+                        <input
+                            type="password"
+                            id="confirm_password"
+                            name="confirm_password"
+                            placeholder=" "
+                            autocomplete="new-password"
+                            required
+                            aria-describedby="confirm-password-error"
+                        >
+
+                        <label for="confirm_password">Confirm Password</label>
+
+                        <button
+                            type="button"
+                            id="toggle-confirm-password"
+                            class="cinema-password-toggle"
+                            aria-label="Show password"
+                            aria-pressed="false"
+                        >
+                            <i data-lucide="eye-off"></i>
+                        </button>
+                    </div>
+
+                    <p
+                        id="confirm-password-error"
+                        class="signup-field-error"
+                        aria-live="polite"
+                    ></p>
+
+                    <p
+                        id="signup-error"
+                        class="login-error"
+                        role="alert"
+                        aria-live="polite"
+                    ></p>
+
+                    <button type="submit" class="cinema-login-button">
+                        <span>Create Account</span>
+                    </button>
+
+                </form>
+
+                <div class="cinema-login-divider">
+                    <span></span>
+                    <p>YOUR NEXT FILM AWAITS</p>
+                    <span></span>
+                </div>
+
+                <p class="cinema-login-signup">
+                    Already have an account?
+                    <a href="login_page.html">Log In</a>
+                </p>
+
+            </section>
+
+        </main>
+
+        <!-- Footer -->
+        <footer class="cinema-login-footer">
             <p>&copy; 2026 CineMax. All rights reserved.</p>
         </footer>
 
     </div>
+
 </body>
 </html>

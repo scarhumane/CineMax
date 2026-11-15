@@ -83,14 +83,18 @@ body::after {
 .login-header, .homepage-header { display: flex; align-items: center; gap: clamp(16px, 3vw, 40px); padding-block: 22px; }
 .website-logo { margin-right: auto; color: var(--ice); font-size: 24px; font-weight: 500; letter-spacing: 0.34em; text-transform: uppercase; }
 .about-link { font-size: 14px; color: #c3d6e4; transition: color 0.2s; }
-.about-link:hover { color: #fff; }
+.about-link:hover { color: var(--ember); }
 .login-header .sign-in-button, .login-header .home-page-link {
   display: inline-flex; align-items: center; padding: 11px 22px;
   border: 1px solid var(--line); border-radius: 999px; font-size: 14px;
   background: rgba(7, 16, 29, 0.55); backdrop-filter: blur(8px);
-  transition: border-color 0.2s, background 0.2s;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
 }
-.login-header .sign-in-button:hover, .login-header .home-page-link:hover { border-color: rgba(214, 233, 245, 0.5); background: rgba(7, 16, 29, 0.85); }
+.login-header .sign-in-button:hover, .login-header .home-page-link:hover {
+  border-color: rgba(240, 194, 122, 0.5);
+  background: rgba(240, 194, 122, 0.1);
+  color: var(--ember);
+}
 
 .login-footer { margin-top: 20px; padding: 16px 0 20px; border-top: 1px solid var(--line); font-size: 12px; color: var(--mist); }
 .login-footer p { margin: 0; }
@@ -102,10 +106,10 @@ body::after {
   background: rgba(7, 16, 29, 0.55); backdrop-filter: blur(10px);
 }
 .homepage-nav-pill a { padding: 9px 16px; border-radius: 999px; font-size: 14px; color: #c3d6e4; transition: color 0.2s, background 0.2s; }
-.homepage-nav-pill a:hover { color: var(--ice); background: rgba(92, 195, 220, 0.1); }
-.homepage-nav-pill .nav-subscribe { color: #07121c; background: var(--frost); font-weight: 500; }
-.homepage-nav-pill a[aria-current="page"] { color: var(--ice); background: rgba(92, 195, 220, 0.1); }
-.homepage-nav-pill .nav-subscribe:hover { color: #07121c; background: var(--ice); }
+.homepage-nav-pill a:hover { color: var(--ember); background: rgba(240, 194, 122, 0.1); }
+.homepage-nav-pill .nav-subscribe { color: #07121c; background: var(--ember); font-weight: 500; }
+.homepage-nav-pill a[aria-current="page"] { color: var(--ember); background: rgba(240, 194, 122, 0.1); }
+.homepage-nav-pill .nav-subscribe:hover { color: #07121c; background: var(--ember); }
 
 /* ---------- Homepage ---------- */
 .home-main { flex: 1; display: flex; flex-direction: column; padding-block: clamp(16px, 4vh, 48px) 0; }
@@ -144,7 +148,7 @@ body::after {
 .toprated-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
 .toprated h2 { margin: 0; font-family: var(--display); font-weight: 500; font-size: 28px; line-height: 1; }
 .toprated-head a { font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mist); }
-.toprated-head a:hover { color: var(--frost); }
+.toprated-head a:hover { color: var(--ember); }
 .rank { margin: 18px 0 0; padding: 0; list-style: none; }
 .rank li { display: grid; grid-template-columns: 56px 28px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 16px 0; border-top: 1px solid var(--line); }
 .rank li:first-child { border-top: 0; }
@@ -769,8 +773,8 @@ body::after {
 }
 
 .subscription-page .select-plan-button:hover {
-    border-color: var(--ice);
-    background: var(--ice);
+    border-color: var(--ember);
+    background: var(--ember);
     color: #04121a;
 }
 
@@ -1258,7 +1262,304 @@ body.features-page::after {
     justify-content: center;
     margin-top: 28px;
 }
- 
+
+.cinema-signup-page {
+    min-height: 100vh;
+}
+
+/* Signup layout */
+
+.cinema-signup-main {
+    padding-top: 30px;
+    padding-bottom: 45px;
+}
+
+.cinema-signup-card {
+    width: 100%;
+    max-width: 520px;
+    margin: 0 auto;
+}
+
+.cinema-signup-card .cinema-login-heading h1 {
+    font-size: clamp(38px, 5vw, 55px);
+}
+
+/* Signup form reset */
+
+.cinema-signup-card #signup-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+/* Floating-label fields */
+
+.cinema-signup-card #signup-form .cinema-login-field {
+    position: relative;
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+.cinema-signup-card #signup-form .cinema-login-field label {
+    display: block;
+    position: absolute;
+    top: 19px;
+    left: 17px;
+    margin: 0;
+    padding: 0;
+    color: var(--login-mist, #93abbd);
+    background: transparent;
+    border: 0;
+    font-family: "Hanken Grotesk", sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    font-variant: normal;
+    letter-spacing: 0;
+    text-transform: none;
+    line-height: 1.4;
+    pointer-events: none;
+    transform-origin: left center;
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.cinema-signup-card #signup-form .cinema-login-field input {
+    display: block;
+    width: 100%;
+    height: 60px;
+    margin: 0;
+    padding: 22px 48px 8px 17px;
+    color: var(--login-frost, #d6e9f5);
+    background: rgba(2, 8, 17, 0.66);
+    border: 1px solid rgba(214, 233, 245, 0.16);
+    border-radius: 9px;
+    box-shadow: none;
+    outline: none;
+    font-family: "Hanken Grotesk", sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 0;
+    transition: border-color 0.25s, box-shadow 0.25s;
+}
+
+.cinema-signup-card #signup-form .cinema-login-field input::placeholder {
+    color: transparent;
+    opacity: 1;
+}
+
+.cinema-signup-card #signup-form .cinema-login-field input:focus {
+    border-color: var(--login-ice, #5cc3dc);
+    box-shadow: 0 0 0 3px rgba(92, 195, 220, 0.11);
+}
+
+.cinema-signup-card #signup-form .cinema-login-field input:focus + label,
+.cinema-signup-card #signup-form .cinema-login-field input:not(:placeholder-shown) + label {
+    color: var(--login-ember, #f0c27a);
+    transform: translateY(-12px) scale(0.78);
+}
+
+/* Password visibility buttons */
+
+.cinema-signup-card .cinema-password-toggle {
+    z-index: 2;
+    font: inherit;
+}
+
+.cinema-signup-card .cinema-password-toggle svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Password strength preview */
+
+.cinema-signup-card .password-strength {
+    width: 100%;
+    margin: -3px 0 19px;
+    padding: 16px;
+    border: 1px solid rgba(214, 233, 245, 0.14);
+    border-radius: 10px;
+    background: rgba(2, 8, 17, 0.38);
+    font-family: "Hanken Grotesk", sans-serif;
+}
+
+.cinema-signup-card .strength-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 12px;
+    color: var(--login-mist, #93abbd);
+    font-size: 12px;
+}
+
+.cinema-signup-card #strength-text {
+    color: var(--login-frost, #d6e9f5);
+    font-weight: 600;
+}
+
+/* Five-part strength meter */
+
+.cinema-signup-card .strength-meter {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 5px;
+    width: 100%;
+    height: 7px;
+    overflow: visible;
+    background: transparent;
+}
+
+.cinema-signup-card .strength-segment {
+    display: block;
+    height: 7px;
+    border-radius: 10px;
+    background: rgba(147, 171, 189, 0.2);
+    transition: background 0.25s ease;
+}
+
+.cinema-signup-card .strength-segment.filled {
+    background: #dca45e;
+}
+
+.cinema-signup-card .strength-segment.complete {
+    background: #68c99b;
+}
+
+/* Password requirements */
+
+.cinema-signup-card .password-requirements {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 9px 12px;
+    margin: 15px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.cinema-signup-card .password-requirements li {
+    position: relative;
+    padding-left: 17px;
+    color: var(--login-mist, #93abbd);
+    font-size: 11px;
+    line-height: 1.5;
+    transition: color 0.2s ease;
+}
+
+.cinema-signup-card .password-requirements li::before {
+    content: "○";
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: var(--login-mist, #93abbd);
+}
+
+.cinema-signup-card .password-requirements li.valid {
+    color: #68c99b;
+}
+
+.cinema-signup-card .password-requirements li.valid::before {
+    content: "✓";
+    color: #68c99b;
+    font-weight: 700;
+}
+
+/* Confirm password error */
+
+.cinema-signup-card .signup-field-error {
+    margin: -7px 0 12px;
+    color: #ff9999;
+    font-family: "Hanken Grotesk", sans-serif;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.cinema-signup-card .signup-field-error:empty {
+    display: none;
+}
+
+/* Signup button */
+
+.cinema-signup-card .cinema-login-button {
+    width: 100%;
+    margin-top: 12px;
+    font-family: "Hanken Grotesk", sans-serif;
+}
+
+/* Signup form error */
+
+.cinema-signup-card .login-error:empty {
+    display: none;
+}
+
+.cinema-signup-card .login-error {
+    margin: 0 0 12px;
+    color: #ff9999;
+    font-family: "Hanken Grotesk", sans-serif;
+    font-size: 12px;
+    line-height: 1.5;
+    text-align: left;
+}
+
+/* Autofill */
+
+.cinema-signup-card #signup-form input:-webkit-autofill,
+.cinema-signup-card #signup-form input:-webkit-autofill:hover,
+.cinema-signup-card #signup-form input:-webkit-autofill:focus {
+    -webkit-text-fill-color: #d6e9f5;
+    box-shadow: 0 0 0 100px #07101d inset;
+    caret-color: #d6e9f5;
+}
+
+/* Responsive */
+
+@media (max-width: 760px) {
+    .cinema-signup-main {
+        padding: 25px 18px 40px;
+    }
+
+    .cinema-signup-card {
+        max-width: 480px;
+        padding: 35px 28px 30px;
+    }
+}
+
+@media (max-width: 480px) {
+    .cinema-signup-main {
+        padding-inline: 14px;
+    }
+
+    .cinema-signup-card {
+        padding: 30px 20px 26px;
+    }
+
+    .cinema-signup-card .password-requirements {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .cinema-signup-card .strength-heading {
+        font-size: 11px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cinema-signup-card *,
+    .cinema-signup-card *::before,
+    .cinema-signup-card *::after {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
 /* ---------- Features: tablet ---------- */
 @media (max-width: 900px) {
     body.features-page::after {
@@ -1826,6 +2127,552 @@ body.features-page .login-footer {
 .billing-page .subscription-footer {
     font-family: var(--body);
 }
+
+
+body.cinema-login-page {
+    --login-night: #050a14;
+    --login-frost: #d6e9f5;
+    --login-mist: #93abbd;
+    --login-ice: #5cc3dc;
+    --login-ember: #f0c27a;
+
+    margin: 0;
+    min-height: 100vh;
+    background: var(--login-night);
+    color: var(--login-frost);
+    font-family: "Hanken Grotesk", sans-serif;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* Background */
+
+.cinema-login-background {
+    position: fixed;
+    inset: -2%;
+    z-index: 0;
+    background:
+        url("../01 - background/background.png")
+        center center / cover no-repeat;
+    filter: brightness(0.55) saturate(0.85);
+    transform: scale(1.02);
+}
+
+.cinema-login-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+        radial-gradient(
+            ellipse at center,
+            rgba(5, 10, 20, 0.43) 0%,
+            rgba(5, 10, 20, 0.78) 72%,
+            rgba(5, 10, 20, 0.94) 100%
+        ),
+        linear-gradient(
+            180deg,
+            rgba(5, 10, 20, 0.65),
+            rgba(5, 10, 20, 0.25) 45%,
+            rgba(5, 10, 20, 0.85)
+        );
+}
+
+.cinema-login-light {
+    position: fixed;
+    width: 650px;
+    height: 650px;
+    top: -250px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1;
+    pointer-events: none;
+    background: radial-gradient(
+        circle,
+        rgba(240, 194, 122, 0.09),
+        transparent 70%
+    );
+}
+
+.cinema-login-grain {
+    position: fixed;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E");
+}
+
+/* Main container */
+
+.cinema-login-container {
+    min-height: 100vh;
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
+
+.cinema-login-header {
+    width: calc(100% - 7%);
+    max-width: 1700px;
+    margin: 0 auto;
+    padding: 23px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    z-index: 3;
+}
+
+.cinema-login-logo {
+    color: var(--login-ice);
+    text-decoration: none;
+    font-size: 24px;
+    font-weight: 500;
+    letter-spacing: 0.34em;
+    white-space: nowrap;
+}
+
+.cinema-login-nav {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px;
+    border: 1px solid rgba(214, 233, 245, 0.16);
+    border-radius: 50px;
+    background: rgba(7, 16, 29, 0.55);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.cinema-login-nav a {
+    padding: 9px 16px;
+    color: #c3d6e4;
+    text-decoration: none;
+    font-size: 14px;
+    border-radius: 50px;
+    transition: 0.25s ease;
+}
+
+.cinema-login-nav a:hover {
+    color: var(--login-ember);
+    background: rgba(240, 194, 122, 0.1);
+}
+
+.cinema-login-nav .cinema-login-subscribe {
+    background: var(--login-ember);
+    color: #07121c;
+}
+
+.cinema-login-nav .cinema-login-subscribe:hover {
+    background: var(--login-ember);
+    color: #07121c;
+}
+
+/* Login layout */
+
+.cinema-login-main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 45px 20px 55px;
+}
+
+.cinema-login-card {
+    width: 100%;
+    max-width: 560px;
+    padding: 43px 50px 38px;
+    position: relative;
+    overflow: hidden;
+
+    border: 1px solid rgba(214, 233, 245, 0.16);
+    border-radius: 18px;
+
+    background: rgba(7, 16, 29, 0.83);
+
+    backdrop-filter: blur(24px) saturate(1.15);
+    -webkit-backdrop-filter: blur(24px) saturate(1.15);
+
+    box-shadow:
+    0 30px 90px rgba(0, 0, 0, 0.48),
+    0 0 70px rgba(240, 194, 122, 0.055);
+
+    animation: cinemaLoginEntrance 0.9s ease both;
+}
+
+@keyframes cinemaLoginEntrance {
+    from {
+        opacity: 0;
+        transform: translateY(24px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Ticket detail */
+
+.cinema-login-ticket-line {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        var(--login-ember),
+        var(--login-ice),
+        transparent
+    );
+    opacity: 0.8;
+}
+
+.cinema-login-admit {
+   display: inline-flex;
+   align-items: center;
+   gap: 9px;
+   padding: 8px 13px;
+   margin-left: auto;
+   width: fit-content;
+
+   color: var(--login-ember);
+   border: 1px solid rgba(240, 194, 122, 0.32);
+   border-radius: 5px;
+
+   font-size: 10px;
+   font-weight: 700;
+   letter-spacing: 0.24em;;
+}
+
+.cinema-login-admit svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* Heading */
+
+.cinema-login-heading {
+    margin: 24px 0 31px;
+}
+
+.cinema-login-heading h1 {
+    margin: 0 0 12px;
+    font-family: "Cormorant Garamond", serif;
+    font-size: clamp(40px, 5vw, 49px);
+    line-height: 0.99;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    color: var(--login-frost);
+}
+
+.cinema-login-heading h1 em {
+    color: var(--login-ember);
+    font-weight: 500;
+}
+
+.cinema-recovery-heading h1 em {
+    display: block;
+}
+
+.cinema-login-heading p {
+    margin: 15px 0 0;
+    color: var(--login-mist);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* Form fields */
+
+.cinema-login-field {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.cinema-login-field input {
+    width: 100%;
+    height: 60px;
+    padding: 22px 48px 8px 17px;
+
+    color: var(--login-frost);
+    background: rgba(2, 8, 17, 0.66);
+
+    border: 1px solid rgba(214, 233, 245, 0.16);
+    border-radius: 9px;
+
+    outline: none;
+    font-family: "Hanken Grotesk", sans-serif;
+    font-size: 14px;
+
+    transition: border-color 0.25s, box-shadow 0.25s;
+}
+
+.cinema-login-field label {
+    position: absolute;
+    left: 17px;
+    top: 19px;
+
+    color: var(--login-mist);
+    font-size: 14px;
+
+    pointer-events: none;
+    transform-origin: left center;
+    transition: 0.2s ease;
+}
+
+.cinema-login-field input:focus,
+.cinema-login-field input:not(:placeholder-shown) {
+    padding-top: 25px;
+}
+
+.cinema-login-field input:focus + label,
+.cinema-login-field input:not(:placeholder-shown) + label {
+    transform: translateY(-12px) scale(0.78);
+    color: var(--login-ember);
+}
+
+.cinema-login-field input:focus {
+    border-color: var(--login-ice);
+    box-shadow: 0 0 0 3px rgba(92, 195, 220, 0.11);
+}
+
+.cinema-login-field input::placeholder {
+    color: transparent;
+}
+
+/* Password visibility */
+
+.cinema-password-toggle {
+    position: absolute;
+    top: 10px;
+    right: 9px;
+
+    width: 40px;
+    height: 40px;
+
+    display: grid;
+    place-items: center;
+
+    color: var(--login-mist);
+    background: transparent;
+    border: 0;
+    border-radius: 8px;
+
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.cinema-password-toggle:hover {
+    color: var(--login-ember);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Forgot password */
+
+.cinema-login-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin: 2px 0 23px auto;
+
+    color: var(--login-mist);
+    font-size: 12px;
+}
+
+.cinema-login-options a {
+    color: var(--login-mist);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: 0.2s ease;
+}
+
+.cinema-login-options a:hover {
+    color: var(--login-ember);
+}
+
+/* Error message */
+
+.cinema-login-card .login-error {
+    color: #ff9999;
+    font-size: 13px;
+    margin: 0 0 12px;
+}
+
+/* Login button */
+
+.cinema-login-button {
+    width: 100%;
+    min-height: 55px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+
+    border: 0;
+    border-radius: 50px;
+
+    color: var(--login-night);
+    background: linear-gradient(
+        120deg,
+        #f7d9a4,
+        var(--login-ember),
+        #e6b466
+    );
+
+    font-family: "Hanken Grotesk", sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.035em;
+
+    cursor: pointer;
+    box-shadow: 0 9px 25px rgba(240, 194, 122, 0.17);
+    transition: transform 0.25s, box-shadow 0.25s;
+}
+
+.cinema-login-button svg {
+    width: 17px;
+    height: 17px;
+    transition: transform 0.25s;
+}
+
+.cinema-login-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 13px 30px rgba(240, 194, 122, 0.28);
+}
+
+.cinema-login-button:hover svg {
+    transform: translateX(4px);
+}
+
+.cinema-login-button:active {
+    transform: translateY(0);
+}
+
+/* Divider */
+
+.cinema-login-divider {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    margin: 27px 0 20px;
+}
+
+.cinema-login-divider span {
+    flex: 1;
+    height: 1px;
+    background: rgba(214, 233, 245, 0.12);
+}
+
+.cinema-login-divider p {
+    margin: 0;
+    color: rgba(214, 233, 245, 0.43);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    white-space: nowrap;
+}
+
+/* Signup link */
+
+.cinema-login-signup {
+    margin: 0;
+    text-align: center;
+    color: var(--login-mist);
+    font-size: 13px;
+}
+
+.cinema-login-signup a {
+    color: var(--login-ember);
+    font-weight: 700;
+    text-decoration: none;
+    margin-left: 4px;
+    transition: 0.2s ease;
+}
+
+.cinema-login-signup a:hover {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+/* Footer */
+
+.cinema-login-footer {
+    width: calc(100% - 7%);
+    max-width: 1700px;
+    margin: 0 auto;
+    padding: 18px 0 22px;
+
+    border-top: 1px solid rgba(214, 233, 245, 0.12);
+}
+
+.cinema-login-footer p {
+    margin: 0;
+    color: var(--login-mist);
+    font-size: 12px;
+}
+
+/* Responsive */
+
+@media (max-width: 760px) {
+    .cinema-login-header {
+        flex-direction: column;
+        gap: 18px;
+        padding: 20px 0;
+    }
+
+    .cinema-login-logo {
+        font-size: 23px;
+    }
+
+    .cinema-login-nav {
+        max-width: 100%;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 2px;
+    }
+
+    .cinema-login-nav a {
+        padding: 10px 11px;
+        font-size: 12px;
+    }
+
+    .cinema-login-main {
+        padding: 30px 18px 45px;
+    }
+
+    .cinema-login-card {
+        max-width: 440px;
+        padding: 35px 28px 30px;
+    }
+}
+
+@media (max-width: 420px) {
+    .cinema-login-nav a {
+        padding: 9px 8px;
+        font-size: 11px;
+    }
+
+    .cinema-login-card {
+        padding: 32px 22px 27px;
+    }
+
+    .cinema-login-heading h1 {
+        font-size: 39px;
+    }
+
+    .cinema-login-options {
+        font-size: 11px;
+    }
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 900px) {
   body::after { background: linear-gradient(0deg, rgba(3, 7, 14, 0.9) 0%, rgba(3, 7, 14, 0.55) 60%, rgba(3, 7, 14, 0.7) 100%); }
@@ -1856,5 +2703,197 @@ body.features-page .login-footer {
 
     .founder-card-header h2 {
         font-size: 18px;
+    }
+}
+
+
+/* ================================================================
+   INTEGRATED FIXES — preserve all existing CineMax page styles
+   These overrides are scoped to the redesigned login page only.
+   ================================================================ */
+
+/* Prevent the old global body background layers from affecting the
+   dedicated login composition. The login page has its own layers. */
+body.cinema-login-page {
+    isolation: isolate;
+    min-height: 100vh;
+    background: var(--login-night, #050a14);
+}
+
+body.cinema-login-page::before,
+body.cinema-login-page::after {
+    content: none;
+}
+
+body.cinema-login-page .cinema-login-background,
+body.cinema-login-page .cinema-login-overlay,
+body.cinema-login-page .cinema-login-light,
+body.cinema-login-page .cinema-login-grain {
+    pointer-events: none;
+}
+
+body.cinema-login-page .cinema-login-background { z-index: 0; }
+body.cinema-login-page .cinema-login-overlay,
+body.cinema-login-page .cinema-login-light { z-index: 1; }
+body.cinema-login-page .cinema-login-container { z-index: 2; }
+body.cinema-login-page .cinema-login-grain { z-index: 5; }
+
+/* Critical: the older shared stylesheet gives #login-form its own
+   glass card. Reset that styling so only .cinema-login-card is visible. */
+body.cinema-login-page .cinema-login-card #login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+/* Override the old shared form-label styling on the floating labels. */
+body.cinema-login-page #login-form .cinema-login-field label {
+    display: block;
+    position: absolute;
+    top: 19px;
+    left: 17px;
+    margin: 0;
+    padding: 0;
+    color: var(--login-mist);
+    background: transparent;
+    border: 0;
+    font-family: "Hanken Grotesk", sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    font-variant: normal;
+    letter-spacing: 0;
+    text-transform: none;
+    line-height: 1.4;
+    pointer-events: none;
+    transform-origin: left center;
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+/* Override the old global #login-form input rules. */
+body.cinema-login-page #login-form .cinema-login-field input {
+    display: block;
+    width: 100%;
+    height: 60px;
+    margin: 0;
+    padding: 22px 48px 8px 17px;
+    color: var(--login-frost);
+    background: rgba(2, 8, 17, 0.66);
+    border: 1px solid rgba(214, 233, 245, 0.16);
+    border-radius: 9px;
+    box-shadow: none;
+    outline: none;
+    font-family: "Hanken Grotesk", sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    font-variant: normal;
+    letter-spacing: 0;
+    line-height: normal;
+    transition: border-color 0.25s, box-shadow 0.25s;
+}
+
+body.cinema-login-page #login-form .cinema-login-field input::placeholder {
+    color: transparent;
+    opacity: 1;
+    font: inherit;
+    text-transform: none;
+}
+
+body.cinema-login-page #login-form .cinema-login-field input:focus {
+    border-color: var(--login-ice);
+    box-shadow: 0 0 0 3px rgba(92, 195, 220, 0.11);
+    outline: none;
+}
+
+body.cinema-login-page #login-form .cinema-login-field input:focus + label,
+body.cinema-login-page #login-form .cinema-login-field input:not(:placeholder-shown) + label {
+    color: var(--login-ember);
+    transform: translateY(-12px) scale(0.78);
+}
+
+body.cinema-login-page #login-form .cinema-login-field input:-webkit-autofill,
+body.cinema-login-page #login-form .cinema-login-field input:-webkit-autofill:hover,
+body.cinema-login-page #login-form .cinema-login-field input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--login-frost);
+    box-shadow: 0 0 0 100px #07101d inset;
+    caret-color: var(--login-frost);
+}
+
+/* Keep the password visibility control above the input. */
+body.cinema-login-page .cinema-password-toggle {
+    z-index: 2;
+    font: inherit;
+}
+
+body.cinema-login-page .cinema-password-toggle svg {
+    width: 18px;
+    height: 18px;
+}
+
+body.cinema-login-page .cinema-login-options a,
+body.cinema-login-page .cinema-login-signup a {
+    text-decoration-thickness: 1px;
+}
+
+body.cinema-login-page .cinema-login-card .login-error:empty {
+    display: none;
+}
+
+body.cinema-login-page .cinema-login-card .login-error {
+    margin: 0 0 12px;
+    padding: 0;
+    color: #ff9999;
+    font-family: "Hanken Grotesk", sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+    text-align: left;
+}
+
+body.cinema-login-page .cinema-login-button {
+    font-family: "Hanken Grotesk", sans-serif;
+}
+
+/* Login page responsive corrections. These rules do not alter the
+   homepage, signup, features, pricing, billing, or recovery pages. */
+@media (max-width: 760px) {
+    body.cinema-login-page .cinema-login-header {
+        width: calc(100% - 36px);
+    }
+
+    body.cinema-login-page .cinema-login-footer {
+        width: calc(100% - 36px);
+    }
+}
+
+@media (max-width: 420px) {
+    body.cinema-login-page .cinema-login-main {
+        padding-inline: 14px;
+    }
+
+    body.cinema-login-page .cinema-login-card {
+        padding: 30px 19px 25px;
+    }
+
+    body.cinema-login-page .password-requirements {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body.cinema-login-page .cinema-login-card,
+    body.cinema-login-page .cinema-login-card *,
+    body.cinema-login-page .cinema-login-card *::before,
+    body.cinema-login-page .cinema-login-card *::after {
+        animation: none !important;
+        transition: none !important;
     }
 }
