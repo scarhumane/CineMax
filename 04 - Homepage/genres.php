@@ -13,3 +13,5 @@ if (
 }
 
 render_page("genres.html");
+
+?>

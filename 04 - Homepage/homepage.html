@@ -1,14 +1,18 @@
+
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>CineMax — Home</title>
 
     <link rel="stylesheet" href="homepage.css">
 
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="homepage.js" defer></script>
+    <script src="profile_menu.js" defer></script>
 </head>
 
 <body>
@@ -23,85 +27,29 @@
             </a>
 
             <nav class="homepage-nav">
-            <a href="homepage.php" class="active">Home</a>
-            <a href="homepage.php#movies">Movies</a>
-            <a href="genres.php">Genres</a>
-            <a href="people.php">People</a>
-            <a href="homepage.php#watchlist">Watchlist</a>
+                <a href="homepage.php" class="active">Home</a>
+                <a href="homepage.php#movies">Movies</a>
+                <a href="genres.php">Genres</a>
+                <a href="people.php">People</a>
+                <a href="watchlist.php">Watchlist</a>
             </nav>
 
             <div class="header-right">
 
                 <div class="search-container">
                     <i data-lucide="search"></i>
+
                     <input
                         type="search"
                         id="homepage-search"
-                        placeholder="Search movies or people..."
+                        placeholder="Search movies..."
                         autocomplete="off"
-                        aria-label="Search movies or people"
+                        aria-label="Search movies"
                     >
                 </div>
 
-                <div class="profile-menu">
-
-                <button
-                class="profile-trigger"
-                id="profile-trigger"
-                type="button"
-                aria-expanded="false"
-                aria-controls="profile-dropdown"
-                >
-
-                <span class="profile-avatar">
-                    {{profile_initial}}
-                </span>
-
-                <span class="profile-plan">
-                    ultimate
-                </span>
-
-                <i data-lucide="chevron-down"></i>
-                </button>
-
-            <div class="profile-dropdown" id="profile-dropdown">
-
-                <div class="profile-dropdown-header">
-                    <span class="profile-avatar">
-                        {{profile_initial}}
-                    </span>
-
-                <div>
-                    <strong>{{profile_name}}</strong>
-                    <span>CineMax Ultimate</span>
-                </div>
-            </div>
-
-            <div class="profile-dropdown-divider"></div>
-
-             <a href="#" class="profile-dropdown-item">
-                <i data-lucide="user-round"></i>
-                <span>Account</span>
-            </a>
-
-            <a href="#" class="profile-dropdown-item">
-                <i data-lucide="settings"></i>
-                <span>Profile Settings</span>
-            </a>
-
-        <div class="profile-dropdown-divider"></div>
-
-            <a
-            href="../05 - logout Page/logout.php"
-            class="profile-dropdown-item logout-item"
-            >
-            <i data-lucide="log-out"></i>
-            <span>Log Out</span>
-            </a>
-
-            </div>
-
-                </div>
+                <!-- SHARED PROFILE MENU -->
+                {{profile_menu}}
 
             </div>
 
@@ -114,12 +62,12 @@
             <!-- CINEMA SHOWCASE -->
             <section class="hero-section">
 
-                <!-- The ID must match homepage.js -->
                 <div class="hero" id="cinemaShowcase"></div>
 
                 <div class="dots" id="dots"></div>
 
             </section>
+
 
             <p
                 class="service-status"
@@ -127,6 +75,7 @@
                 role="status"
                 hidden
             ></p>
+
 
             <!-- SEARCH RESULTS -->
             <section
@@ -200,12 +149,20 @@
 
             </section>
 
+
             <!-- TOP RATED MOVIES -->
             <section class="content-section" id="toprated">
 
                 <div class="section-header">
+
                     <h2>Top Rated Movies</h2>
-                    <div class="row-controls" role="group" aria-label="Top rated movie controls">
+
+                    <div
+                        class="row-controls"
+                        role="group"
+                        aria-label="Top rated movie controls"
+                    >
+
                         <button
                             type="button"
                             class="row-control"
@@ -215,6 +172,7 @@
                         >
                             <i data-lucide="chevron-left"></i>
                         </button>
+
                         <button
                             type="button"
                             class="row-control"
@@ -224,7 +182,9 @@
                         >
                             <i data-lucide="chevron-right"></i>
                         </button>
+
                     </div>
+
                 </div>
 
                 <ol
@@ -236,30 +196,6 @@
             </section>
 
 
-            <!-- MY WATCHLIST -->
-            <section class="content-section" id="watchlist">
-
-                <div class="section-header">
-                    <h2>My Watchlist</h2>
-                </div>
-
-                <div
-                    class="movie-row"
-                    id="watchlist-movies"
-                ></div>
-
-                <p
-                    class="empty-watchlist"
-                    id="empty-watchlist"
-                >
-                    Your watchlist is empty. Add movies you want to watch!
-                </p>
-
-            </section>
-
-        </main>
-
-
         <!-- FOOTER -->
         <footer class="homepage-footer">
             <p>&copy; {{current_year}} CineMax. All rights reserved.</p>
@@ -267,6 +203,8 @@
 
     </div>
 
+
+    <!-- MOVIE DETAILS MODAL -->
     <div
         class="modal"
         id="movie-modal"
@@ -276,8 +214,11 @@
         aria-hidden="true"
         hidden
     >
+
         <div class="modal-overlay" data-close-modal></div>
+
         <div class="modal-panel">
+
             <button
                 type="button"
                 class="modal-close"
@@ -286,9 +227,15 @@
             >
                 <i data-lucide="x"></i>
             </button>
+
             <div class="modal-media"></div>
+
             <div class="modal-body"></div>
+
         </div>
+
     </div>
 
 </body>
+
+</html>

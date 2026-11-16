@@ -2346,8 +2346,8 @@ body.cinema-login-page {
    margin-left: auto;
    width: fit-content;
 
-   color: var(--login-ember);
-   border: 1px solid rgba(240, 194, 122, 0.32);
+   color: var(--login-ice);
+   border: 1px solid rgba(52, 168, 194, 0.32);
    border-radius: 5px;
 
    font-size: 10px;

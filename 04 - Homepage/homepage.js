@@ -22,48 +22,97 @@ function escapeHTML(value) {
     })[character]);
 }
 
-// Logout
-
-const profileMenu = document.querySelector(".profile-menu");
-const profileTrigger = document.getElementById("profile-trigger");
-
-if (profileMenu && profileTrigger) {
-
-    profileTrigger.addEventListener("click", () => {
-
-        const isOpen = profileMenu.classList.toggle("open");
-
-        profileTrigger.setAttribute(
-            "aria-expanded",
-            String(isOpen)
-        );
-
-    });
-
-    document.addEventListener("click", event => {
-
-        if (!profileMenu.contains(event.target)) {
-            profileMenu.classList.remove("open");
-            profileTrigger.setAttribute("aria-expanded", "false");
-        }
-
-    });
-
-    document.addEventListener("keydown", event => {
-
-        if (event.key === "Escape") {
-            profileMenu.classList.remove("open");
-            profileTrigger.setAttribute("aria-expanded", "false");
-        }
-
-    });
-
-}
-
 const formatRating = rating => {
     const value = Number(rating || 0);
     return Number.isFinite(value) ? value.toFixed(1) : "N/A";
-};
+};;
+
+
+/* ACCOUNT WATCHLIST - PHP JSON STORAGE */
+
+let watchlistCache = [];
+let watchlistLoaded = false;
+
+function getWatchlist() {
+    return watchlistCache;
+}
+
+function isSaved(id) {
+    return watchlistCache.some(movie => String(movie.id) === String(id));
+}
+
+function notifyWatchlistChange() {
+    document.dispatchEvent(new CustomEvent("watchlist:change"));
+}
+
+async function loadWatchlist() {
+    const response = await fetch("watchlist_api.php?action=list", {
+        method: "GET",
+        credentials: "same-origin",
+        cache: "no-store"
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || data.error) {
+        throw new Error(data.error || "Unable to load your watchlist.");
+    }
+
+    watchlistCache = Array.isArray(data.watchlist) ? data.watchlist : [];
+    watchlistLoaded = true;
+    notifyWatchlistChange();
+
+    return watchlistCache;
+}
+
+async function sendWatchlistAction(action, payload = {}) {
+    const response = await fetch("watchlist_api.php", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ action, ...payload })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || data.error) {
+        throw new Error(data.error || "Unable to update your watchlist.");
+    }
+
+    watchlistCache = Array.isArray(data.watchlist) ? data.watchlist : [];
+    watchlistLoaded = true;
+    notifyWatchlistChange();
+
+    return data;
+}
+
+async function addToWatchlist(movie) {
+    if (!movie || !movie.id || isSaved(movie.id)) return false;
+
+    await sendWatchlistAction("add", { movie });
+    return true;
+}
+
+async function removeFromWatchlist(id) {
+    if (!id) return false;
+
+    await sendWatchlistAction("remove", { id: String(id) });
+    return true;
+}
+
+async function toggleWatchlist(movie) {
+    if (!movie || !movie.id) return false;
+
+    if (isSaved(movie.id)) {
+        await removeFromWatchlist(movie.id);
+        return false;
+    }
+
+    await addToWatchlist(movie);
+    return true;
+}
 
 const GENRE_NAMES = {
     28: "Action",
@@ -355,94 +404,6 @@ document.addEventListener("error", event => {
 
     image.replaceWith(placeholder);
 }, true);
-
-/* WATCHLIST */
-
-const WATCHLIST_KEY = "cinemax-watchlist-v2";
-const OLD_WATCHLIST_KEY = "cinemax-watchlist";
-
-let watchlistCache = null;
-
-function readWatchlist(key) {
-    try {
-        const value = JSON.parse(localStorage.getItem(key));
-        return Array.isArray(value) ? value : null;
-    } catch (error) {
-        console.warn("Unable to read the watchlist:", error);
-        return null;
-    }
-}
-
-function writeWatchlist(list) {
-    try {
-        localStorage.setItem(WATCHLIST_KEY, JSON.stringify(list));
-    } catch (error) {
-        console.warn("Unable to save the watchlist:", error);
-    }
-}
-
-function getWatchlist() {
-    if (watchlistCache !== null) {
-        return watchlistCache;
-    }
-
-    const saved = readWatchlist(WATCHLIST_KEY);
-
-    if (saved !== null) {
-        watchlistCache = saved.filter(movie => movie && movie.id);
-    } else {
-        const oldIds = readWatchlist(OLD_WATCHLIST_KEY) || [];
-
-        watchlistCache = oldIds
-            .map(id => getMovie(id))
-            .filter(Boolean);
-
-        if (watchlistCache.length) {
-            writeWatchlist(watchlistCache);
-        }
-    }
-
-    return watchlistCache;
-}
-
-function isSaved(id) {
-    return getWatchlist().some(
-        movie => String(movie.id) === String(id)
-    );
-}
-
-function notifyWatchlistChange() {
-    document.dispatchEvent(new CustomEvent("watchlist:change"));
-}
-
-function addToWatchlist(movie) {
-    if (!movie || isSaved(movie.id)) return;
-
-    watchlistCache = [...getWatchlist(), movie];
-    writeWatchlist(watchlistCache);
-    notifyWatchlistChange();
-}
-
-function removeFromWatchlist(id) {
-    watchlistCache = getWatchlist().filter(
-        movie => String(movie.id) !== String(id)
-    );
-
-    writeWatchlist(watchlistCache);
-    notifyWatchlistChange();
-}
-
-function toggleWatchlist(movie) {
-    if (!movie) return false;
-
-    if (isSaved(movie.id)) {
-        removeFromWatchlist(movie.id);
-        return false;
-    }
-
-    addToWatchlist(movie);
-    return true;
-}
 
 /* MOVIE CARDS */
 
@@ -919,9 +880,21 @@ function renderMovieDetails(movie, details) {
 
     updateWatchButton(button, watchlistMovie);
 
-    button.addEventListener("click", () => {
-        toggleWatchlist(watchlistMovie);
-        updateWatchButton(button, watchlistMovie);
+    button.dataset.movieId = watchlistMovie.id;
+    button.addEventListener("click", async () => {
+        if (button.disabled) return;
+
+        button.disabled = true;
+
+        try {
+            await toggleWatchlist(watchlistMovie);
+            updateWatchButton(button, watchlistMovie);
+        } catch (error) {
+            console.error("Watchlist update failed:", error);
+            alert(error.message || "Unable to update your watchlist. Please try again.");
+        } finally {
+            button.disabled = false;
+        }
     });
 
     refreshIcons();
@@ -1500,7 +1473,14 @@ function renderWatchlist() {
     }
 }
 
-document.addEventListener("watchlist:change", renderWatchlist);
+document.addEventListener("watchlist:change", () => {
+    renderWatchlist();
+
+    const modalButton = document.querySelector(".modal-watch");
+    if (modalButton?.dataset.movieId) {
+        updateWatchButton(modalButton, { id: modalButton.dataset.movieId });
+    }
+});
 
 /* SEARCH */
 
@@ -1695,7 +1675,17 @@ document.addEventListener("click", event => {
     const removeButton = target.closest("[data-remove-watchlist]");
 
     if (removeButton) {
-        removeFromWatchlist(removeButton.dataset.removeWatchlist);
+        removeButton.disabled = true;
+
+        removeFromWatchlist(removeButton.dataset.removeWatchlist)
+            .catch(error => {
+                console.error("Unable to remove movie from watchlist:", error);
+                alert(error.message || "Unable to update your watchlist. Please try again.");
+            })
+            .finally(() => {
+                removeButton.disabled = false;
+            });
+
         return;
     }
 
@@ -1853,6 +1843,9 @@ async function loadTMDB() {
 /* INITIALIZE PAGE */
 
 renderWatchlist();
+loadWatchlist().catch(error => {
+    console.error("Unable to load the account watchlist:", error);
+});
 watchSections();
 renderContinueWatching();
 

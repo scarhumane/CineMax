@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -11,6 +12,7 @@
 
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="people.js" defer></script>
+    <script src="profile_menu.js" defer></script>
 </head>
 
 <body>
@@ -29,22 +31,24 @@
                 <a href="homepage.php#movies">Movies</a>
                 <a href="genres.php">Genres</a>
                 <a href="people.php" class="active">People</a>
-                <a href="homepage.php#watchlist">Watchlist</a>
+                <a href="watchlist.php">Watchlist</a>
             </nav>
 
             <div class="header-right">
 
-                <div class="profile-container">
+                <div class="search-container">
+                    <i data-lucide="search"></i>
 
-                    <div class="profile-avatar" aria-hidden="true">
-                        {{profile_initial}}
-                    </div>
-
-                    <span class="profile-name">
-                        {{profile_name}}
-                    </span>
-
+                    <input
+                        type="search"
+                        id="people-search"
+                        placeholder="Search actors and directors..."
+                        autocomplete="off"
+                        aria-label="Search people by name"
+                    >
                 </div>
+
+                {{profile_menu}}
 
             </div>
 
@@ -61,26 +65,9 @@
 
                     <h1>Discover People</h1>
 
-
-                    <!-- SEARCH AND FILTERS -->
+                    <!-- ROLE FILTERS -->
                     <div class="people-controls">
 
-                        <label class="people-search">
-
-                            <i data-lucide="search"></i>
-
-                            <input
-                                type="search"
-                                id="people-search"
-                                placeholder="Search actors and directors..."
-                                autocomplete="off"
-                                aria-label="Search people by name"
-                            >
-
-                        </label>
-
-
-                        <!-- ROLE FILTERS -->
                         <div class="people-filters">
 
                             <button
@@ -182,7 +169,6 @@
     </div>
 
 
-    <!-- INITIALIZE LUCIDE ICONS -->
     <script>
         if (typeof lucide !== "undefined") {
             lucide.createIcons();
