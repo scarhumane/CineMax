@@ -27,14 +27,28 @@
 
             <nav class="homepage-nav">
                 <a href="homepage.php">Home</a>
-                <a href="homepage.php#movies">Movies</a>
+                <a href="movies.php">Movies</a>
                 <a href="genres.php" class="active">Genres</a>
                 <a href="people.php">People</a>
-                <a href="homepage.php#watchlist">Watchlist</a>
+                <a href="watchlist.php">Watchlist</a>
             </nav>
 
             <div class="header-right">
+
+                <div class="search-container">
+                    <i data-lucide="search"></i>
+
+                    <input
+                        type="search"
+                        id="genre-search"
+                        placeholder="Search genres..."
+                        autocomplete="off"
+                        aria-label="Search genres"
+                    >
+                </div>
+
                 {{profile_menu}}
+
             </div>
 
         </header>
@@ -49,20 +63,6 @@
                 <div class="section-header">
                     <h1>Explore Genres</h1>
                     <p>Discover movies across different genres.</p>
-                </div>
-
-
-                <!-- GENRE SEARCH -->
-                <div class="search-container">
-                    <i data-lucide="search"></i>
-
-                    <input
-                        type="search"
-                        id="genre-search"
-                        placeholder="Search genres..."
-                        autocomplete="off"
-                        aria-label="Search genres"
-                    >
                 </div>
 
 

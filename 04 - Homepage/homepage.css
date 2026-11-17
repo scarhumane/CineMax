@@ -865,24 +865,6 @@ main {
     font-size: 15px;
 }
 
-#genres > .content-section > .search-container {
-    width: min(460px, 100%);
-    min-height: 48px;
-    margin-bottom: 30px;
-    padding: 12px 18px;
-    border-radius: 8px;
-    background: rgba(7, 16, 29, 0.8);
-}
-
-#genres > .content-section > .search-container svg {
-    width: 19px;
-    height: 19px;
-}
-
-#genres > .content-section > .search-container input {
-    font-size: 15px;
-}
-
 #genres-list.genres-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -2079,10 +2061,6 @@ main {
 
     #genres > .content-section > .section-header h1 {
         font-size: 36px;
-    }
-
-    #genres > .content-section > .search-container {
-        width: 100%;
     }
 
     #genres-list.genres-grid {
