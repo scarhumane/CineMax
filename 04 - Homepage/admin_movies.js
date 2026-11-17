@@ -1,6 +1,7 @@
 const adminMovieForm = document.getElementById("admin-movie-form");
 const adminMovieList = document.getElementById("admin-movie-list");
 const adminStatus = document.getElementById("admin-status");
+const posterLookupButton = document.getElementById("lookup-poster-button");
 const adminCsrfToken = document.querySelector(".admin-page")?.dataset.csrfToken || "";
 
 function escapeAdminHTML(value) {
@@ -55,6 +56,7 @@ function renderAdminMovies(movies) {
                     Catalog ID ${escapeAdminHTML(movie.id)}
                     ${movie.year ? ` · ${escapeAdminHTML(movie.year)}` : ""}
                     ${Array.isArray(movie.genres) && movie.genres.length ? ` · ${escapeAdminHTML(movie.genres.join(", "))}` : ""}
+                    ${movie.youtube_url ? ` · <a href="${escapeAdminHTML(movie.youtube_url)}" target="_blank" rel="noopener noreferrer">YouTube link</a>` : ""}
                 </p>
             </div>
             <button
@@ -116,3 +118,49 @@ adminMovieList.addEventListener("click", async event => {
 });
 
 loadAdminMovies();
+
+posterLookupButton.addEventListener("click", async () => {
+    const title = adminMovieForm.elements.title.value.trim();
+    const posterInput = adminMovieForm.elements.poster;
+
+    adminStatus.textContent = "";
+    if (!title) {
+        adminStatus.textContent = "Enter a movie title before searching for its poster.";
+        adminMovieForm.elements.title.focus();
+        return;
+    }
+
+    posterLookupButton.disabled = true;
+    posterLookupButton.textContent = "Searching posters...";
+
+    try {
+        const response = await fetch("poster_lookup.php", {
+            method: "POST",
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                "X-CSRF-Token": adminCsrfToken
+            },
+            body: JSON.stringify({ title })
+        });
+        let data;
+
+        try {
+            data = await response.json();
+        } catch {
+            throw new Error("The poster service returned an invalid response.");
+        }
+
+        if (!response.ok || !data.success || !data.poster_url) {
+            throw new Error(data.error || "Unable to find a poster for that title.");
+        }
+
+        posterInput.value = data.poster_url;
+        adminStatus.textContent = "Poster found and added to the movie form.";
+    } catch (error) {
+        adminStatus.textContent = error.message;
+    } finally {
+        posterLookupButton.disabled = false;
+        posterLookupButton.textContent = "Find poster by title";
+    }
+});

@@ -1820,6 +1820,14 @@ main {
     min-width: 0;
 }
 
+.modal-video {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border: 0;
+    background: #000;
+}
+
 .modal-media .movie-poster {
     width: 100%;
 }

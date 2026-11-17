@@ -63,6 +63,26 @@ function watchlist_clean_image($value): string
         : "";
 }
 
+function watchlist_clean_youtube_url($value): string
+{
+    $url = watchlist_clean_text($value, 500);
+    if ($url === "") {
+        return "";
+    }
+
+    $parts = parse_url($url);
+    if (
+        !is_array($parts)
+        || ($parts["scheme"] ?? "") !== "https"
+        || ($parts["host"] ?? "") !== "www.youtube-nocookie.com"
+        || !preg_match('#^/embed/([A-Za-z0-9_-]{11})$#', $parts["path"] ?? "", $match)
+    ) {
+        return "";
+    }
+
+    return "https://www.youtube-nocookie.com/embed/" . $match[1];
+}
+
 function watchlist_clean_string_list($value, int $limit, int $length): array
 {
     if (!is_array($value)) {
@@ -126,6 +146,7 @@ function watchlist_clean_movie($movie): ?array
     return [
         "id" => $id,
         "title" => $title,
+        "youtube_url" => watchlist_clean_youtube_url($movie["youtube_url"] ?? ""),
         "year" => $year,
         "rating" => $rating,
         "genres" => watchlist_clean_string_list($movie["genres"] ?? [], 10, 50),

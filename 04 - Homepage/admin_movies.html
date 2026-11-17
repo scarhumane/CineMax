@@ -25,9 +25,10 @@
                 <p class="hero-label">CINEMAX ADMIN</p>
                 <h1>Manage the movie collection</h1>
                 <p>
-                    Add movies and their artwork, genres, and people to the
-                    local CineMax catalog. No movie database API is required.
+                    Add movies, YouTube links, genres, and people to the
+                    CineMax catalog.
                 </p>
+                <p><a href="movies.php">Browse catalog movies</a></p>
             </section>
 
             <section class="admin-panel" aria-labelledby="add-movie-heading">
@@ -51,6 +52,15 @@
                             required
                         >
                     </label>
+                    <label class="admin-description-field">
+                        YouTube movie link (optional)
+                        <input
+                            type="url"
+                            name="youtube_url"
+                            maxlength="500"
+                            placeholder="https://www.youtube.com/watch?v=..."
+                        >
+                    </label>
                     <label>
                         Release year
                         <input
@@ -70,14 +80,26 @@
                             placeholder="Drama, Science Fiction"
                         >
                     </label>
-                    <label>
+                    <label class="admin-description-field">
                         Poster image URL (optional)
                         <input
                             type="text"
                             name="poster"
-                            placeholder="https://... or a local image path"
+                            placeholder="Paste an image URL or use poster lookup"
                         >
                     </label>
+                    <div class="admin-description-field">
+                        <button
+                            type="button"
+                            id="lookup-poster-button"
+                            class="admin-submit-button">
+                            Find poster by title
+                        </button>
+                        <p class="modal-muted">
+                            Poster lookup uses TMDB. Configure TMDB_API_KEY in
+                            the PHP server environment to enable it.
+                        </p>
+                    </div>
                     <label>
                         Banner / backdrop image URL (optional)
                         <input

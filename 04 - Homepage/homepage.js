@@ -1,4 +1,5 @@
 const $ = id => document.getElementById(id);
+const adminMode = $("movie-catalog")?.dataset.adminMode === "true";
 
 const reducedMotion = window.matchMedia(
     "(prefers-reduced-motion: reduce)"
@@ -363,6 +364,7 @@ async function loadAdminMovies() {
         localCatalogMovies = data.movies.map(movie => ({
             id: String(movie.id),
             title: movie.title,
+            youtube_url: movie.youtube_url || "",
             year: movie.year || "N/A",
             rating: Number(movie.rating || 0),
             genres: Array.isArray(movie.genres) ? movie.genres : [],
@@ -925,8 +927,18 @@ function renderLocalMovieDetails(movie, media, body, panel) {
                 </div>
             </section>
         ` : ""}
-        <div class="modal-actions"><button type="button" class="modal-watch"></button></div>
-        ${renderPersonalRating(movie)}
+        ${getYouTubeEmbedURL(movie.youtube_url) ? `
+            <div class="modal-actions">
+                <button type="button" class="modal-trailer" data-play-movie>
+                    <i data-lucide="play"></i>
+                    Play movie
+                </button>
+            </div>
+        ` : ""}
+        ${adminMode ? "" : `
+            <div class="modal-actions"><button type="button" class="modal-watch"></button></div>
+            ${renderPersonalRating(movie)}
+        `}
     `;
 
     const posterImage = media.querySelector("img");
@@ -946,7 +958,28 @@ function renderLocalMovieDetails(movie, media, body, panel) {
         }, { once: true });
     });
 
+    const playButton = body.querySelector("[data-play-movie]");
+    playButton?.addEventListener("click", () => {
+        const embedURL = getYouTubeEmbedURL(movie.youtube_url);
+        if (!embedURL) return;
+        media.innerHTML = `
+            <iframe
+                class="modal-video"
+                src="${escapeHTML(embedURL)}?autoplay=1"
+                title="Play ${escapeHTML(movie.title)}"
+                allow="autoplay; encrypted-media; picture-in-picture"
+                referrerpolicy="strict-origin-when-cross-origin"
+                allowfullscreen>
+            </iframe>
+        `;
+    });
+
     const button = body.querySelector(".modal-watch");
+    if (!button) {
+        refreshIcons();
+        return;
+    }
+
     updateWatchButton(button, movie);
     button.dataset.movieId = movie.id;
     button.addEventListener("click", async () => {
@@ -962,6 +995,23 @@ function renderLocalMovieDetails(movie, media, body, panel) {
     });
 
     refreshIcons();
+}
+
+function getYouTubeEmbedURL(value) {
+    if (typeof value !== "string") return "";
+
+    try {
+        const url = new URL(value);
+        const match = url.hostname === "www.youtube-nocookie.com"
+            && url.protocol === "https:"
+            ? url.pathname.match(/^\/embed\/([A-Za-z0-9_-]{11})$/)
+            : null;
+        return match
+            ? `https://www.youtube-nocookie.com/embed/${match[1]}`
+            : "";
+    } catch {
+        return "";
+    }
 }
 
 function firstInitials(name) {
@@ -988,6 +1038,8 @@ function closeModal() {
 
     modal.querySelector(".modal-panel")
         ?.style.removeProperty("--modal-backdrop");
+    modal.querySelector(".modal-media").innerHTML = "";
+    modal.querySelector(".modal-media").innerHTML = "";
 
     if (lastFocused && typeof lastFocused.focus === "function") {
         lastFocused.focus();
@@ -1727,9 +1779,11 @@ async function loadLocalCatalog() {
 /* INITIALIZE PAGE */
 
 renderWatchlist();
-loadWatchlist().catch(error => {
-    console.error("Unable to load the account watchlist:", error);
-});
+if (!adminMode) {
+    loadWatchlist().catch(error => {
+        console.error("Unable to load the account watchlist:", error);
+    });
+}
 watchSections();
 
 showHeroSkeleton();

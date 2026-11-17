@@ -446,6 +446,7 @@ function closeModal() {
 
     modal.querySelector(".modal-panel")
         ?.style.removeProperty("--modal-backdrop");
+    modal.querySelector(".modal-media").innerHTML = "";
 
     if (lastFocused && typeof lastFocused.focus === "function") {
         lastFocused.focus();
@@ -740,7 +741,30 @@ function renderLocalMovieDetails(movie) {
             </section>
         ` : ""}
         <div class="modal-actions"><button type="button" class="modal-watch"></button></div>
+        ${getYouTubeEmbedURL(movie.youtube_url) ? `
+            <div class="modal-actions">
+                <button type="button" class="modal-trailer" data-play-movie>
+                    <i data-lucide="play"></i>
+                    Play movie
+                </button>
+            </div>
+        ` : ""}
     `;
+
+    body.querySelector("[data-play-movie]")?.addEventListener("click", () => {
+        const embedURL = getYouTubeEmbedURL(movie.youtube_url);
+        if (!embedURL) return;
+        media.innerHTML = `
+            <iframe
+                class="modal-video"
+                src="${escapeHTML(embedURL)}?autoplay=1"
+                title="Play ${escapeHTML(movie.title)}"
+                allow="autoplay; encrypted-media; picture-in-picture"
+                referrerpolicy="strict-origin-when-cross-origin"
+                allowfullscreen>
+            </iframe>
+        `;
+    });
 
     const button = body.querySelector(".modal-watch");
     updateWatchButton(button, movie);
@@ -779,6 +803,21 @@ function openModal(movie) {
     lastFocused = document.activeElement;
     showModal();
     renderLocalMovieDetails(movie);
+}
+
+function getYouTubeEmbedURL(value) {
+    if (typeof value !== "string") return "";
+
+    try {
+        const url = new URL(value);
+        const match = url.protocol === "https:"
+            && url.hostname === "www.youtube-nocookie.com"
+            ? url.pathname.match(/^\/embed\/([A-Za-z0-9_-]{11})$/)
+            : null;
+        return match ? `https://www.youtube-nocookie.com/embed/${match[1]}` : "";
+    } catch {
+        return "";
+    }
 }
 
 /*CLICK EVENTS*/

@@ -100,12 +100,37 @@ function render_homepage(): void
     render_page("homepage.html");
 }
 
+function render_movie_navigation(): string
+{
+    if (current_user_is_admin()) {
+        return '
+            <nav class="homepage-nav">
+                <a href="movies.php" class="active">Movies</a>
+                <a href="admin_movies.php">Manage Movies</a>
+            </nav>
+        ';
+    }
+
+    return '
+        <nav class="homepage-nav">
+            <a href="homepage.php">Home</a>
+            <a href="movies.php" class="active">Movies</a>
+            <a href="genres.php">Genres</a>
+            <a href="people.php">People</a>
+            <a href="watchlist.php">Watchlist</a>
+        </nav>
+    ';
+}
+
 
 function render_page(string $filename): void
 {
     start_session();
 
-    if (current_user_is_admin() && $filename !== "admin_movies.html") {
+    if (
+        current_user_is_admin()
+        && !in_array($filename, ["admin_movies.html", "movies.html"], true)
+    ) {
         header("Location: admin_movies.php");
         exit;
     }
@@ -133,6 +158,8 @@ function render_page(string $filename): void
             "{{profile_plan}}",
             "{{profile_menu}}",
             "{{admin_csrf_token}}",
+            "{{admin_mode}}",
+            "{{movie_navigation}}",
             "{{current_year}}"
         ],
         [
@@ -141,6 +168,8 @@ function render_page(string $filename): void
             e(current_user_plan()),
             render_profile_menu(),
             e(admin_csrf_token()),
+            current_user_is_admin() ? "true" : "false",
+            render_movie_navigation(),
             date("Y")
         ],
         $html

@@ -58,6 +58,44 @@ function admin_movies_valid_image($value): bool
         || admin_movies_clean_image($value) !== "";
 }
 
+function admin_movies_clean_youtube_url($value): string
+{
+    if (!is_string($value) || trim($value) === "") {
+        return "";
+    }
+
+    $parts = parse_url(trim($value));
+    if (
+        !is_array($parts)
+        || ($parts["scheme"] ?? "") !== "https"
+        || !in_array(strtolower($parts["host"] ?? ""), [
+            "youtube.com",
+            "www.youtube.com",
+            "m.youtube.com",
+            "youtu.be"
+        ], true)
+    ) {
+        return "";
+    }
+
+    $host = strtolower($parts["host"]);
+    $path = $parts["path"] ?? "";
+    if ($host === "youtu.be") {
+        $videoId = trim($path, "/");
+    } elseif (preg_match('#^/(?:embed|shorts)/([A-Za-z0-9_-]{11})/?$#', $path, $match)) {
+        $videoId = $match[1];
+    } else {
+        parse_str($parts["query"] ?? "", $query);
+        $videoId = is_string($query["v"] ?? null) ? $query["v"] : "";
+    }
+
+    if (!preg_match('/^[A-Za-z0-9_-]{11}$/', $videoId)) {
+        return "";
+    }
+
+    return "https://www.youtube-nocookie.com/embed/" . $videoId;
+}
+
 $method = $_SERVER["REQUEST_METHOD"] ?? "GET";
 
 if (!in_array($method, ["GET", "POST", "DELETE"], true)) {
@@ -150,6 +188,8 @@ if ($method === "POST") {
     $director = trim(is_string($input["director"] ?? null) ? $input["director"] : "");
     $directorPhoto = admin_movies_clean_image($input["director_photo"] ?? "");
     $rating = 0;
+    $youtubeInput = $input["youtube_url"] ?? "";
+    $youtubeUrl = admin_movies_clean_youtube_url($youtubeInput);
     $description = trim(
         is_string($input["description"] ?? null)
             ? $input["description"]
@@ -198,6 +238,16 @@ if ($method === "POST") {
         admin_movies_respond(["error" => "Artwork must use an HTTPS image URL or a local image path."], 400);
     }
 
+    if (
+        is_string($youtubeInput)
+        && trim($youtubeInput) !== ""
+        && $youtubeUrl === ""
+    ) {
+        flock($handle, LOCK_UN);
+        fclose($handle);
+        admin_movies_respond(["error" => "Enter a valid HTTPS YouTube watch, short, or embed link."], 400);
+    }
+
     foreach (preg_split('/\r\n|\r|\n/', is_string($castInput) ? $castInput : "") as $line) {
         $line = trim($line);
         if ($line === "") {
@@ -241,6 +291,7 @@ if ($method === "POST") {
     $movies[] = [
         "id" => $id,
         "title" => $title,
+        "youtube_url" => $youtubeUrl,
         "year" => $year === "" ? "" : (string) $year,
         "description" => $description,
         "poster" => $poster,

@@ -24,13 +24,7 @@
                 CINEMAX
             </a>
 
-            <nav class="homepage-nav">
-                <a href="homepage.php">Home</a>
-                <a href="movies.php" class="active">Movies</a>
-                <a href="genres.php">Genres</a>
-                <a href="people.php">People</a>
-                <a href="watchlist.php">Watchlist</a>
-            </nav>
+            {{movie_navigation}}
 
             <div class="header-right">
 
@@ -52,7 +46,7 @@
 
         </header>
 
-        <main id="movie-catalog">
+        <main id="movie-catalog" data-admin-mode="{{admin_mode}}">
 
             <section
                 class="content-section"
