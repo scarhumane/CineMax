@@ -202,6 +202,146 @@ main {
     font-weight: 600;
 }
 
+/* ADMIN MOVIE COLLECTION */
+
+.admin-page {
+    width: min(100%, 980px);
+    margin: 55px auto;
+}
+
+.admin-heading {
+    margin-bottom: 30px;
+}
+
+.admin-heading h1 {
+    margin: 8px 0;
+    color: var(--frost);
+    font-family: var(--display);
+    font-size: clamp(36px, 5vw, 54px);
+    font-weight: 500;
+}
+
+.admin-heading > p:last-child {
+    max-width: 720px;
+    color: var(--mist);
+}
+
+.admin-panel {
+    margin: 22px 0;
+    padding: clamp(20px, 4vw, 32px);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--glass);
+}
+
+.admin-panel h2 {
+    margin: 0 0 20px;
+    color: var(--ember);
+    font-family: var(--display);
+    font-size: 30px;
+    font-weight: 500;
+}
+
+.admin-movie-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.admin-movie-form label {
+    display: grid;
+    gap: 7px;
+    color: var(--mist);
+    font-size: 13px;
+}
+
+.admin-movie-form input,
+.admin-movie-form textarea {
+    width: 100%;
+    min-width: 0;
+    padding: 11px 13px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: rgba(3, 7, 14, 0.72);
+    color: var(--frost);
+}
+
+.admin-movie-form textarea {
+    resize: vertical;
+}
+
+.admin-description-field {
+    grid-column: 1 / -1;
+}
+
+.admin-submit-button,
+.admin-remove-button {
+    width: fit-content;
+    padding: 11px 17px;
+    border: 1px solid var(--line-hover);
+    border-radius: 7px;
+    background: var(--ice-soft);
+    color: var(--ice);
+    transition: background var(--transition), color var(--transition);
+}
+
+.admin-submit-button:hover,
+.admin-remove-button:hover {
+    background: var(--ice);
+    color: var(--night);
+}
+
+.admin-status {
+    min-height: 1.5em;
+    margin: 14px 0 0;
+    color: var(--ember);
+}
+
+.admin-error {
+    color: #ff9a9a;
+}
+
+.admin-movie-list {
+    display: grid;
+    gap: 10px;
+}
+
+.admin-movie-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 15px 0;
+    border-bottom: 1px solid var(--line);
+}
+
+.admin-movie-row h3,
+.admin-movie-row p {
+    margin: 0;
+}
+
+.admin-movie-row h3 {
+    color: var(--frost);
+    font-size: 15px;
+}
+
+.admin-movie-row p {
+    margin-top: 4px;
+    color: var(--mist);
+    font-size: 12px;
+}
+
+.admin-remove-button {
+    flex-shrink: 0;
+    border-color: rgba(255, 130, 130, 0.35);
+    background: rgba(255, 100, 100, 0.1);
+    color: #ffaaaa;
+}
+
+.admin-remove-button:hover {
+    background: #ffaaaa;
+}
+
 /* SEARCH */
 
 .search-container {

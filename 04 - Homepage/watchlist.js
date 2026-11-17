@@ -1,7 +1,7 @@
 
-const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/";
-
 const movieIndex = new Map();
+let localCatalogMovies = [];
+let catalogLoadPromise = null;
 
 let watchlistCache = [];
 let lastFocused = null;
@@ -49,86 +49,51 @@ function getMovie(id) {
     return movieIndex.get(String(id));
 }
 
-/*TMDB API*/
+/*LOCAL MOVIE CATALOG*/
 
-async function fetchTMDB(type, { id = null, query = "" } = {}) {
-    const parameters = new URLSearchParams({ type });
+async function loadLocalCatalog() {
+    if (catalogLoadPromise) return catalogLoadPromise;
 
-    if (id !== null) {
-        parameters.set("id", String(id));
-    }
+    catalogLoadPromise = (async () => {
+        const response = await fetch("admin_movies_api.php", {
+            credentials: "same-origin",
+            cache: "no-store",
+            headers: { Accept: "application/json" }
+        });
+        let data;
 
-    if (query) {
-        parameters.set("query", query);
-    }
+        try {
+            data = await response.json();
+        } catch {
+            throw new Error("The local movie catalog returned an invalid response.");
+        }
 
-    const response = await fetch(
-        `tmdb_movies.php?${parameters.toString()}`
-    );
+        if (!response.ok || !Array.isArray(data.movies)) {
+            throw new Error(data.error || "Unable to load the local movie catalog.");
+        }
 
-    const data = await response.json();
+        localCatalogMovies = data.movies
+            .filter(movie => movie && movie.id)
+            .map(movie => ({
+                ...movie,
+                id: String(movie.id),
+                year: movie.year || "N/A",
+                rating: Number(movie.rating || 0),
+                genres: Array.isArray(movie.genres) ? movie.genres : [],
+                cast: Array.isArray(movie.cast) ? movie.cast : [],
+                poster: movie.poster || "",
+                backdrop: movie.backdrop || "",
+                description: movie.description || "No description available."
+            }));
 
-    if (!response.ok || !data || data.error) {
-        throw new Error(data?.error || "Unable to fetch movie data.");
-    }
+        register(localCatalogMovies);
+        return localCatalogMovies;
+    })().catch(error => {
+        catalogLoadPromise = null;
+        throw error;
+    });
 
-    return data;
-}
-
-/*CONVERT TMDB SEARCH RESULTS*/
-
-const GENRE_NAMES = {
-    28: "Action",
-    12: "Adventure",
-    16: "Animation",
-    35: "Comedy",
-    80: "Crime",
-    99: "Documentary",
-    18: "Drama",
-    10751: "Family",
-    14: "Fantasy",
-    36: "History",
-    27: "Horror",
-    10402: "Music",
-    9648: "Mystery",
-    10749: "Romance",
-    878: "Sci-Fi",
-    53: "Thriller",
-    10752: "War",
-    37: "Western"
-};
-
-function normalizeTMDBMovie(movie) {
-    if (!movie || !movie.id) return null;
-
-    return {
-        id: String(movie.id),
-
-        title: movie.title || movie.original_title || "Untitled",
-
-        year: movie.release_date
-            ? Number(movie.release_date.slice(0, 4))
-            : "N/A",
-
-        rating: Number(movie.vote_average || 0),
-
-        genres: (movie.genre_ids || [])
-            .map(id => GENRE_NAMES[id])
-            .filter(Boolean),
-
-        director: "",
-        cast: [],
-
-        poster: movie.poster_path
-            ? `${TMDB_IMAGE_BASE}w500${movie.poster_path}`
-            : "",
-
-        backdrop: movie.backdrop_path
-            ? `${TMDB_IMAGE_BASE}w1280${movie.backdrop_path}`
-            : "",
-
-        description: movie.overview || "No description available."
-    };
+    return catalogLoadPromise;
 }
 
 /*WATCHLIST API*/
@@ -363,20 +328,23 @@ async function performSearch(query) {
     );
 
     try {
-        const movieData = await fetchTMDB("search", {
-            query: term
-        });
+        const catalog = await loadLocalCatalog();
 
         // Ignore outdated search responses.
         if (currentRequest !== searchRequestNumber) {
             return;
         }
 
-        const foundMovies = register(
-            (movieData.results || [])
-                .map(normalizeTMDBMovie)
-                .filter(Boolean)
-        );
+        const searchTerm = term.toLocaleLowerCase();
+        const foundMovies = register(catalog.filter(movie => [
+            movie.title,
+            movie.description,
+            movie.director,
+            ...(movie.genres || []),
+            ...(movie.cast || []).map(person =>
+                typeof person === "string" ? person : person.name
+            )
+        ].join(" ").toLocaleLowerCase().includes(searchTerm)));
 
         if (!foundMovies.length) {
             showSearchResults(
@@ -408,13 +376,13 @@ async function performSearch(query) {
             return;
         }
 
-        console.error("TMDB search error:", error);
+        console.error("Local movie search error:", error);
 
         showSearchResults(
             "Search Unavailable",
             `
                 <p class="no-results">
-                    Unable to search right now.
+                    ${escapeHTML(error.message || "Unable to search right now.")}
                     Please try again.
                 </p>
             `
@@ -507,18 +475,14 @@ function renderMovieDetails(movie, details) {
     const body = modal.querySelector(".modal-body");
     const panel = modal.querySelector(".modal-panel");
 
-    const backdrop = details.backdrop_path
-        ? `${TMDB_IMAGE_BASE}original${details.backdrop_path}`
-        : movie.backdrop;
+    const backdrop = details.backdrop || movie.backdrop;
 
     panel.style.setProperty(
         "--modal-backdrop",
         backdrop ? `url("${backdrop}")` : "none"
     );
 
-    const poster = details.poster_path
-        ? `${TMDB_IMAGE_BASE}w500${details.poster_path}`
-        : movie.poster;
+    const poster = details.poster || movie.poster;
 
     media.innerHTML = poster
         ? `
@@ -659,7 +623,7 @@ function renderMovieDetails(movie, details) {
                             ${person.profile_path
                                 ? `
                                     <img
-                                        src="${TMDB_IMAGE_BASE}w185${escapeHTML(person.profile_path)}"
+                                        src="${escapeHTML(person.photo || person.profile_path)}"
                                         alt="${escapeHTML(person.name)}"
                                         loading="lazy"
                                     >
@@ -728,63 +692,93 @@ function renderMovieDetails(movie, details) {
     refreshIcons();
 }
 
-async function openModal(movie) {
+function renderLocalMovieDetails(movie) {
     const modal = getModal();
-
-    if (!modal || !movie) return;
-
-    const requestId = ++modalRequestNumber;
-
-    lastFocused = document.activeElement;
-
     const media = modal.querySelector(".modal-media");
     const body = modal.querySelector(".modal-body");
+    const panel = modal.querySelector(".modal-panel");
 
-    if (!media || !body) return;
+    if (!media || !body || !panel) return;
 
-    media.innerHTML = createPoster(movie);
+    panel.style.setProperty(
+        "--modal-backdrop",
+        movie.backdrop ? `url("${escapeHTML(movie.backdrop)}")` : "none"
+    );
+    media.innerHTML = movie.poster
+        ? `<img class="modal-poster" src="${escapeHTML(movie.poster)}" alt="${escapeHTML(movie.title)} poster">`
+        : `<div class="poster-placeholder">${escapeHTML(movie.title)}</div>`;
+
+    const cast = (Array.isArray(movie.cast) ? movie.cast : []).map(person =>
+        typeof person === "string" ? { name: person, photo: "" } : person
+    ).filter(person => person && person.name);
 
     body.innerHTML = `
-        <p class="hero-label">CineMax Movie Guide</p>
-
-        <h2 id="modal-title">
-            ${escapeHTML(movie.title)}
-        </h2>
-
-        <p class="modal-muted">
-            Loading movie information...
+        <p class="hero-label">CineMax Local Catalog</p>
+        <h2 id="modal-title">${escapeHTML(movie.title)}</h2>
+        <p class="modal-meta">
+            ${escapeHTML(movie.year || "Year unknown")}
+            ${movie.rating ? ` · <span class="modal-rating">★ ${formatRating(movie.rating)}</span>` : ""}
         </p>
+        <div class="modal-tags">
+            ${(movie.genres || []).map(genre => `<span class="tag">${escapeHTML(genre)}</span>`).join("")}
+        </div>
+        <p class="modal-description">${escapeHTML(movie.description || "No synopsis available.")}</p>
+        ${movie.director ? `<div class="modal-credits"><p><span>Director</span> ${escapeHTML(movie.director)}</p></div>` : ""}
+        ${cast.length ? `
+            <section class="modal-section">
+                <h3>Cast</h3>
+                <div class="modal-cast-grid">
+                    ${cast.map(person => `
+                        <article class="modal-cast-item">
+                            ${person.photo
+                                ? `<img src="${escapeHTML(person.photo)}" alt="${escapeHTML(person.name)}" loading="lazy">`
+                                : `<div class="cast-placeholder"><i data-lucide="user"></i></div>`}
+                            <p>${escapeHTML(person.name)}</p>
+                        </article>
+                    `).join("")}
+                </div>
+            </section>
+        ` : ""}
+        <div class="modal-actions"><button type="button" class="modal-watch"></button></div>
     `;
 
-    showModal();
-
-    try {
-        const details = await fetchTMDB("movie", {
-            id: movie.id
-        });
-
-        if (requestId !== modalRequestNumber || modal.hidden) {
-            return;
+    const button = body.querySelector(".modal-watch");
+    updateWatchButton(button, movie);
+    button.addEventListener("click", async () => {
+        if (button.disabled) return;
+        button.disabled = true;
+        try {
+            const saved = watchlistCache.some(item => String(item.id) === String(movie.id));
+            await sendWatchlistAction(saved ? "remove" : "add", saved
+                ? { id: String(movie.id) }
+                : { movie });
+            updateWatchButton(button, movie);
+        } catch (error) {
+            console.error("Watchlist update failed:", error);
+            alert(error.message || "Unable to update your watchlist. Please try again.");
+        } finally {
+            button.disabled = false;
         }
+    });
 
-        renderMovieDetails(movie, details);
+    media.querySelector("img")?.addEventListener("error", event => {
+        const placeholder = document.createElement("div");
+        placeholder.className = "poster-placeholder";
+        placeholder.textContent = movie.title;
+        event.currentTarget.replaceWith(placeholder);
+    }, { once: true });
 
-    } catch (error) {
-        if (requestId !== modalRequestNumber) return;
+    refreshIcons();
+}
 
-        console.error("Movie details error:", error);
+function openModal(movie) {
+    const modal = getModal();
+    if (!modal || !movie) return;
 
-        body.innerHTML = `
-            <h2 id="modal-title">
-                ${escapeHTML(movie.title)}
-            </h2>
-
-            <p class="modal-muted">
-                Unable to load the complete movie details.
-                Please try again.
-            </p>
-        `;
-    }
+    modalRequestNumber++;
+    lastFocused = document.activeElement;
+    showModal();
+    renderLocalMovieDetails(movie);
 }
 
 /*CLICK EVENTS*/

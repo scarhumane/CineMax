@@ -1,4 +1,3 @@
-
 <?php
 
 function render_profile_menu(): string
@@ -46,27 +45,33 @@ function render_profile_menu(): string
 
                 <div>
                     <strong><?= e($name) ?></strong>
-                    <span><?= e($plan) ?></span>
+                    <span><?= current_user_is_admin() ? "Admin account" : e($plan) ?></span>
                 </div>
 
             </div>
 
-            <div class="profile-dropdown-divider"></div>
+            <?php if (!current_user_is_admin()): ?>
+                <div class="profile-dropdown-divider"></div>
 
-            <a href="#" class="profile-dropdown-item">
-                <i data-lucide="user-round"></i>
-                <span>Account</span>
-            </a>
+                <a href="#" class="profile-dropdown-item">
+                    <i data-lucide="user-round"></i>
+                    <span>Account</span>
+                </a>
 
-            <a href="#" class="profile-dropdown-item">
-                <i data-lucide="settings"></i>
-                <span>Profile Settings</span>
-            </a>
+                <a href="#" class="profile-dropdown-item">
+                    <i data-lucide="settings"></i>
+                    <span>Profile Settings</span>
+                </a>
+            <?php endif; ?>
+
+            <?php if (current_user_is_admin()): ?>
+                <div class="profile-dropdown-divider"></div>
+            <?php endif; ?>
 
             <div class="profile-dropdown-divider"></div>
 
             <a
-                href="../05 - logout Page/logout.php"
+                href="../05 - Logout Page/logout.php"
                 class="profile-dropdown-item logout-item"
             >
                 <i data-lucide="log-out"></i>

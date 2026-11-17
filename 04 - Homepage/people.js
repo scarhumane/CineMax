@@ -1,8 +1,6 @@
 
 const $ = id => document.getElementById(id);
 
-const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/";
-
 const PROFILE_SIZE = "w342";
 const POSTER_SIZE = "w342";
 
@@ -34,11 +32,7 @@ function escapeHTML(value) {
 }
 
 function getImageURL(path, size = "w500") {
-    if (!path) {
-        return "";
-    }
-
-    return `${TMDB_IMAGE_BASE}${size}${path}`;
+    return typeof path === "string" ? path : "";
 }
 
 function getInitials(name) {
@@ -97,73 +91,76 @@ function calculateAge(birthday, deathday = null) {
     return age >= 0 ? String(age) : "";
 }
 
-async function fetchTMDB(type, parameters = {}) {
-    const url = new URL(
-        "tmdb_movies.php",
-        window.location.href
-    );
-
-    url.searchParams.set("type", type);
-
-    Object.entries(parameters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== "") {
-            url.searchParams.set(key, value);
-        }
+async function fetchLocalPeople() {
+    const response = await fetch("admin_movies_api.php", {
+        credentials: "same-origin",
+        cache: "no-store",
+        headers: { Accept: "application/json" }
     });
+    let data;
 
-    const response = await fetch(url, {
-        headers: {
-            "Accept": "application/json"
-        }
-    });
-
-    if (!response.ok) {
-        throw new Error(`TMDB request failed: ${response.status}`);
+    try {
+        data = await response.json();
+    } catch {
+        throw new Error("The local movie catalog returned an invalid response.");
     }
 
-    const data = await response.json();
-
-    if (data.error) {
-        throw new Error(data.error);
+    if (!response.ok || !Array.isArray(data.movies)) {
+        throw new Error(data.error || "Unable to load the local movie catalog.");
     }
 
-    return data;
-}
+    const peopleByName = new Map();
+    data.movies.forEach(movie => {
+        if (!movie || !movie.title) return;
 
-function normalizeTMDBPerson(person) {
-    const knownFor = Array.isArray(person.known_for)
-        ? person.known_for
-        : [];
+        const credit = {
+            id: String(movie.id),
+            title: movie.title,
+            posterPath: movie.poster || "",
+            releaseDate: movie.year || ""
+        };
+        const addPerson = (name, role, photo = "") => {
+            if (typeof name !== "string" || !name.trim()) return;
 
-    const knownForMovies = knownFor.filter(item => {
-        return item.media_type === "movie" ||
-            (
-                !item.media_type &&
-                (item.title || item.release_date)
-            );
+            const displayName = name.trim();
+            const key = displayName.toLocaleLowerCase();
+            let person = peopleByName.get(key);
+            if (!person) {
+                person = {
+                    id: `person-${encodeURIComponent(key)}`,
+                    name: displayName,
+                    roles: new Set(),
+                    profilePath: "",
+                    knownFor: new Map()
+                };
+                peopleByName.set(key, person);
+            }
+
+            person.roles.add(role);
+            if (!person.profilePath && photo) person.profilePath = photo;
+            person.knownFor.set(credit.id, credit);
+        };
+
+        addPerson(movie.director, "director", movie.director_photo);
+        (Array.isArray(movie.cast) ? movie.cast : []).forEach(person => {
+            if (typeof person === "string") {
+                addPerson(person, "actor");
+            } else if (person && typeof person === "object") {
+                addPerson(person.name, "actor", person.photo || "");
+            }
+        });
     });
 
-    return {
-        id: person.id,
-        name: person.name || "Unknown Person",
-
-        department:
-            person.known_for_department ||
-            person.department ||
-            "Unknown",
-
-        profilePath: person.profile_path || null,
-
-        popularity: Number(person.popularity || 0),
-
-        knownFor: knownForMovies.map(movie => ({
-            id: movie.id,
-            title: movie.title || "Untitled Movie",
-            posterPath: movie.poster_path || null,
-            releaseDate: movie.release_date || "",
-            character: movie.character || ""
+    return [...peopleByName.values()]
+        .map(person => ({
+            ...person,
+            roles: [...person.roles],
+            department: person.roles.has("director") && person.roles.has("actor")
+                ? "Actor, Director"
+                : person.roles.has("director") ? "Director" : "Actor",
+            knownFor: [...person.knownFor.values()]
         }))
-    };
+        .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 function createPersonCard(person) {
@@ -181,7 +178,7 @@ function createPersonCard(person) {
     return `
         <article
             class="person-card"
-            data-person-id="${person.id}"
+            data-person-id="${escapeHTML(person.id)}"
             tabindex="0"
             role="button"
             aria-label="View ${escapeHTML(person.name)}"
@@ -191,10 +188,11 @@ function createPersonCard(person) {
                     image
                         ? `
                             <img
-                                src="${image}"
+                                src="${escapeHTML(image)}"
                                 alt="${escapeHTML(person.name)}"
                                 loading="lazy"
                                 onerror="
+                                    this.onerror=null;
                                     this.style.display='none';
                                     this.nextElementSibling.style.display='flex';
                                 "
@@ -239,7 +237,7 @@ function renderPeople(list = people) {
 
     if (activeRole !== "all") {
         filteredPeople = filteredPeople.filter(person => {
-            return person.department.toLowerCase() === activeRole;
+            return person.roles.includes(activeRole);
         });
     }
 
@@ -247,7 +245,7 @@ function renderPeople(list = people) {
         container.innerHTML = `
             <div class="empty-state">
                 <h3>No people found</h3>
-                <p>Try another name or change the selected filter.</p>
+                <p>Add cast members or a director to movies in the local catalog, or try another search/filter.</p>
             </div>
         `;
 
@@ -277,21 +275,11 @@ async function loadPopularPeople() {
     `;
 
     try {
-        const data = await fetchTMDB("people", {
-            page: 1
-        });
+        people = await fetchLocalPeople();
 
         if (requestNumber !== peopleRequestNumber) {
             return;
         }
-
-        const results = Array.isArray(data)
-            ? data
-            : data.results || [];
-
-        people = results
-            .map(normalizeTMDBPerson)
-            .filter(person => person.id && person.name);
 
         renderPeople();
 
@@ -305,6 +293,7 @@ async function loadPopularPeople() {
         container.innerHTML = `
             <div class="empty-state">
                 <h3>Unable to load people</h3>
+                <p>${escapeHTML(error.message)}</p>
                 <p>Please try refreshing the page.</p>
             </div>
         `;
@@ -334,22 +323,20 @@ async function searchPeople(query) {
     `;
 
     try {
-        const data = await fetchTMDB("people", {
-            query: query.trim(),
-            page: 1
-        });
+        const catalogPeople = await fetchLocalPeople();
 
         if (requestNumber !== searchRequestNumber) {
             return;
         }
 
-        const results = Array.isArray(data)
-            ? data
-            : data.results || [];
-
-        people = results
-            .map(normalizeTMDBPerson)
-            .filter(person => person.id && person.name);
+        const term = query.trim().toLocaleLowerCase();
+        people = catalogPeople.filter(person =>
+            [
+                person.name,
+                ...person.roles,
+                ...person.knownFor.map(movie => movie.title)
+            ].join(" ").toLocaleLowerCase().includes(term)
+        );
 
         renderPeople();
 
@@ -477,12 +464,11 @@ function getMovieCredits(personData) {
 }
 
 function createKnownForMovie(movie) {
-    const poster = movie.poster_path
-        ? getImageURL(movie.poster_path, POSTER_SIZE)
-        : "";
+    const poster = getImageURL(movie.posterPath || movie.poster_path, POSTER_SIZE);
 
-    const year = movie.release_date
-        ? movie.release_date.slice(0, 4)
+    const releaseDate = movie.releaseDate || movie.release_date;
+    const year = releaseDate
+        ? String(releaseDate).slice(0, 4)
         : "Year unknown";
 
     return `
@@ -530,11 +516,10 @@ function renderPersonDetails(personData) {
 
     const person = personData.person || personData;
 
-    const profile = person.profile_path
-        ? getImageURL(person.profile_path, PROFILE_SIZE)
-        : "";
+    const profile = getImageURL(person.profilePath || person.profile_path, PROFILE_SIZE);
 
     const department =
+        person.roles?.join(", ") ||
         person.known_for_department ||
         person.department ||
         "Unknown";
@@ -551,7 +536,7 @@ function renderPersonDetails(personData) {
     const placeOfBirth = person.place_of_birth || "Unknown";
 
     const biography = person.biography ||
-        "No biography is currently available.";
+        "Profile information is managed through the local CineMax movie catalog.";
 
     const movies = getMovieCredits(personData);
 
@@ -561,7 +546,7 @@ function renderPersonDetails(personData) {
                 profile
                     ? `
                         <img
-                            src="${profile}"
+                            src="${escapeHTML(profile)}"
                             alt="${escapeHTML(person.name)}"
                         >
                     `
@@ -574,6 +559,14 @@ function renderPersonDetails(personData) {
         </div>
     `;
 
+    const profileImage = media.querySelector("img");
+    profileImage?.addEventListener("error", () => {
+        const fallback = document.createElement("div");
+        fallback.className = "person-modal-fallback";
+        fallback.textContent = getInitials(person.name);
+        profileImage.replaceWith(fallback);
+    }, { once: true });
+
     body.innerHTML = `
         <div class="person-modal-details">
             <p class="person-modal-department">
@@ -582,39 +575,34 @@ function renderPersonDetails(personData) {
 
             <h2>${escapeHTML(person.name || "Unknown Person")}</h2>
 
-            <div class="person-facts">
-                <div>
-                    <span>Birthday</span>
-                    <p>${escapeHTML(birthday)}</p>
+            ${person.birthday || person.place_of_birth || person.deathday ? `
+                <div class="person-facts">
+                    ${person.birthday ? `
+                        <div>
+                            <span>Birthday</span>
+                            <p>${escapeHTML(birthday)}</p>
+                        </div>
+                    ` : ""}
+                    ${age ? `
+                        <div>
+                            <span>Age</span>
+                            <p>${escapeHTML(age)}</p>
+                        </div>
+                    ` : ""}
+                    ${person.deathday ? `
+                        <div>
+                            <span>Passed away</span>
+                            <p>${escapeHTML(formatDate(person.deathday))}</p>
+                        </div>
+                    ` : ""}
+                    ${person.place_of_birth ? `
+                        <div>
+                            <span>Place of birth</span>
+                            <p>${escapeHTML(placeOfBirth)}</p>
+                        </div>
+                    ` : ""}
                 </div>
-
-                ${
-                    age
-                        ? `
-                            <div>
-                                <span>Age</span>
-                                <p>${escapeHTML(age)}</p>
-                            </div>
-                        `
-                        : ""
-                }
-
-                ${
-                    person.deathday
-                        ? `
-                            <div>
-                                <span>Passed away</span>
-                                <p>${escapeHTML(formatDate(person.deathday))}</p>
-                            </div>
-                        `
-                        : ""
-                }
-
-                <div>
-                    <span>Place of birth</span>
-                    <p>${escapeHTML(placeOfBirth)}</p>
-                </div>
-            </div>
+            ` : ""}
 
             <section class="person-biography">
                 <h3>Biography</h3>
@@ -706,6 +694,9 @@ async function openPersonDetails(personId) {
     }
 
     const requestNumber = ++activePersonRequestNumber;
+    const selectedPerson = people.find(person => person.id === personId);
+
+    if (!selectedPerson) return;
 
     openPersonModal();
 
@@ -727,33 +718,24 @@ async function openPersonDetails(personId) {
         oldKnownFor.remove();
     }
 
-    try {
-        const data = await fetchTMDB("person", {
-            id: personId
-        });
+    if (requestNumber !== activePersonRequestNumber) return;
 
-        if (requestNumber !== activePersonRequestNumber) {
-            return;
+    renderPersonDetails({
+        person: {
+            id: selectedPerson.id,
+            name: selectedPerson.name,
+            profile_path: selectedPerson.profilePath,
+            roles: selectedPerson.roles
+        },
+        movie_credits: {
+            cast: selectedPerson.knownFor.map(movie => ({
+                id: movie.id,
+                title: movie.title,
+                poster_path: movie.posterPath,
+                release_date: movie.releaseDate
+            }))
         }
-
-        renderPersonDetails(data);
-
-    } catch (error) {
-        console.error("Unable to load person details:", error);
-
-        if (requestNumber !== activePersonRequestNumber) {
-            return;
-        }
-
-        media.innerHTML = "";
-
-        body.innerHTML = `
-            <div class="empty-state">
-                <h3>Unable to load profile</h3>
-                <p>Please try again later.</p>
-            </div>
-        `;
-    }
+    });
 }
 
 function setupPeopleCardEvents() {

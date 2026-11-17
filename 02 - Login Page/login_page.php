@@ -1,4 +1,3 @@
-```php
 <?php
 
 session_start();
@@ -65,8 +64,25 @@ foreach ($data["users"] as $user) {
             $_SESSION["logged_in"] = true;
             $_SESSION["username"] = $existingUsername;
             $_SESSION["email"] = $existingEmail;
+            $_SESSION["role"] = $user["role"] ?? "user";
 
-            $subscriptionPlan = $user["subscription_plan"] ?? null;
+            if ($_SESSION["role"] === "admin") {
+                unset(
+                    $_SESSION["has_subscription"],
+                    $_SESSION["subscription_plan"],
+                    $_SESSION["billing_period"],
+                    $_SESSION["subscription_status"],
+                    $_SESSION["pending_plan"],
+                    $_SESSION["pending_billing_period"]
+                );
+
+                header("Location: ../04 - Homepage/admin_movies.php");
+                exit;
+            }
+
+            $subscriptionPlan = $user["subscription_plan"]
+                ?? $user["plan"]
+                ?? null;
 
             if (empty($subscriptionPlan)) {
                 $_SESSION["has_subscription"] = false;
@@ -91,4 +107,3 @@ header("Location: login_page.html?error=invalid");
 exit;
 
 ?>
-```

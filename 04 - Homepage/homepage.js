@@ -4,8 +4,6 @@ const reducedMotion = window.matchMedia(
     "(prefers-reduced-motion: reduce)"
 ).matches;
 
-const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/";
-
 function refreshIcons() {
     if (typeof lucide !== "undefined") {
         lucide.createIcons();
@@ -114,31 +112,10 @@ async function toggleWatchlist(movie) {
     return true;
 }
 
-const GENRE_NAMES = {
-    28: "Action",
-    12: "Adventure",
-    16: "Animation",
-    35: "Comedy",
-    80: "Crime",
-    99: "Documentary",
-    18: "Drama",
-    10751: "Family",
-    14: "Fantasy",
-    36: "History",
-    27: "Horror",
-    10402: "Music",
-    9648: "Mystery",
-    10749: "Romance",
-    878: "Sci-Fi",
-    10770: "TV Movie",
-    53: "Thriller",
-    10752: "War",
-    37: "Western"
-};
-
 /* MOVIE DATA */
 
 const movieIndex = new Map();
+let localCatalogMovies = [];
 
 function register(movies) {
     movies.forEach(movie => {
@@ -309,81 +286,6 @@ const SAMPLE_MOVIES = register([
     }
 ]);
 
-/* TMDB */
-
-async function fetchTMDB(type, {
-    query = "",
-    page = 1,
-    id = null
-} = {}) {
-    const parameters = new URLSearchParams({
-        type,
-        page: String(page)
-    });
-
-    if (query) {
-        parameters.set("query", query);
-    }
-
-    if (id !== null) {
-        parameters.set("id", String(id));
-    }
-
-    const response = await fetch(
-        `tmdb_movies.php?${parameters.toString()}`
-    );
-
-    let data;
-
-    try {
-        data = await response.json();
-    } catch {
-        throw new Error("The movie service returned an invalid response.");
-    }
-
-    if (!response.ok || !data || data.error) {
-        throw new Error(
-            data?.error || "Unable to fetch movie data."
-        );
-    }
-
-    return data;
-}
-
-function normalizeTMDBMovie(movie) {
-    if (!movie || !movie.id) {
-        return null;
-    }
-
-    const genres = movie.genre_ids
-        ? movie.genre_ids.map(id => GENRE_NAMES[id]).filter(Boolean)
-        : (movie.genres || []).map(genre => genre.name).filter(Boolean);
-
-    return {
-        id: String(movie.id),
-        title: movie.title || movie.original_title || "Untitled",
-        year: movie.release_date
-            ? Number(movie.release_date.slice(0, 4))
-            : "N/A",
-        rating: Number(movie.vote_average || 0),
-        genres,
-        director: "",
-        cast: [],
-        poster: movie.poster_path
-            ? `${TMDB_IMAGE_BASE}w500${movie.poster_path}`
-            : "",
-        backdrop: movie.backdrop_path
-            ? `${TMDB_IMAGE_BASE}w1280${movie.backdrop_path}`
-            : "",
-        backdropSmall: movie.backdrop_path
-            ? `${TMDB_IMAGE_BASE}w780${movie.backdrop_path}`
-            : "",
-        description: movie.overview || "No description available.",
-        trending: false,
-        topRated: false
-    };
-}
-
 /* IMAGE FALLBACKS */
 
 document.addEventListener("error", event => {
@@ -442,6 +344,75 @@ function createMovieCard(movie, extraContent = "") {
             ${extraContent}
         </article>
     `;
+}
+
+async function loadAdminMovies() {
+    const section = $("admin-movies-section");
+    const container = $("admin-movies-grid");
+
+    try {
+        const response = await fetch("admin_movies_api.php", {
+            headers: { Accept: "application/json" }
+        });
+        const data = await response.json();
+
+        if (!response.ok || !Array.isArray(data.movies)) {
+            throw new Error(data.error || "Unable to load the CineMax collection.");
+        }
+
+        localCatalogMovies = data.movies.map(movie => ({
+            id: String(movie.id),
+            title: movie.title,
+            year: movie.year || "N/A",
+            rating: Number(movie.rating || 0),
+            genres: Array.isArray(movie.genres) ? movie.genres : [],
+            director: movie.director || "",
+            directorPhoto: movie.director_photo || "",
+            cast: Array.isArray(movie.cast) ? movie.cast : [],
+            poster: movie.poster || "",
+            backdrop: movie.backdrop || "",
+            backdropSmall: movie.backdrop || movie.poster || "",
+            description: movie.description || "No description available.",
+            trending: false,
+            topRated: false
+        }));
+
+        register(localCatalogMovies);
+        localTrendingMovies = localCatalogMovies;
+        localTopRatedMovies = [...localCatalogMovies].sort((a, b) => b.rating - a.rating);
+        homeLoaded = true;
+
+        if (section && container) {
+            container.innerHTML = localCatalogMovies.map(createMovieCard).join("");
+            section.hidden = false;
+        }
+
+        renderTrending();
+        renderTopRated();
+
+        if (localCatalogMovies.length) {
+            await setHero(localCatalogMovies);
+        } else {
+            const hero = $("cinemaShowcase");
+            if (hero) {
+                hero.innerHTML = `<div class="empty-state"><h3>No movies yet</h3><p>Add movies from the admin page to start your local catalog.</p></div>`;
+            }
+        }
+    } catch (error) {
+        console.error("Local movie catalog could not be loaded:", error);
+        homeLoaded = true;
+        catalogLoadError = error.message;
+        if (section && container) {
+            section.hidden = false;
+            container.innerHTML = `<p class="no-results">${escapeHTML(error.message)}</p>`;
+        }
+        renderTrending();
+        renderTopRated();
+        const hero = $("cinemaShowcase");
+        if (hero) {
+            hero.innerHTML = `<div class="empty-state"><h3>Catalog unavailable</h3><p>${escapeHTML(error.message)}</p></div>`;
+        }
+    }
 }
 
 function createContinueCard(movie, progress) {
@@ -648,7 +619,7 @@ function renderProviders(providerData) {
 
                         ${provider.logo_path
                             ? `<img
-                                src="${TMDB_IMAGE_BASE}w92${escapeHTML(provider.logo_path)}"
+                                src="${escapeHTML(provider.logo_path)}"
                                 alt=""
                                 loading="lazy">`
                             : ""}
@@ -659,7 +630,7 @@ function renderProviders(providerData) {
             </div>
 
             <p class="modal-muted">
-                Availability is provided by TMDB and may change.
+                Availability information is provided with the movie catalog.
             </p>
         </section>
     `;
@@ -678,7 +649,7 @@ function renderCast(cast) {
                     <article class="modal-cast-item">
                         ${person.profile_path
                             ? `<img
-                                src="${TMDB_IMAGE_BASE}w185${escapeHTML(person.profile_path)}"
+                                src="${escapeHTML(person.photo || person.profile_path)}"
                                 alt="${escapeHTML(person.name)}"
                                 loading="lazy">`
                             : `<div class="cast-placeholder">
@@ -695,7 +666,7 @@ function renderCast(cast) {
 
 function renderRecommendations(recommendations) {
     const movies = (recommendations || [])
-        .map(normalizeTMDBMovie)
+        .map(movie => movie && movie.id ? { ...movie, id: String(movie.id) } : null)
         .filter(Boolean);
 
     register(movies);
@@ -741,18 +712,14 @@ function renderMovieDetails(movie, details) {
     const body = modal.querySelector(".modal-body");
     const panel = modal.querySelector(".modal-panel");
 
-    const backdrop = details.backdrop_path
-        ? `${TMDB_IMAGE_BASE}original${details.backdrop_path}`
-        : movie.backdrop;
+    const backdrop = details.backdrop || movie.backdrop;
 
     panel.style.setProperty(
         "--modal-backdrop",
         backdrop ? `url("${backdrop}")` : "none"
     );
 
-    const poster = details.poster_path
-        ? `${TMDB_IMAGE_BASE}w500${details.poster_path}`
-        : movie.poster;
+    const poster = details.poster || movie.poster;
 
     media.innerHTML = poster
         ? `<img
@@ -905,8 +872,6 @@ async function openModal(movie) {
 
     if (!modal || !movie) return;
 
-    const requestId = ++modalRequestNumber;
-
     lastFocused = document.activeElement;
 
     const media = modal.querySelector(".modal-media");
@@ -914,39 +879,99 @@ async function openModal(movie) {
 
     if (!media || !body) return;
 
-    media.innerHTML = createPoster(movie);
+    showModal();
+    renderLocalMovieDetails(movie, media, body, modal.querySelector(".modal-panel"));
+}
 
+function renderLocalMovieDetails(movie, media, body, panel) {
+    const backdrop = movie.backdrop || "";
+    panel?.style.setProperty(
+        "--modal-backdrop",
+        backdrop ? `url("${escapeHTML(backdrop)}")` : "none"
+    );
+
+    media.innerHTML = movie.poster
+        ? `<img class="modal-poster" src="${escapeHTML(movie.poster)}" alt="${escapeHTML(movie.title)} poster">`
+        : `<div class="poster-placeholder">${escapeHTML(movie.title)}</div>`;
+
+    const cast = Array.isArray(movie.cast) ? movie.cast : [];
     body.innerHTML = `
-        <p class="hero-label">CineMax Movie Guide</p>
+        <p class="hero-label">CineMax Local Catalog</p>
         <h2 id="modal-title">${escapeHTML(movie.title)}</h2>
-        <p class="modal-muted">Loading movie information...</p>
+        <p class="modal-meta">
+            ${escapeHTML(movie.year || "Year unknown")}
+            ${movie.rating ? ` · <span class="modal-rating">★ ${formatRating(movie.rating)}</span>` : ""}
+        </p>
+        <div class="modal-tags">
+            ${(movie.genres || []).map(genre => `<span class="tag">${escapeHTML(genre)}</span>`).join("")}
+        </div>
+        <p class="modal-description">${escapeHTML(movie.description || "No synopsis available.")}</p>
+        ${movie.director ? `<div class="modal-credits"><p><span>Director</span>${escapeHTML(movie.director)}</p></div>` : ""}
+        ${cast.length ? `
+            <section class="modal-section">
+                <h3>Cast</h3>
+                <div class="modal-cast-grid">
+                    ${cast.map(person => {
+                        const name = typeof person === "string" ? person : person.name;
+                        const photo = typeof person === "string" ? "" : person.photo;
+                        return `
+                        <article class="modal-cast-item">
+                            ${photo
+                                ? `<img src="${escapeHTML(photo)}" alt="${escapeHTML(name)}" loading="lazy">`
+                                : `<div class="cast-placeholder">${escapeHTML(firstInitials(name))}</div>`}
+                            <p>${escapeHTML(name)}</p>
+                        </article>
+                    `}).join("")}
+                </div>
+            </section>
+        ` : ""}
+        <div class="modal-actions"><button type="button" class="modal-watch"></button></div>
+        ${renderPersonalRating(movie)}
     `;
 
-    showModal();
+    const posterImage = media.querySelector("img");
+    posterImage?.addEventListener("error", () => {
+        const placeholder = document.createElement("div");
+        placeholder.className = "poster-placeholder";
+        placeholder.textContent = movie.title;
+        posterImage.replaceWith(placeholder);
+    }, { once: true });
 
-    try {
-        const details = await fetchTMDB("movie", {
-            id: movie.id
-        });
+    body.querySelectorAll(".modal-cast-item img").forEach(image => {
+        image.addEventListener("error", () => {
+            const fallback = document.createElement("div");
+            fallback.className = "cast-placeholder";
+            fallback.textContent = firstInitials(image.alt);
+            image.replaceWith(fallback);
+        }, { once: true });
+    });
 
-        if (requestId !== modalRequestNumber || modal.hidden) {
-            return;
+    const button = body.querySelector(".modal-watch");
+    updateWatchButton(button, movie);
+    button.dataset.movieId = movie.id;
+    button.addEventListener("click", async () => {
+        button.disabled = true;
+        try {
+            await toggleWatchlist(movie);
+            updateWatchButton(button, movie);
+        } catch (error) {
+            alert(error.message || "Unable to update your watchlist.");
+        } finally {
+            button.disabled = false;
         }
+    });
 
-        renderMovieDetails(movie, details);
-    } catch (error) {
-        if (requestId !== modalRequestNumber) return;
+    refreshIcons();
+}
 
-        console.error("Movie details error:", error);
-
-        body.innerHTML = `
-            <h2 id="modal-title">${escapeHTML(movie.title)}</h2>
-            <p class="modal-muted">
-                Unable to load the complete movie details.
-                Please try again.
-            </p>
-        `;
-    }
+function firstInitials(name) {
+    return String(name || "?")
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .map(part => part.charAt(0))
+        .join("")
+        .toUpperCase();
 }
 
 function closeModal() {
@@ -996,11 +1021,11 @@ document.addEventListener("click", event => {
 
 /* HOME DATA STATE */
 
-let tmdbTrending = [];
-let tmdbTopRated = [];
+let localTrendingMovies = [];
+let localTopRatedMovies = [];
+let catalogLoadError = "";
 
-// true once loadTMDB() has finished (success or failure).
-// Until then, the rows show a loading message instead of sample movies.
+// Keep the rows in a loading state until the local catalog request finishes.
 let homeLoaded = false;
 
 /* HOME CACHE (makes reloads instant) */
@@ -1078,7 +1103,7 @@ function fallbackHero() {
 
 // Only rebuilds the hero(carosel) when the featured movies actually changed.
 async function setHero(movies) {
-    const picks = movies.filter(movie => movie.backdrop).slice(0, 5);
+    const picks = movies.slice(0, 5);
 
     if (!picks.length) return false;
 
@@ -1122,7 +1147,7 @@ function preloadHeroImage(url) {
 async function preloadHeroImages(movies) {
     const firstMovie = movies.find(movie => movie.backdrop);
 
-    if (!firstMovie) return false;
+    if (!firstMovie) return true;
 
     const firstReady = await preloadHeroImage(firstMovie.backdrop);
 
@@ -1349,61 +1374,19 @@ async function renderContinueWatching() {
 
     if (!container) return;
 
-    // Instant render from cache, no network needed.
-    const cached = readContinueCache();
-
-    if (cached) {
-        cached.forEach(item => register([item.movie]));
-        paintContinueWatching(container, cached);
-        return;
-    }
-
-    container.innerHTML = loadingHTML("Loading your movies...");
-
-    const results = await Promise.allSettled(
-        continueWatching.map(async item => {
-            const data = await fetchTMDB("search", {
-                query: item.title
-            });
-
-            const match = (data.results || []).find(movie =>
-                movie.title?.toLowerCase() === item.title.toLowerCase() &&
-                movie.release_date?.startsWith(String(item.year))
+    const available = continueWatching
+        .map(item => {
+            const movie = localCatalogMovies.find(candidate =>
+                candidate.title.toLowerCase() === item.title.toLowerCase()
             );
-
-            if (!match) return null;
-
-            const movie = normalizeTMDBMovie(match);
-
-            if (!movie) return null;
-
-            register([movie]);
-
-            return { movie, progress: item.progress };
+            return movie ? { movie, progress: item.progress } : null;
         })
-    );
-
-    const available = results
-        .filter(result => result.status === "fulfilled" && result.value)
-        .map(result => result.value);
-
-    results
-        .filter(result => result.status === "rejected")
-        .forEach(result =>
-            console.error("Continue Watching error:", result.reason)
-        );
+        .filter(Boolean);
 
     if (available.length) {
         paintContinueWatching(container, available);
-
-        // Only cache a complete result.
-        if (available.length === continueWatching.length) {
-            writeContinueCache(available);
-        }
     } else {
-        container.innerHTML = results.some(result => result.status === "rejected")
-            ? loadingHTML("Unable to load your movies right now.")
-            : loadingHTML("No movies available.");
+        container.innerHTML = loadingHTML("No matching locally cataloged movies are available.");
     }
 }
 
@@ -1414,14 +1397,19 @@ function renderTrending() {
 
     if (!container) return;
 
-    if (!tmdbTrending.length && !homeLoaded) {
+    if (!localTrendingMovies.length && !homeLoaded) {
         container.innerHTML = loadingHTML("Loading trending movies...");
         return;
     }
 
-    const pool = tmdbTrending.length
-        ? tmdbTrending
-        : SAMPLE_MOVIES.filter(movie => movie.trending);
+    const pool = localTrendingMovies;
+
+    if (!pool.length) {
+        container.innerHTML = loadingHTML(
+            catalogLoadError || "No movies have been added to the local catalog yet."
+        );
+        return;
+    }
 
     container.innerHTML = [...pool]
         .slice(0, 12)
@@ -1434,14 +1422,19 @@ function renderTopRated() {
 
     if (!container) return;
 
-    if (!tmdbTopRated.length && !homeLoaded) {
+    if (!localTopRatedMovies.length && !homeLoaded) {
         container.innerHTML = `<li>${loadingHTML("Loading top rated movies...")}</li>`;
         return;
     }
 
-    const pool = tmdbTopRated.length
-        ? tmdbTopRated
-        : SAMPLE_MOVIES.filter(movie => movie.topRated);
+    const pool = localTopRatedMovies;
+
+    if (!pool.length) {
+        container.innerHTML = `<li>${loadingHTML(
+            catalogLoadError || "No movies have been added to the local catalog yet."
+        )}</li>`;
+        return;
+    }
 
     container.innerHTML = [...pool]
         .sort((a, b) => b.rating - a.rating)
@@ -1541,65 +1534,26 @@ async function performSearch(query) {
 
     setSearchMode(true);
 
+    const foundMovies = localCatalogMovies.filter(movie => {
+        const searchText = [
+            movie.title,
+            movie.description,
+            ...(movie.genres || []),
+            movie.director,
+            ...(movie.cast || []).map(person => person.name)
+        ].join(" ").toLowerCase();
+
+        return searchText.includes(term.toLowerCase());
+    });
+
+    if (current !== requestNumber) return;
+
     showResults(
         "Search Results",
-        loadingHTML(`Searching for "${term}"...`)
+        foundMovies.length
+            ? `<p class="search-results-count">${foundMovies.length} local movies found for "${escapeHTML(term)}"</p>${foundMovies.map(createMovieCard).join("")}`
+            : `<div class="empty-state"><h3>No Movies Found</h3><p>No local catalog movies match "${escapeHTML(term)}".</p></div>`
     );
-
-    try {
-        const movieData = await fetchTMDB("search", {
-            query: term
-        });
-
-        if (current !== requestNumber) return;
-
-        const foundMovies = register(
-            (movieData.results || [])
-                .map(normalizeTMDBMovie)
-                .filter(Boolean)
-        );
-
-        if (!foundMovies.length) {
-            showResults(
-                "Search Results",
-                `
-                    <div class="empty-state">
-                        <h3>No Movies Found</h3>
-                        <p>
-                            We couldn't find any movies matching
-                            "${escapeHTML(term)}".
-                            Try another title.
-                        </p>
-                    </div>
-                `
-            );
-
-            return;
-        }
-
-        showResults(
-            "Search Results",
-            `
-                <p class="search-results-count">
-                    ${foundMovies.length} movies found for
-                    "${escapeHTML(term)}"
-                </p>
-
-                ${foundMovies.map(movie =>
-                    createMovieCard(movie)
-                ).join("")}
-            `
-        );
-    } catch (error) {
-        if (current !== requestNumber) return;
-
-        console.error("TMDB search error:", error);
-
-        showResults(
-            "Search Unavailable",
-            loadingHTML("Unable to search right now. Please try again.")
-        );
-    }
 }
 
 if (searchInput) {
@@ -1765,79 +1719,9 @@ function watchSections() {
     sections.forEach(section => observer.observe(section));
 }
 
-/* LOAD LIVE TMDB DATA */
-
-async function loadTMDB() {
-    const [trendingResult, topRatedResult] = await Promise.allSettled([
-        fetchTMDB("trending"),
-        fetchTMDB("top-rated")
-    ]);
-
-    if (trendingResult.status === "fulfilled") {
-        tmdbTrending = register(
-            (trendingResult.value.results || [])
-                .map(normalizeTMDBMovie)
-                .filter(Boolean)
-                .map(movie => ({ ...movie, trending: true }))
-        );
-    } else {
-        console.error(
-            "Trending movies could not be loaded:",
-            trendingResult.reason
-        );
-    }
-
-    if (topRatedResult.status === "fulfilled") {
-        tmdbTopRated = register(
-            (topRatedResult.value.results || [])
-                .map(normalizeTMDBMovie)
-                .filter(Boolean)
-                .map(movie => ({ ...movie, topRated: true }))
-        );
-    } else {
-        console.error(
-            "Top rated movies could not be loaded:",
-            topRatedResult.reason
-        );
-    }
-
-    if (tmdbTrending.length) {
-        await setHero(tmdbTrending);
-    }
-
-    // API failed (or had no backdrops) and there was no cache.
-    if (!heroMovies.length) {
-        fallbackHero();
-    }
-
-    if (tmdbTrending.length && tmdbTopRated.length) {
-        writeHomeCache(tmdbTrending, tmdbTopRated);
-    }
-
-    const failures = [trendingResult, topRatedResult]
-        .filter(result => result.status === "rejected")
-        .map(result => result.reason);
-
-    const status = $("movie-service-status");
-
-    if (status && failures.length) {
-        const missingKey = failures.some(error =>
-            String(error?.message || error).includes(
-                "TMDB_API_KEY is not configured."
-            )
-        );
-
-        status.textContent = missingKey
-            ? "Live movie data is unavailable. Configure TMDB_API_KEY in tmdb_config.php to enable it."
-            : "Some live movie data could not be loaded. Showing available previews.";
-
-        status.hidden = false;
-    }
-
-    homeLoaded = true;
-
-    renderTrending();
-    renderTopRated();
+async function loadLocalCatalog() {
+    await loadAdminMovies();
+    await renderContinueWatching();
 }
 
 /* INITIALIZE PAGE */
@@ -1847,22 +1731,11 @@ loadWatchlist().catch(error => {
     console.error("Unable to load the account watchlist:", error);
 });
 watchSections();
-renderContinueWatching();
 
 showHeroSkeleton();
-
-const cachedHome = readHomeCache();
-
-if (cachedHome) {
-    // Show the last known real data immediately, then refresh in the background.
-    tmdbTrending = register(cachedHome.trending);
-    tmdbTopRated = register(cachedHome.topRated);
-
-    setHero(tmdbTrending);
-}
 
 renderTrending();
 renderTopRated();
 
 refreshIcons();
-loadTMDB();
+loadLocalCatalog();

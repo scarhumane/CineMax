@@ -13,6 +13,12 @@ if (
     exit;
 }
 
+if (($_SESSION["role"] ?? "") === "admin") {
+    http_response_code(403);
+    echo json_encode(["error" => "Administrator accounts cannot access reviews."]);
+    exit;
+}
+
 $username = $_SESSION["username"] ?? "";
 
 if ($username === "") {

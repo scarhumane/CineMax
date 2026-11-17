@@ -5,8 +5,6 @@ const reducedMotion = window.matchMedia(
     "(prefers-reduced-motion: reduce)"
 ).matches;
 
-const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/";
-
 /* HELPERS */
 
 function escapeHTML(value) {
@@ -39,8 +37,6 @@ function refreshIcons() {
 
 /* GENRE LOOKUP */
 
-const GENRE_NAMES = {};
-
 let genres = [];
 let selectedGenre = null;
 
@@ -60,96 +56,74 @@ function getMovie(id) {
     return movieIndex.get(String(id));
 }
 
-/* TMDB */
+/* LOCAL MOVIE CATALOG */
 
-async function fetchTMDB(type, {
+async function fetchCatalog(type, {
     query = "",
-    page = 1,
-    genre = null
+    genre = ""
 } = {}) {
-    const parameters = new URLSearchParams({
-        type,
-        page: String(page)
+    const response = await fetch("admin_movies_api.php", {
+        credentials: "same-origin",
+        cache: "no-store",
+        headers: { Accept: "application/json" }
     });
-
-    if (query) {
-        parameters.set("query", query);
-    }
-
-    if (genre !== null) {
-        parameters.set("genre", String(genre));
-    }
-
-    const response = await fetch(
-        `tmdb_movies.php?${parameters.toString()}`
-    );
-
     let data;
 
     try {
         data = await response.json();
     } catch {
-        throw new Error(
-            "The movie service returned an invalid response."
-        );
+        throw new Error("The local movie catalog returned an invalid response.");
     }
 
-    if (!response.ok || !data || data.error) {
-        throw new Error(
-            data?.error || "Unable to fetch movie data."
-        );
+    if (!response.ok || !Array.isArray(data.movies)) {
+        throw new Error(data.error || "Unable to load the local movie catalog.");
     }
 
-    return data;
+    const movies = data.movies.map(normalizeLocalMovie).filter(Boolean);
+    if (type === "genres") {
+        const names = [...new Set(movies.flatMap(movie => movie.genres))]
+            .sort((a, b) => a.localeCompare(b));
+        return {
+            genres: names.map(name => ({ id: name, name }))
+        };
+    }
+
+    const filtered = movies.filter(movie => {
+        if (type === "discover" && !movie.genres.some(name =>
+            name.toLowerCase() === String(genre).toLowerCase()
+        )) return false;
+        if (type === "search" && ![
+            movie.title,
+            movie.description,
+            movie.director,
+            ...movie.genres
+        ].join(" ").toLowerCase().includes(query.toLowerCase())) return false;
+        return true;
+    });
+
+    return { results: filtered };
 }
 
-/* MOVIE NORMALIZATION */
+/* LOCAL MOVIE NORMALIZATION */
 
-function normalizeTMDBMovie(movie) {
+function normalizeLocalMovie(movie) {
     if (!movie || !movie.id) {
         return null;
     }
 
-    const movieGenres = movie.genre_ids
-        ? movie.genre_ids
-            .map(id => GENRE_NAMES[id])
-            .filter(Boolean)
-        : (movie.genres || [])
-            .map(genre => genre.name)
-            .filter(Boolean);
-
     return {
+        ...movie,
         id: String(movie.id),
-
-        title: movie.title ||
-            movie.original_title ||
-            "Untitled",
-
-        year: movie.release_date
-            ? Number(movie.release_date.slice(0, 4))
-            : "N/A",
-
-        rating: Number(movie.vote_average || 0),
-
-        genres: movieGenres,
-
-        director: "",
-        cast: [],
-
-        poster: movie.poster_path
-            ? `${TMDB_IMAGE_BASE}w500${movie.poster_path}`
-            : "",
-
-        backdrop: movie.backdrop_path
-            ? `${TMDB_IMAGE_BASE}original${movie.backdrop_path}`
-            : "",
-
-        backdropSmall: movie.backdrop_path
-            ? `${TMDB_IMAGE_BASE}w780${movie.backdrop_path}`
-            : "",
-
-        description: movie.overview ||
-            "No description available."
+        title: movie.title || "Untitled",
+        year: movie.year || "N/A",
+        rating: Number(movie.rating || 0),
+        genres: Array.isArray(movie.genres) ? movie.genres : [],
+        director: movie.director || "",
+        cast: Array.isArray(movie.cast) ? movie.cast : [],
+        poster: movie.poster || "",
+        backdrop: movie.backdrop || "",
+        backdropSmall: movie.backdrop || movie.poster || "",
+        description: movie.description || "No description available."
     };
 }
 
@@ -293,7 +267,7 @@ function renderGenres() {
 
     if (!genres.length) {
         container.innerHTML = loadingHTML(
-            "No genres are available right now."
+            "No genres are available yet. Add genre details to movies in the CineMax catalog."
         );
 
         return;
@@ -303,7 +277,7 @@ function renderGenres() {
         <button
             type="button"
             class="genre-card"
-            data-genre="${Number(genre.id)}"
+            data-genre="${escapeHTML(genre.id)}"
             aria-pressed="false"
         >
             ${escapeHTML(genre.name)}
@@ -321,25 +295,16 @@ async function loadGenres() {
     );
 
     try {
-        const data = await fetchTMDB("genres");
+        const data = await fetchCatalog("genres");
 
         genres = data.genres || [];
-
-        Object.keys(GENRE_NAMES).forEach(id => {
-            delete GENRE_NAMES[id];
-        });
-
-        genres.forEach(genre => {
-            GENRE_NAMES[genre.id] = genre.name;
-        });
 
         renderGenres();
 
     } catch (error) {
         console.error("Genre loading error:", error);
-
         genreList.innerHTML = loadingHTML(
-            "Unable to load genres. Please try again later."
+            `Unable to load the local movie catalog: ${error.message}`
         );
     }
 }
@@ -353,9 +318,7 @@ let searchTimer = null;
 /* GENRE MOVIES */
 
 async function showGenre(genreId) {
-    const genre = genres.find(
-        item => Number(item.id) === Number(genreId)
-    );
+    const genre = genres.find(item => String(item.id) === String(genreId));
 
     if (!genre) return;
 
@@ -366,7 +329,7 @@ async function showGenre(genreId) {
 
     const current = movieRequestNumber;
 
-    selectedGenre = Number(genre.id);
+    selectedGenre = genre.id;
 
     if (genreSearch) {
         genreSearch.value = "";
@@ -392,15 +355,13 @@ async function showGenre(genreId) {
     }
 
     try {
-        const data = await fetchTMDB("discover", {
-            genre: genre.id
-        });
+        const data = await fetchCatalog("discover", { genre: genre.name });
 
         if (current !== movieRequestNumber) return;
 
         const movies = register(
             (data.results || [])
-                .map(normalizeTMDBMovie)
+                .map(normalizeLocalMovie)
                 .filter(Boolean)
         );
 
@@ -457,15 +418,13 @@ async function searchGenreMovies(query) {
     showMovieResults();
 
     try {
-        const data = await fetchTMDB("search", {
-            query: term
-        });
+        const data = await fetchCatalog("search", { query: term });
 
         if (current !== searchRequestNumber) return;
 
         const movies = register(
             (data.results || [])
-                .map(normalizeTMDBMovie)
+                .map(normalizeLocalMovie)
                 .filter(Boolean)
         );
 
