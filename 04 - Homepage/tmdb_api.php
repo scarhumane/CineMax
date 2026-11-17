@@ -1,7 +1,80 @@
-
 <?php
 
 require_once __DIR__ . "/tmdb_config.php";
+
+/*TMDB CACHE*/
+
+function tmdbCacheDuration(string $endpoint): int
+{
+    if ($endpoint === "/genre/movie/list") {
+        return 86400; // 24 hours
+    }
+
+    if (str_starts_with($endpoint, "/search/")) {
+        return 300; // 5 minutes
+    }
+
+    if (str_starts_with($endpoint, "/movie/") ||
+        str_starts_with($endpoint, "/person/")) {
+        return 21600; // 6 hours
+    }
+
+    if ($endpoint === "/trending/movie/week") {
+        return 900; // 15 minutes
+    }
+
+    if (
+        $endpoint === "/movie/popular" ||
+        $endpoint === "/movie/top_rated" ||
+        $endpoint === "/discover/movie"
+    ) {
+        return 1800; // 30 minutes
+    }
+
+    return 900;
+}
+
+function tmdbReadCache(string $cacheFile, int $duration): ?array
+{
+    if (!is_file($cacheFile)) {
+        return null;
+    }
+
+    $modified = filemtime($cacheFile);
+
+    if ($modified === false || time() - $modified > $duration) {
+        return null;
+    }
+
+    $contents = file_get_contents($cacheFile);
+
+    if ($contents === false) {
+        return null;
+    }
+
+    $data = json_decode($contents, true);
+
+    return is_array($data) ? $data : null;
+}
+
+function tmdbWriteCache(string $cacheFile, array $data): void
+{
+    try {
+        $encoded = json_encode(
+            $data,
+            JSON_UNESCAPED_SLASHES |
+            JSON_UNESCAPED_UNICODE |
+            JSON_INVALID_UTF8_SUBSTITUTE |
+            JSON_THROW_ON_ERROR
+        );
+
+        file_put_contents($cacheFile, $encoded, LOCK_EX);
+    } catch (Throwable $error) {
+        error_log("Unable to write TMDB cache: " . $error->getMessage());
+    }
+}
+
+/*TMDB REQUEST*/
 
 function tmdbRequest(string $endpoint, array $parameters = []): array
 {
@@ -20,6 +93,41 @@ function tmdbRequest(string $endpoint, array $parameters = []): array
     }
 
     $endpoint = "/" . ltrim($endpoint, "/");
+
+    // Keep cache keys consistent regardless of parameter order.
+    ksort($parameters);
+
+    $cacheKey = hash(
+        "sha256",
+        $endpoint . "?" . http_build_query($parameters)
+    );
+
+    $cacheDirectory = sys_get_temp_dir()
+        . DIRECTORY_SEPARATOR
+        . "cinemax_tmdb_cache";
+
+    if (!is_dir($cacheDirectory)) {
+        if (!mkdir($cacheDirectory, 0775, true) && !is_dir($cacheDirectory)) {
+            error_log("Unable to create CineMax TMDB cache directory.");
+        }
+    }
+
+    $cacheFile = $cacheDirectory
+        . DIRECTORY_SEPARATOR
+        . $cacheKey
+        . ".json";
+
+    $cacheDuration = tmdbCacheDuration($endpoint);
+
+    // Return cached data before making another API request.
+    if (is_dir($cacheDirectory)) {
+        $cachedData = tmdbReadCache($cacheFile, $cacheDuration);
+
+        if ($cachedData !== null) {
+            return $cachedData;
+        }
+    }
+
     $parameters["api_key"] = TMDB_API_KEY;
 
     $url = rtrim(TMDB_BASE_URL, "/")
@@ -82,8 +190,15 @@ function tmdbRequest(string $endpoint, array $parameters = []): array
         ];
     }
 
+    // Cache only successful responses.
+    if (is_dir($cacheDirectory)) {
+        tmdbWriteCache($cacheFile, $data);
+    }
+
     return $data;
 }
+
+/*MOVIE FUNCTIONS*/
 
 function getPopularMovies(int $page = 1): array
 {
@@ -146,6 +261,8 @@ function searchMovies(string $query, int $page = 1): array
     ]);
 }
 
+/*PEOPLE FUNCTIONS*/
+
 function searchPeople(string $query, int $page = 1): array
 {
     $query = trim($query);
@@ -189,12 +306,16 @@ function getPersonMovieCredits(int $personId): array
     ]);
 }
 
+/*GENRE FUNCTIONS*/
+
 function getMovieGenres(): array
 {
     return tmdbRequest("/genre/movie/list", [
         "language" => "en-US"
     ]);
 }
+
+/*MOVIE DETAILS AND WATCH PROVIDERS*/
 
 function getMovieDetails(int $movieId): array
 {

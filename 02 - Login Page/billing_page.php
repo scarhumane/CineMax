@@ -84,11 +84,9 @@ $safePeriod = $isFreePlan
     <div class="login-container">
 
         <header class="homepage-header">
-
             <a href="landing_page.html" class="website-logo">
                 CINEMAX
             </a>
-
         </header>
 
         <main class="subscription-container">
@@ -99,11 +97,7 @@ $safePeriod = $isFreePlan
                     CINEMAX MEMBERSHIP
                 </p>
 
-                <h1>
-                    <?php echo $isFreePlan
-                        ? "Activate Your Plan"
-                        : "Activate Your Plan"; ?>
-                </h1>
+                <h1>Activate Your Plan</h1>
 
                 <p class="heading-description">
                     <?php echo $isFreePlan
@@ -115,111 +109,117 @@ $safePeriod = $isFreePlan
 
             <section class="plan-card <?php echo $planClass; ?>">
 
-             <div class="selected-plan-heading">
-    <span class="section-label">YOUR SELECTED PLAN</span>
-    <span class="selected-plan-line"></span>
-</div>
+                <div class="selected-plan-heading">
+                    <span class="section-label">YOUR SELECTED PLAN</span>
+                    <span class="selected-plan-line"></span>
+                </div>
 
-<div class="selected-plan-summary <?php echo $planClass; ?>">
+                <div class="selected-plan-summary <?php echo $planClass; ?>">
 
-    <div class="selected-plan-top">
+                    <!-- PRICE -->
+                    <div class="plan-price">
 
-        <div class="selected-plan-info">
-            <span class="selected-plan-category">
-                CINEMAX MEMBERSHIP
-            </span>
+                        <span class="price-amount">
+                            <?php echo $safePrice; ?>
+                        </span>
 
-            <h2><?php echo $safePlan; ?></h2>
-        </div>
+                        <span class="price-period">
+                            / <?php echo htmlspecialchars(
+                                $safePeriod,
+                                ENT_QUOTES,
+                                "UTF-8"
+                            ); ?>
+                        </span>
 
-        <?php if ($plan === "CineMax Plus"): ?>
+                    </div>
 
-            <span class="membership-badge plus-badge">
-                PLUS MEMBERSHIP
-            </span>
+                    <!-- PLAN INFORMATION -->
+                    <div class="selected-plan-top">
 
-        <?php elseif ($plan === "CineMax Ultimate"): ?>
+                        <div class="selected-plan-info">
 
-            <span class="membership-badge ultimate-badge">
-                ULTIMATE MEMBERSHIP
-            </span>
+                            <span class="selected-plan-category">
+                                CINEMAX MEMBERSHIP
+                            </span>
 
-        <?php else: ?>
+                            <h2><?php echo $safePlan; ?></h2>
 
-            <span class="membership-badge basic-badge">
-                BASIC MEMBERSHIP
-            </span>
+                        </div>
 
-        <?php endif; ?>
+                        <?php if ($plan === "CineMax Plus"): ?>
 
-    </div>
+                            <span class="membership-badge plus-badge">
+                                PLUS MEMBERSHIP
+                            </span>
 
-    <div class="membership-benefits">
+                        <?php elseif ($plan === "CineMax Ultimate"): ?>
 
-        <?php if ($plan === "CineMax Plus"): ?>
+                            <span class="membership-badge ultimate-badge">
+                                ULTIMATE MEMBERSHIP
+                            </span>
 
-            <div class="benefit-item">
-                <span class="benefit-check">✓</span>
-                <span>Enhanced streaming experience</span>
-            </div>
+                        <?php else: ?>
 
-            <div class="benefit-item">
-                <span class="benefit-check">✓</span>
-                <span>Access to more movies and series</span>
-            </div>
+                            <span class="membership-badge basic-badge">
+                                BASIC MEMBERSHIP
+                            </span>
 
-             <div class="benefit-item">
-                <span class="benefit-check">✓</span>
-                <span>Access to more personalized features</span>
-            </div>
+                        <?php endif; ?>
 
-        <?php elseif ($plan === "CineMax Ultimate"): ?>
+                    </div>
 
-            <div class="benefit-item">
-                <span class="benefit-check">✓</span>
-                <span>Everything included in CineMax Plus</span>
-            </div>
+                    <!-- MEMBERSHIP BENEFITS -->
+                    <div class="membership-benefits">
 
-            <div class="benefit-item">
-                <span class="benefit-check">✓</span>
-                <span>Premium movie and series access</span>
-            </div>
+                        <?php if ($plan === "CineMax Plus"): ?>
 
-            <div class="benefit-item">
-                <span class="benefit-check">✓</span>
-                <span>Exclusive Ultimate membership benefits</span>
-            </div>
+                            <div class="benefit-item">
+                                <span class="benefit-check">✓</span>
+                                <span>Enhanced streaming experience</span>
+                            </div>
 
-        <?php else: ?>
+                            <div class="benefit-item">
+                                <span class="benefit-check">✓</span>
+                                <span>Access to more movies and series</span>
+                            </div>
 
-            <div class="benefit-item">
-                <span class="benefit-check">✓</span>
-                <span>Explore the CineMax movie collection</span>
-            </div>
+                            <div class="benefit-item">
+                                <span class="benefit-check">✓</span>
+                                <span>Access to more personalized features</span>
+                            </div>
 
-            <div class="benefit-item">
-                <span class="benefit-check">✓</span>
-                <span>Enjoy your free membership</span>
-            </div>
+                        <?php elseif ($plan === "CineMax Ultimate"): ?>
 
-        <?php endif; ?>
+                            <div class="benefit-item">
+                                <span class="benefit-check">✓</span>
+                                <span>Everything included in CineMax Plus</span>
+                            </div>
 
-    </div>
+                            <div class="benefit-item">
+                                <span class="benefit-check">✓</span>
+                                <span>Premium movie and series access</span>
+                            </div>
 
-</div>
-                <div class="plan-price">
+                            <div class="benefit-item">
+                                <span class="benefit-check">✓</span>
+                                <span>Exclusive Ultimate membership benefits</span>
+                            </div>
 
-                    <span class="price-amount">
-                        <?php echo $safePrice; ?>
-                    </span>
+                        <?php else: ?>
 
-                    <span class="price-period">
-                        / <?php echo htmlspecialchars(
-                            $safePeriod,
-                            ENT_QUOTES,
-                            "UTF-8"
-                        ); ?>
-                    </span>
+                            <div class="benefit-item">
+                                <span class="benefit-check">✓</span>
+                                <span>Explore the CineMax movie collection</span>
+                            </div>
+
+                            <div class="benefit-item">
+                                <span class="benefit-check">✓</span>
+                                <span>Enjoy your free membership</span>
+                            </div>
+
+                        <?php endif; ?>
+
+                    </div>
 
                 </div>
 
@@ -230,105 +230,122 @@ $safePeriod = $isFreePlan
                     <?php if (!$isFreePlan): ?>
 
                         <h3>Payment Method</h3>
-<div class="payment-methods">
 
-    <!-- CARD -->
-    <label class="payment-option card-option">
-    <input
-        type="radio"
-        name="payment_method"
-        value="Card"
-        required
-    >
+                        <div class="payment-methods">
 
-    <span class="payment-brand">
-        <span class="payment-logo card-logo">
-            <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-                focusable="false"
-            >
-                <rect x="2.5" y="5" width="19" height="14" rx="2"></rect>
-                <path d="M2.5 10h19M6 15h3"></path>
-            </svg>
-        </span>
+                            <!-- CARD -->
+                            <label class="payment-option card-option">
 
-        <span class="payment-text">
-            <strong>Credit / Debit Card</strong>
+                                <input
+                                    type="radio"
+                                    name="payment_method"
+                                    value="Card"
+                                    required
+                                >
 
-            <span class="card-network-logos">
-                <img
-                    src="https://cdn.simpleicons.org/visa/1A1F71"
-                    alt="Visa"
-                >
+                                <span class="payment-brand">
 
-                <img
-                    src="https://cdn.simpleicons.org/mastercard/EB001B"
-                    alt="Mastercard"
-                >
-            </span>
-        </span>
-    </span>
+                                    <span class="payment-logo card-logo">
 
-    <span class="payment-check">✓</span>
-</label>
+                                        <svg
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="1.8"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            aria-hidden="true"
+                                            focusable="false"
+                                        >
+                                            <rect x="2.5" y="5" width="19" height="14" rx="2"></rect>
+                                            <path d="M2.5 10h19M6 15h3"></path>
+                                        </svg>
 
-    <!-- GCASH -->
-    <label class="payment-option gcash-option">
-        <input
-            type="radio"
-            name="payment_method"
-            value="GCash"
-        >
+                                    </span>
 
-        <span class="payment-brand">
-            <span class="payment-logo gcash-logo">
-                <img
-                    src="https://commons.wikimedia.org/wiki/Special:FilePath/GCash_logo.svg"
-                    alt="GCash"
-                >
-            </span>
+                                    <span class="payment-text">
+                                        <strong>Credit / Debit Card</strong>
 
-            <span class="payment-text">
-                <strong>GCash</strong>
-                <small>Pay using GCash</small>
-            </span>
-        </span>
+                                        <span class="card-network-logos">
 
-        <span class="payment-check">✓</span>
-    </label>
+                                            <img
+                                                src="https://cdn.simpleicons.org/visa/1A1F71"
+                                                alt="Visa"
+                                            >
 
-    <!-- MAYA -->
-    <label class="payment-option maya-option">
-        <input
-            type="radio"
-            name="payment_method"
-            value="Maya"
-        >
+                                            <img
+                                                src="https://cdn.simpleicons.org/mastercard/EB001B"
+                                                alt="Mastercard"
+                                            >
 
-        <span class="payment-brand">
-            <span class="payment-logo maya-logo">
-                <img
-                    src="https://commons.wikimedia.org/wiki/Special:FilePath/Maya_logo.svg"
-                    alt="Maya"
-                >
-            </span>
+                                        </span>
+                                    </span>
 
-            <span class="payment-text">
-                <strong>Maya</strong>
-                <small>Pay using Maya</small>
-            </span>
-        </span>
+                                </span>
 
-        <span class="payment-check">✓</span>
-    </label>
+                                <span class="payment-check">✓</span>
 
-    </div>
+                            </label>
+
+                            <!-- GCASH -->
+                            <label class="payment-option gcash-option">
+
+                                <input
+                                    type="radio"
+                                    name="payment_method"
+                                    value="GCash"
+                                >
+
+                                <span class="payment-brand">
+
+                                    <span class="payment-logo gcash-logo">
+                                        <img
+                                            src="https://commons.wikimedia.org/wiki/Special:FilePath/GCash_logo.svg"
+                                            alt="GCash"
+                                        >
+                                    </span>
+
+                                    <span class="payment-text">
+                                        <strong>GCash</strong>
+                                        <small>Pay using GCash</small>
+                                    </span>
+
+                                </span>
+
+                                <span class="payment-check">✓</span>
+
+                            </label>
+
+                            <!-- MAYA -->
+                            <label class="payment-option maya-option">
+
+                                <input
+                                    type="radio"
+                                    name="payment_method"
+                                    value="Maya"
+                                >
+
+                                <span class="payment-brand">
+
+                                    <span class="payment-logo maya-logo">
+                                        <img
+                                            src="https://commons.wikimedia.org/wiki/Special:FilePath/Maya_logo.svg"
+                                            alt="Maya"
+                                        >
+                                    </span>
+
+                                    <span class="payment-text">
+                                        <strong>Maya</strong>
+                                        <small>Pay using Maya</small>
+                                    </span>
+
+                                </span>
+
+                                <span class="payment-check">✓</span>
+
+                            </label>
+
+                        </div>
 
                         <div class="plan-divider"></div>
 
@@ -412,9 +429,7 @@ $safePeriod = $isFreePlan
         </main>
 
         <footer class="login-footer subscription-footer">
-
             <p>© 2026 CineMax. All rights reserved.</p>
-
         </footer>
 
     </div>

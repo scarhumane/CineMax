@@ -1767,6 +1767,7 @@ function watchSections() {
 
 /* LOAD LIVE TMDB DATA */
 
+
 async function loadTMDB() {
     const [trendingResult, topRatedResult] = await Promise.allSettled([
         fetchTMDB("trending"),
@@ -1801,17 +1802,26 @@ async function loadTMDB() {
         );
     }
 
-    if (tmdbTrending.length) {
-        await setHero(tmdbTrending);
-    }
-
-    // API failed (or had no backdrops) and there was no cache.
-    if (!heroMovies.length) {
-        fallbackHero();
-    }
-
+    // Save available data for the next homepage visit.
     if (tmdbTrending.length && tmdbTopRated.length) {
         writeHomeCache(tmdbTrending, tmdbTopRated);
+    }
+
+    // Render movie rows immediately.
+    homeLoaded = true;
+
+    renderTrending();
+    renderTopRated();
+
+    // Load the hero backdrop separately.
+    if (tmdbTrending.length) {
+        setHero(tmdbTrending).then(heroReady => {
+            if (!heroReady && !heroMovies.length) {
+                fallbackHero();
+            }
+        });
+    } else if (!heroMovies.length) {
+        fallbackHero();
     }
 
     const failures = [trendingResult, topRatedResult]
@@ -1833,12 +1843,8 @@ async function loadTMDB() {
 
         status.hidden = false;
     }
-
-    homeLoaded = true;
-
-    renderTrending();
-    renderTopRated();
 }
+
 
 /* INITIALIZE PAGE */
 
