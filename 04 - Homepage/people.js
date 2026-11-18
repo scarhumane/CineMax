@@ -117,14 +117,18 @@ async function fetchTMDB(type, parameters = {}) {
         }
     });
 
-    if (!response.ok) {
-        throw new Error(`TMDB request failed: ${response.status}`);
+    let data;
+
+    try {
+        data = await response.json();
+    } catch {
+        throw new Error("TMDB returned an invalid response.");
     }
 
-    const data = await response.json();
-
-    if (data.error) {
-        throw new Error(data.error);
+    if (!response.ok || data.error) {
+        throw new Error(
+            data.error || `TMDB request failed: ${response.status}`
+        );
     }
 
     return data;
@@ -135,35 +139,38 @@ function normalizeTMDBPerson(person) {
         ? person.known_for
         : [];
 
-    const knownForMovies = knownFor.filter(item => {
-        return item.media_type === "movie" ||
-            (
-                !item.media_type &&
-                (item.title || item.release_date)
-            );
-    });
+    const knownForTitles = knownFor.filter(item =>
+        item.media_type === "movie" || item.media_type === "tv" ||
+        (!item.media_type && (item.title || item.name || item.release_date || item.first_air_date))
+    );
 
     return {
         id: person.id,
         name: person.name || "Unknown Person",
 
-        department:
-            person.known_for_department ||
-            person.department ||
-            "Unknown",
+        department: person.known_for_department || person.department || "Unknown",
+        role: normalizeRole(person.known_for_department || person.department),
 
         profilePath: person.profile_path || null,
 
         popularity: Number(person.popularity || 0),
 
-        knownFor: knownForMovies.map(movie => ({
-            id: movie.id,
-            title: movie.title || "Untitled Movie",
-            posterPath: movie.poster_path || null,
-            releaseDate: movie.release_date || "",
-            character: movie.character || ""
+        knownFor: knownForTitles.map(title => ({
+            id: title.id,
+            title: title.title || title.name || "Untitled",
+            mediaType: title.media_type === "tv" || title.name ? "TV" : "Movie",
+            posterPath: title.poster_path || null,
+            releaseDate: title.release_date || title.first_air_date || "",
+            character: title.character || ""
         }))
     };
+}
+
+function normalizeRole(department) {
+    const value = String(department || "").trim().toLowerCase();
+    if (["acting", "actor", "actress", "cast"].includes(value)) return "actor";
+    if (["directing", "director"].includes(value)) return "director";
+    return "other";
 }
 
 function createPersonCard(person) {
@@ -174,9 +181,9 @@ function createPersonCard(person) {
     const knownForText = person.knownFor.length
         ? person.knownFor
             .slice(0, 2)
-            .map(movie => escapeHTML(movie.title))
+            .map(title => `${escapeHTML(title.title)} <span class="person-credit-type">${escapeHTML(title.mediaType)}</span>`)
             .join(", ")
-        : "No movie credits available";
+        : "No featured credits available";
 
     return `
         <article
@@ -221,6 +228,7 @@ function createPersonCard(person) {
                 </p>
 
                 <p class="person-known-for">
+                    <span class="person-known-for-label">Known for</span>
                     ${knownForText}
                 </p>
             </div>
@@ -238,16 +246,17 @@ function renderPeople(list = people) {
     let filteredPeople = [...list];
 
     if (activeRole !== "all") {
-        filteredPeople = filteredPeople.filter(person => {
-            return person.department.toLowerCase() === activeRole;
-        });
+        filteredPeople = filteredPeople.filter(person => person.role === activeRole);
     }
 
     if (!filteredPeople.length) {
+        const query = $("people-search")?.value.trim();
+        const label = activeRole === "actor" ? "actors" : activeRole === "director" ? "directors" : "people";
         container.innerHTML = `
             <div class="empty-state">
-                <h3>No people found</h3>
-                <p>Try another name or change the selected filter.</p>
+                <h3>${query ? `No ${label} found for “${escapeHTML(query)}”` : `No ${label} to show`}</h3>
+                <p>${query ? "Check the spelling or try a different name." : "Try another role or search for a specific person."}</p>
+                ${activeRole !== "all" ? `<button type="button" class="people-empty-reset" data-clear-role-filter>Show everyone</button>` : ""}
             </div>
         `;
 
@@ -268,6 +277,7 @@ async function loadPopularPeople() {
         return;
     }
 
+    searchRequestNumber++;
     const requestNumber = ++peopleRequestNumber;
 
     container.innerHTML = `
@@ -302,12 +312,43 @@ async function loadPopularPeople() {
             return;
         }
 
+        const message = error.message === "TMDB_API_KEY is not configured."
+            ? "Copy tmdb_config.example.php to tmdb_config.php and add your TMDB API key to load people."
+            : "Please try refreshing the page.";
+
         container.innerHTML = `
             <div class="empty-state">
                 <h3>Unable to load people</h3>
-                <p>Please try refreshing the page.</p>
+                <p>${escapeHTML(message)}</p>
             </div>
         `;
+    }
+}
+
+async function loadPeopleByRole(role) {
+    const container = $("people-list");
+    if (!container) return;
+    searchRequestNumber++;
+    const requestNumber = ++peopleRequestNumber;
+    container.innerHTML = `<div class="loading-state"><p>Loading ${role === "actor" ? "actors" : "directors"}...</p></div>`;
+    try {
+        const pages = role === "director" ? 10 : 3;
+        const pageResults = await Promise.allSettled(
+            Array.from({ length: pages }, (_, index) => fetchTMDB("people", { page: index + 1 }))
+        );
+        if (requestNumber !== peopleRequestNumber) return;
+        const results = pageResults
+            .filter(result => result.status === "fulfilled")
+            .flatMap(result => result.value.results || []);
+        people = results
+            .map(normalizeTMDBPerson)
+            .filter(person => person.id && person.name && person.role === role)
+            .slice(0, 30);
+        renderPeople();
+    } catch (error) {
+        if (requestNumber !== peopleRequestNumber) return;
+        console.error(`Unable to load ${role}s:`, error);
+        container.innerHTML = `<div class="empty-state"><h3>Unable to load ${role === "actor" ? "actors" : "directors"}</h3><p>Please try again in a moment.</p></div>`;
     }
 }
 
@@ -319,8 +360,7 @@ async function searchPeople(query) {
     }
 
     const requestNumber = ++searchRequestNumber;
-
-    peopleRequestNumber++;
+    const peopleRequest = ++peopleRequestNumber;
 
     if (!query.trim()) {
         await loadPopularPeople();
@@ -339,7 +379,7 @@ async function searchPeople(query) {
             page: 1
         });
 
-        if (requestNumber !== searchRequestNumber) {
+        if (requestNumber !== searchRequestNumber || peopleRequest !== peopleRequestNumber) {
             return;
         }
 
@@ -356,14 +396,18 @@ async function searchPeople(query) {
     } catch (error) {
         console.error("People search failed:", error);
 
-        if (requestNumber !== searchRequestNumber) {
+        if (requestNumber !== searchRequestNumber || peopleRequest !== peopleRequestNumber) {
             return;
         }
+
+        const message = error.message === "TMDB_API_KEY is not configured."
+            ? "Copy tmdb_config.example.php to tmdb_config.php and add your TMDB API key to search people."
+            : "Something went wrong. Please try again.";
 
         container.innerHTML = `
             <div class="empty-state">
                 <h3>Search unavailable</h3>
-                <p>Something went wrong. Please try again.</p>
+                <p>${escapeHTML(message)}</p>
             </div>
         `;
     }
@@ -374,6 +418,7 @@ function setupRoleFilters() {
 
     filters.forEach(button => {
         button.addEventListener("click", () => {
+            searchRequestNumber++;
             activeRole = button.dataset.role || "all";
 
             filters.forEach(filter => {
@@ -386,7 +431,13 @@ function setupRoleFilters() {
                 );
             });
 
-            renderPeople();
+            if (!$("people-search")?.value.trim() && activeRole !== "all") {
+                loadPeopleByRole(activeRole);
+            } else if (!$("people-search")?.value.trim()) {
+                loadPopularPeople();
+            } else {
+                renderPeople();
+            }
         });
     });
 }
@@ -454,17 +505,27 @@ function getMovieCredits(personData) {
         ? credits.crew
         : [];
 
-    const combined = [...cast, ...crew];
+    const tvCredits = personData.tv_credits || {};
+    const tvCast = Array.isArray(tvCredits.cast) ? tvCredits.cast : [];
+    const tvCrew = Array.isArray(tvCredits.crew) ? tvCredits.crew : [];
+    const combined = [
+        ...cast.map(item => ({ ...item, media_type: "movie" })),
+        ...crew.map(item => ({ ...item, media_type: "movie" })),
+        ...tvCast.map(item => ({ ...item, media_type: "tv" })),
+        ...tvCrew.map(item => ({ ...item, media_type: "tv" }))
+    ];
 
     const uniqueMovies = new Map();
 
     combined.forEach(movie => {
-        if (!movie.id || !movie.title) {
+        const title = movie.title || movie.name;
+        if (!movie.id || !title) {
             return;
         }
 
-        if (!uniqueMovies.has(movie.id)) {
-            uniqueMovies.set(movie.id, movie);
+        const key = `${movie.media_type}:${movie.id}`;
+        if (!uniqueMovies.has(key)) {
+            uniqueMovies.set(key, { ...movie, title });
         }
     });
 
@@ -481,8 +542,9 @@ function createKnownForMovie(movie) {
         ? getImageURL(movie.poster_path, POSTER_SIZE)
         : "";
 
-    const year = movie.release_date
-        ? movie.release_date.slice(0, 4)
+    const releaseDate = movie.release_date || movie.first_air_date;
+    const year = releaseDate
+        ? releaseDate.slice(0, 4)
         : "Year unknown";
 
     return `
@@ -507,7 +569,7 @@ function createKnownForMovie(movie) {
 
             <div class="person-movie-info">
                 <h4>${escapeHTML(movie.title)}</h4>
-                <p>${escapeHTML(year)}</p>
+                <p>${escapeHTML(movie.media_type === "tv" ? "TV Series · " : "Movie · ")}${escapeHTML(year)}</p>
             </div>
         </article>
     `;
@@ -659,8 +721,8 @@ function renderPersonDetails(personData) {
                     </div>
                 `
                 : `
-                    <p class="empty-state">
-                        No movie credits available.
+                <p class="empty-state">
+                        No film or TV credits available.
                     </p>
                 `
         }
@@ -764,6 +826,19 @@ function setupPeopleCardEvents() {
     }
 
     container.addEventListener("click", event => {
+        if (event.target.closest("[data-clear-role-filter]")) {
+            activeRole = "all";
+            document.querySelectorAll("[data-role]").forEach(button => {
+                const active = button.dataset.role === "all";
+                button.classList.toggle("active", active);
+                button.setAttribute("aria-pressed", String(active));
+            });
+            const query = $("people-search")?.value.trim();
+            if (query) searchPeople(query);
+            else loadPopularPeople();
+            return;
+        }
+
         const card = event.target.closest("[data-person-id]");
 
         if (!card) {

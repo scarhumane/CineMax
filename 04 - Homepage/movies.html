@@ -76,87 +76,39 @@
                 ></div>
             </section>
 
-            <section class="content-section" id="movies">
-
+            <section class="content-section catalog-row-section" id="popular-section">
                 <div class="section-header">
-
-                    <h1>Trending Movies</h1>
-
+                    <h1>Popular Movies</h1>
                     <div class="row-controls">
-
-                        <button
-                            type="button"
-                            class="row-control"
-                            data-row="trending"
-                            data-dir="-1"
-                            aria-label="Scroll trending movies left"
-                        >
-                            <i data-lucide="chevron-left"></i>
-                        </button>
-
-                        <button
-                            type="button"
-                            class="row-control"
-                            data-row="trending"
-                            data-dir="1"
-                            aria-label="Scroll trending movies right"
-                        >
-                            <i data-lucide="chevron-right"></i>
-                        </button>
-
+                        <button type="button" class="row-control" data-row="popular-movies" data-dir="-1" aria-label="Scroll popular movies left"><i data-lucide="chevron-left"></i></button>
+                        <button type="button" class="row-control" data-row="popular-movies" data-dir="1" aria-label="Scroll popular movies right"><i data-lucide="chevron-right"></i></button>
                     </div>
-
                 </div>
-
-                <div
-                    class="movie-row"
-                    id="trending"
-                ></div>
-
+                <div class="movie-row backdrop-row" id="popular-movies" aria-label="Popular movies"></div>
             </section>
 
-            <section class="content-section" id="toprated">
+            <div id="additional-movie-rows"></div>
 
+            <section class="content-section catalog-row-section" id="horror-section">
                 <div class="section-header">
-
-                    <h2>Top Rated Movies</h2>
-
-                    <div
-                        class="row-controls"
-                        role="group"
-                        aria-label="Top rated movie controls"
-                    >
-
-                        <button
-                            type="button"
-                            class="row-control"
-                            data-row="rank"
-                            data-dir="-1"
-                            aria-label="Scroll top rated movies left"
-                        >
-                            <i data-lucide="chevron-left"></i>
-                        </button>
-
-                        <button
-                            type="button"
-                            class="row-control"
-                            data-row="rank"
-                            data-dir="1"
-                            aria-label="Scroll top rated movies right"
-                        >
-                            <i data-lucide="chevron-right"></i>
-                        </button>
-
+                    <h2>Horror</h2>
+                    <div class="row-controls">
+                        <button type="button" class="row-control" data-row="horror-movies" data-dir="-1" aria-label="Scroll horror movies left"><i data-lucide="chevron-left"></i></button>
+                        <button type="button" class="row-control" data-row="horror-movies" data-dir="1" aria-label="Scroll horror movies right"><i data-lucide="chevron-right"></i></button>
                     </div>
-
                 </div>
+                <div class="movie-row backdrop-row" id="horror-movies" aria-label="Horror movies"></div>
+            </section>
 
-                <ol
-                    class="top-rated-list"
-                    id="rank"
-                    aria-label="Top 10 highest-rated movies"
-                ></ol>
-
+            <section class="content-section catalog-row-section" id="comedy-section">
+                <div class="section-header">
+                    <h2>Comedy</h2>
+                    <div class="row-controls">
+                        <button type="button" class="row-control" data-row="comedy-movies" data-dir="-1" aria-label="Scroll comedy movies left"><i data-lucide="chevron-left"></i></button>
+                        <button type="button" class="row-control" data-row="comedy-movies" data-dir="1" aria-label="Scroll comedy movies right"><i data-lucide="chevron-right"></i></button>
+                    </div>
+                </div>
+                <div class="movie-row backdrop-row" id="comedy-movies" aria-label="Comedy movies"></div>
             </section>
 
         </main>

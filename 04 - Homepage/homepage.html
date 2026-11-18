@@ -95,7 +95,6 @@
 
             </section>
 
-
             <!-- CONTINUE WATCHING -->
             <section class="content-section" id="continue">
 
@@ -107,6 +106,78 @@
                     class="movie-row"
                     id="continue-movies"
                 ></div>
+
+            </section>
+
+            <section class="content-section" id="trending-section">
+
+                <div class="section-header">
+                    <h2>Trending Movies</h2>
+
+                    <div class="row-controls">
+                        <button
+                            type="button"
+                            class="row-control"
+                            data-row="trending"
+                            data-dir="-1"
+                            aria-label="Scroll trending movies left"
+                        >
+                            <i data-lucide="chevron-left"></i>
+                        </button>
+
+                        <button
+                            type="button"
+                            class="row-control"
+                            data-row="trending"
+                            data-dir="1"
+                            aria-label="Scroll trending movies right"
+                        >
+                            <i data-lucide="chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="movie-row" id="trending"></div>
+
+            </section>
+
+            <section class="content-section" id="toprated">
+
+                <div class="section-header">
+                    <h2>Top Rated Movies</h2>
+
+                    <div
+                        class="row-controls"
+                        role="group"
+                        aria-label="Top rated movie controls"
+                    >
+                        <button
+                            type="button"
+                            class="row-control"
+                            data-row="rank"
+                            data-dir="-1"
+                            aria-label="Scroll top rated movies left"
+                        >
+                            <i data-lucide="chevron-left"></i>
+                        </button>
+
+                        <button
+                            type="button"
+                            class="row-control"
+                            data-row="rank"
+                            data-dir="1"
+                            aria-label="Scroll top rated movies right"
+                        >
+                            <i data-lucide="chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <ol
+                    class="top-rated-list"
+                    id="rank"
+                    aria-label="Top 10 highest-rated movies"
+                ></ol>
 
             </section>
 

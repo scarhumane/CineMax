@@ -314,7 +314,10 @@ const SAMPLE_MOVIES = register([
 async function fetchTMDB(type, {
     query = "",
     page = 1,
-    id = null
+    id = null,
+    genre = null,
+    from = null,
+    to = null
 } = {}) {
     const parameters = new URLSearchParams({
         type,
@@ -328,6 +331,12 @@ async function fetchTMDB(type, {
     if (id !== null) {
         parameters.set("id", String(id));
     }
+
+    if (genre !== null) {
+        parameters.set("genre", String(genre));
+    }
+    if (from) parameters.set("from", from);
+    if (to) parameters.set("to", to);
 
     const response = await fetch(
         `tmdb_movies.php?${parameters.toString()}`
@@ -361,10 +370,11 @@ function normalizeTMDBMovie(movie) {
 
     return {
         id: String(movie.id),
-        title: movie.title || movie.original_title || "Untitled",
-        year: movie.release_date
-            ? Number(movie.release_date.slice(0, 4))
+        title: movie.title || movie.name || movie.original_title || movie.original_name || "Untitled",
+        year: (movie.release_date || movie.first_air_date)
+            ? Number((movie.release_date || movie.first_air_date).slice(0, 4))
             : "N/A",
+        releaseDate: movie.release_date || movie.first_air_date || "",
         rating: Number(movie.vote_average || 0),
         genres,
         director: "",
@@ -379,6 +389,7 @@ function normalizeTMDBMovie(movie) {
             ? `${TMDB_IMAGE_BASE}w780${movie.backdrop_path}`
             : "",
         description: movie.overview || "No description available.",
+        mediaType: movie.media_type === "tv" || movie.name ? "tv" : "movie",
         trending: false,
         topRated: false
     };
@@ -392,7 +403,7 @@ document.addEventListener("error", event => {
     if (
         !image ||
         image.tagName !== "IMG" ||
-        !image.closest(".movie-poster, .continue-thumb")
+        !image.closest(".movie-poster, .continue-thumb, .backdrop-open")
     ) {
         return;
     }
@@ -442,6 +453,39 @@ function createMovieCard(movie, extraContent = "") {
             ${extraContent}
         </article>
     `;
+}
+
+function createBackdropCard(movie) {
+    const image = movie.backdropSmall || movie.backdrop || movie.poster;
+    const reminder = String(movie.id) !== "1003596"
+        && movie.releaseDate
+        && movie.releaseDate > new Date().toISOString().slice(0, 10)
+        ? `<button type="button" class="remind-button ${isReminderSaved(movie.id) ? "is-saved" : ""}" data-remind-movie="${escapeHTML(movie.id)}" aria-pressed="${isReminderSaved(movie.id)}">${isReminderSaved(movie.id) ? "Reminder saved" : "Remind me"}</button>`
+        : "";
+    const releaseDate = movie.releaseDate
+        ? `<span class="backdrop-release-date">${new Date(`${movie.releaseDate}T00:00:00`).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}</span>`
+        : "";
+    return `
+        <article class="backdrop-card">
+            <a href="#" class="backdrop-open" data-open-movie="${escapeHTML(movie.id)}" aria-label="View details for ${escapeHTML(movie.title)}">
+                ${image
+                    ? `<img src="${escapeHTML(image)}" alt="${escapeHTML(movie.title)}" loading="lazy">`
+                    : `<div class="backdrop-placeholder">${escapeHTML(movie.title)}</div>`}
+                <span class="backdrop-card-title">${escapeHTML(movie.title)}</span>
+                <span class="backdrop-card-rating">★ ${formatRating(movie.rating)}</span>
+                ${releaseDate}
+            </a>
+            ${reminder}
+        </article>
+    `;
+}
+
+function renderBackdropRow(id, movies, loadingText) {
+    const container = $(id);
+    if (!container) return;
+    container.innerHTML = movies.length
+        ? movies.slice(0, 20).map(createBackdropCard).join("")
+        : loadingHTML(loadingText);
 }
 
 function createContinueCard(movie, progress) {
@@ -925,7 +969,7 @@ async function openModal(movie) {
     showModal();
 
     try {
-        const details = await fetchTMDB("movie", {
+        const details = await fetchTMDB(movie.mediaType === "tv" ? "tv" : "movie", {
             id: movie.id
         });
 
@@ -933,7 +977,10 @@ async function openModal(movie) {
             return;
         }
 
-        renderMovieDetails(movie, details);
+        const compatibleDetails = movie.mediaType === "tv"
+            ? { ...details, title: details.name || movie.title, release_date: details.first_air_date, runtime: details.episode_run_time?.[0], watch_providers: null }
+            : details;
+        renderMovieDetails(movie, compatibleDetails);
     } catch (error) {
         if (requestId !== modalRequestNumber) return;
 
@@ -1838,12 +1885,113 @@ async function loadTMDB() {
         );
 
         status.textContent = missingKey
-            ? "Live movie data is unavailable. Configure TMDB_API_KEY in tmdb_config.php to enable it."
+            ? "Live movie data is unavailable. Copy tmdb_config.example.php to tmdb_config.php and add your TMDB API key."
             : "Some live movie data could not be loaded. Showing available previews.";
 
         status.hidden = false;
     }
 }
+
+async function loadMoviesCatalog() {
+    const today = new Date().toISOString().slice(0, 10);
+    const pastDate = new Date();
+    pastDate.setDate(pastDate.getDate() - 60);
+    const rows = [
+        ["popular-movies", "popular", "Popular movies are unavailable right now."],
+        ["new-releases", "new-releases", "New releases are unavailable right now."],
+        ["top-rated-movies", "top-rated", "Top rated movies are unavailable right now."],
+        ["action-adventure", "discover", "Action and adventure movies are unavailable right now.", "28,12"],
+        ["sci-fi-fantasy", "discover", "Sci-fi and fantasy movies are unavailable right now.", "878,14"],
+        ["romance-movies", "discover", "Romance movies are unavailable right now.", "10749"],
+        ["thriller-mystery", "discover", "Thriller and mystery movies are unavailable right now.", "53,9648"],
+        ["drama-movies", "discover", "Drama movies are unavailable right now.", "18"],
+        ["animation-family", "discover", "Animation and family movies are unavailable right now.", "16,10751"],
+        ["documentary-movies", "discover", "Documentaries are unavailable right now.", "99"],
+        ["crime-movies", "discover", "Crime movies are unavailable right now.", "80"],
+        ["horror-movies", "discover", "Horror movies are unavailable right now.", "27"],
+        ["comedy-movies", "discover", "Comedy movies are unavailable right now.", "35"]
+    ];
+    const awardWinners = register([
+        { id: "496243", title: "Parasite", year: 2019, rating: 8.5, genres: ["Thriller", "Drama"], poster: `${TMDB_IMAGE_BASE}w500/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg`, backdrop: "", backdropSmall: "", description: "Academy Award winner for Best Picture, among other honors." },
+        { id: "872585", title: "Oppenheimer", year: 2023, rating: 8.1, genres: ["Drama", "History"], poster: `${TMDB_IMAGE_BASE}w500/ptpr0kGAckfQkJeJIt8st5dglvd.jpg`, backdrop: "", backdropSmall: "", description: "Academy Award winner for Best Picture and multiple other awards." },
+        { id: "545611", title: "Everything Everywhere All at Once", year: 2022, rating: 7.7, genres: ["Sci-Fi", "Adventure"], poster: `${TMDB_IMAGE_BASE}w500/w3LxiVYdWWRvEVdn5RYq6jIqkb1.jpg`, backdrop: "", backdropSmall: "", description: "Academy Award winner for Best Picture and multiple other awards." },
+        { id: "399055", title: "The Shape of Water", year: 2017, rating: 7.2, genres: ["Drama", "Fantasy"], poster: `${TMDB_IMAGE_BASE}w500/k4FwHlMhuRR5BISY2Gm2QZHlH5Q.jpg`, backdrop: "", backdropSmall: "", description: "Academy Award winner for Best Picture and multiple other awards." }
+    ]);
+    const additional = $("additional-movie-rows");
+    if (additional) {
+        const additionalRows = rows
+            .slice(1)
+            .filter(([id]) => id !== "horror-movies" && id !== "comedy-movies");
+
+        additional.innerHTML = additionalRows.slice(0, 5).map(([id]) => createCatalogSection(id, catalogTitle(id))).join("")
+            + createCatalogSection("award-winners", catalogTitle("award-winners"))
+            + additionalRows.slice(5).map(([id]) => createCatalogSection(id, catalogTitle(id))).join("");
+    }
+    renderBackdropRow("award-winners", awardWinners, "Award winners are unavailable right now.");
+    rows.forEach(([id]) => renderBackdropRow(id, [], "Loading recommendations..."));
+    const results = await Promise.allSettled(rows.map(([id, type, , genre]) => {
+        if (type === "new-releases") return fetchTMDB(type, { from: pastDate.toISOString().slice(0, 10), to: today });
+        return fetchTMDB(type, genre ? { genre } : {});
+    }));
+    let failed = false;
+    results.forEach((result, index) => {
+        const [id, , errorText] = rows[index];
+        if (result.status === "fulfilled") {
+            const movies = register((result.value.results || []).map(normalizeTMDBMovie).filter(Boolean));
+            renderBackdropRow(id, movies, errorText);
+        } else {
+            failed = true;
+            console.error(`Unable to load ${id}:`, result.reason);
+            renderBackdropRow(id, [], errorText);
+        }
+    });
+    const status = $("movie-service-status");
+    if (status && failed) {
+        status.textContent = "Some movie rows could not be loaded. Check your TMDB connection and try again.";
+        status.hidden = false;
+    }
+    refreshIcons();
+}
+
+const catalogTitles = {
+    "new-releases": "New Releases",
+    "top-rated-movies": "Top Rated / Critically Acclaimed Movies",
+    "award-winners": "Award Winners",
+    "action-adventure": "Action and Adventure",
+    "sci-fi-fantasy": "Sci-Fi and Fantasy",
+    "romance-movies": "Romance",
+    "thriller-mystery": "Thriller and Mystery",
+    "drama-movies": "Drama",
+    "animation-family": "Animation and Family",
+    "documentary-movies": "Documentary",
+    "crime-movies": "Crime"
+};
+
+function catalogTitle(id) { return catalogTitles[id] || id; }
+
+function createCatalogSection(id, title) {
+    return `<section class="content-section catalog-row-section"><div class="section-header"><h2>${escapeHTML(title)}</h2><div class="row-controls"><button type="button" class="row-control" data-row="${id}" data-dir="-1" aria-label="Scroll ${escapeHTML(title)} left"><i data-lucide="chevron-left"></i></button><button type="button" class="row-control" data-row="${id}" data-dir="1" aria-label="Scroll ${escapeHTML(title)} right"><i data-lucide="chevron-right"></i></button></div></div><div class="movie-row backdrop-row" id="${id}" aria-label="${escapeHTML(title)}"></div></section>`;
+}
+
+const REMINDERS_KEY = "cinemax-release-reminders";
+function getReminders() { try { return JSON.parse(localStorage.getItem(REMINDERS_KEY) || "[]"); } catch { return []; } }
+function isReminderSaved(id) { return getReminders().some(reminder => String(reminder.id) === String(id)); }
+
+document.addEventListener("click", event => {
+    const button = event.target.closest("[data-remind-movie]");
+    if (!button) return;
+    event.preventDefault();
+    const id = String(button.dataset.remindMovie);
+    const reminders = getReminders();
+    if (!reminders.some(reminder => String(reminder.id) === id)) {
+        const movie = getMovie(id);
+        reminders.push({ id, title: movie?.title || "Upcoming movie", releaseDate: movie?.releaseDate || "" });
+        try { localStorage.setItem(REMINDERS_KEY, JSON.stringify(reminders)); } catch (error) { console.warn("Unable to save release reminder:", error); }
+    }
+    button.textContent = "Reminder saved";
+    button.classList.add("is-saved");
+    button.setAttribute("aria-pressed", "true");
+});
 
 
 /* INITIALIZE PAGE */
@@ -1857,18 +2005,27 @@ renderContinueWatching();
 
 showHeroSkeleton();
 
-const cachedHome = readHomeCache();
+const hasHomeMovieRows = $("trending") && $("rank");
 
-if (cachedHome) {
-    // Show the last known real data immediately, then refresh in the background.
-    tmdbTrending = register(cachedHome.trending);
-    tmdbTopRated = register(cachedHome.topRated);
+if (hasHomeMovieRows) {
+    const cachedHome = readHomeCache();
 
-    setHero(tmdbTrending);
+    if (cachedHome) {
+        // Show the last known real data immediately, then refresh in the background.
+        tmdbTrending = register(cachedHome.trending);
+        tmdbTopRated = register(cachedHome.topRated);
+
+        setHero(tmdbTrending);
+    }
+
+    renderTrending();
+    renderTopRated();
 }
 
-renderTrending();
-renderTopRated();
-
 refreshIcons();
-loadTMDB();
+
+if (hasHomeMovieRows) {
+    loadTMDB();
+} else if ($("popular-movies")) {
+    loadMoviesCatalog();
+}

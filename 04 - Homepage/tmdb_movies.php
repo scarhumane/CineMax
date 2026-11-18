@@ -69,11 +69,15 @@ $movieIdValue = $_GET["movie_id"] ?? $_GET["id"] ?? "";
 $movieId = filter_var($movieIdValue, FILTER_VALIDATE_INT);
 
 $genreValue = $_GET["genre"] ?? "";
-$genre = filter_var($genreValue, FILTER_VALIDATE_INT);
+$genre = is_string($genreValue) && preg_match('/^\d+(?:,\d+)*$/', $genreValue)
+    ? $genreValue
+    : "";
+$from = $_GET["from"] ?? "";
+$to = $_GET["to"] ?? "";
 
 if (
     $type === "discover" &&
-    ($genre === false || $genre <= 0)
+    $genre === ""
 ) {
     sendJson(
         ["error" => "A valid movie genre is required."],
@@ -95,8 +99,28 @@ switch ($type) {
         $result = getTopRatedMovies($page);
         break;
 
+    case "tv-top-rated":
+        $result = getTopRatedTV($page);
+        break;
+
+    case "new-releases":
+        if (!is_string($from) || !is_string($to) || !DateTime::createFromFormat("!Y-m-d", $from) || !DateTime::createFromFormat("!Y-m-d", $to)) {
+            sendJson(["error" => "A valid release date range is required."], 400);
+            exit;
+        }
+        $result = getNewReleases($from, $to, $page);
+        break;
+
+    case "upcoming":
+        $result = getUpcomingMovies($page);
+        break;
+
+    case "tv-binge":
+        $result = getBingeWorthyTV($page);
+        break;
+
     case "discover":
-        $result = getMoviesByGenre($genre, $page);
+        $result = discoverMovies($genre, $page);
         break;
 
     case "search":
@@ -138,9 +162,12 @@ switch ($type) {
             break;
         }
 
+        $tvCredits = getPersonTVCredits($personId);
+
         $result = [
             "person" => $person,
-            "credits" => $credits
+            "credits" => $credits,
+            "tv_credits" => !isset($tvCredits["error"]) ? $tvCredits : ["cast" => [], "crew" => []]
         ];
 
         break;
@@ -164,6 +191,15 @@ switch ($type) {
                 : null;
         }
 
+        break;
+
+    case "tv":
+        if ($movieId === false || $movieId <= 0) {
+            sendJson(["error" => "A valid TV show ID is required."], 400);
+            exit;
+        }
+
+        $result = getTVDetails($movieId);
         break;
 
     default:

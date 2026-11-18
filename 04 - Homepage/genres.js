@@ -338,8 +338,12 @@ async function loadGenres() {
     } catch (error) {
         console.error("Genre loading error:", error);
 
+        const message = error.message === "TMDB_API_KEY is not configured."
+            ? "Copy tmdb_config.example.php to tmdb_config.php and add your TMDB API key to load genres."
+            : "Unable to load genres. Please try again later.";
+
         genreList.innerHTML = loadingHTML(
-            "Unable to load genres. Please try again later."
+            message
         );
     }
 }
