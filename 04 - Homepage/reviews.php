@@ -1,262 +1,280 @@
 <?php
 
-session_start();
+declare(strict_types=1);
 
-header("Content-Type: application/json; charset=UTF-8");
+const REVIEW_DIR = __DIR__ . "/reviews_data";
+const MAX_REVIEWS_PER_TITLE = 500;
+const MAX_NAME = 40;
+const MAX_TEXT = 1500;
+const MIN_TEXT = 3;
+const COOKIE_NAME = "cm_reviewer";
 
-if (
-    !isset($_SESSION["logged_in"]) ||
-    $_SESSION["logged_in"] !== true
-) {
-    http_response_code(401);
-    echo json_encode(["error" => "Please log in to access reviews."]);
-    exit;
+header("Content-Type: application/json; charset=utf-8");
+header("Cache-Control: no-store");
+header("X-Content-Type-Options: nosniff");
+
+/*
+ * If CineMax has logged-in users, return the signed-in display name here
+ * (for example from $_SESSION) and it will be used instead of the typed name.
+ */
+function currentUserName(): ?string
+{
+    return null;
 }
 
-$username = $_SESSION["username"] ?? "";
-
-if ($username === "") {
-    http_response_code(401);
-    echo json_encode(["error" => "Your account could not be identified."]);
-    exit;
-}
-
-$file = __DIR__ . "/../03 - Data/reviews.json";
-
-function respond(array $data, int $status = 200): void
+function respond(array $payload, int $status = 200): never
 {
     http_response_code($status);
-    echo json_encode($data, JSON_UNESCAPED_UNICODE);
+    echo json_encode(
+        $payload,
+        JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE
+    );
     exit;
 }
 
-function readReviews($handle): array
+function isHttps(): bool
 {
-    rewind($handle);
-
-    $contents = stream_get_contents($handle);
-    $data = json_decode($contents ?: '{"reviews":[]}', true);
-
-    return is_array($data) && isset($data["reviews"]) && is_array($data["reviews"])
-        ? $data["reviews"]
-        : [];
+    return (!empty($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] !== "off")
+        || ($_SERVER["SERVER_PORT"] ?? "") === "443";
 }
 
-function getReviewFile(string $file)
+function reviewerToken(): string
 {
-    $directory = dirname($file);
+    $cookie = $_COOKIE[COOKIE_NAME] ?? "";
 
-    if (!is_dir($directory)) {
-        return false;
-    }
-
-    if (!file_exists($file)) {
-        file_put_contents($file, '{"reviews":[]}', LOCK_EX);
-    }
-
-    return fopen($file, "c+");
+    return is_string($cookie) && preg_match('/^[a-f0-9]{32}$/', $cookie)
+        ? $cookie
+        : "";
 }
 
-function sendReviews(array $reviews, int $movieId, string $username): void
+function issueToken(): string
 {
-    $movieReviews = array_values(array_filter(
-        $reviews,
-        fn($review) =>
-            (int)($review["movie_id"] ?? 0) === $movieId
-    ));
+    $token = bin2hex(random_bytes(16));
 
-    usort(
-        $movieReviews,
-        fn($a, $b) =>
-            strcmp($b["updated_at"] ?? "", $a["updated_at"] ?? "")
-    );
-
-    $ownReview = null;
-
-    foreach ($movieReviews as $review) {
-        if (($review["username"] ?? "") === $username) {
-            $ownReview = $review;
-            break;
-        }
-    }
-
-    respond([
-        "success" => true,
-        "reviews" => $movieReviews,
-        "own_review" => $ownReview,
-        "review_count" => count($movieReviews)
+    setcookie(COOKIE_NAME, $token, [
+        "expires" => time() + 60 * 60 * 24 * 365,
+        "path" => "/",
+        "secure" => isHttps(),
+        "httponly" => true,
+        "samesite" => "Lax",
     ]);
+
+    $_COOKIE[COOKIE_NAME] = $token;
+
+    return $token;
 }
 
-$method = $_SERVER["REQUEST_METHOD"];
+function ensureStorage(): void
+{
+    if (!is_dir(REVIEW_DIR) && !@mkdir(REVIEW_DIR, 0755, true) && !is_dir(REVIEW_DIR)) {
+        error_log("reviews.php: cannot create " . REVIEW_DIR);
+        respond(["error" => "Reviews storage is unavailable."], 500);
+    }
+
+    $htaccess = REVIEW_DIR . "/.htaccess";
+
+    if (!is_file($htaccess)) {
+        @file_put_contents(
+            $htaccess,
+            "<IfModule mod_authz_core.c>\nRequire all denied\n</IfModule>\n"
+            . "<IfModule !mod_authz_core.c>\nDeny from all\n</IfModule>\n"
+        );
+    }
+}
+
+function parseTitle(mixed $kind, mixed $id): array
+{
+    $kind = is_string($kind) ? $kind : "movie";
+    $id = filter_var($id, FILTER_VALIDATE_INT);
+
+    if (!in_array($kind, ["movie", "tv"], true) || $id === false || $id < 1 || $id > 99999999) {
+        respond(["error" => "A valid movie ID is required."], 400);
+    }
+
+    return [$kind, $id];
+}
+
+function storePath(string $kind, int $id): string
+{
+    return REVIEW_DIR . "/{$kind}_{$id}.json";
+}
+
+function decodeList(string|false $raw): array
+{
+    $list = json_decode($raw === false || $raw === "" ? "[]" : $raw, true);
+
+    return is_array($list) ? $list : [];
+}
+
+function readReviews(string $path): array
+{
+    return is_file($path) ? decodeList(@file_get_contents($path)) : [];
+}
+
+function mutateReviews(string $path, callable $change): array
+{
+    $handle = @fopen($path, "c+");
+
+    if ($handle === false) {
+        respond(["error" => "Unable to save your review."], 500);
+    }
+
+    try {
+        flock($handle, LOCK_EX);
+        $list = $change(decodeList(stream_get_contents($handle)));
+        ftruncate($handle, 0);
+        rewind($handle);
+        fwrite($handle, json_encode($list, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        fflush($handle);
+        flock($handle, LOCK_UN);
+    } finally {
+        fclose($handle);
+    }
+
+    return $list;
+}
+
+function publicView(array $list, string $token): array
+{
+    usort($list, static fn($a, $b) => strcmp((string)($b["created"] ?? ""), (string)($a["created"] ?? "")));
+
+    $hash = $token === "" ? null : hash("sha256", $token);
+    $out = [];
+    $sum = 0;
+
+    foreach ($list as $r) {
+        $rating = (int)($r["rating"] ?? 0);
+        $sum += $rating;
+        $out[] = [
+            "id" => (string)($r["id"] ?? ""),
+            "name" => (string)($r["name"] ?? "Anonymous"),
+            "rating" => $rating,
+            "text" => (string)($r["text"] ?? ""),
+            "created" => (string)($r["created"] ?? ""),
+            "mine" => $hash !== null && ($r["reviewer"] ?? null) === $hash,
+        ];
+    }
+
+    return [
+        "reviews" => $out,
+        "count" => count($out),
+        "average" => count($out) ? round($sum / count($out), 1) : 0,
+    ];
+}
+
+function cleanText(string $value, bool $multiline): string
+{
+    if (!mb_check_encoding($value, "UTF-8")) {
+        return "";
+    }
+
+    $value = str_replace(["\r\n", "\r"], "\n", $value);
+    $value = preg_replace('/[^\P{C}\n]+/u', "", $value) ?? "";
+
+    if ($multiline) {
+        $value = preg_replace("/\n{3,}/", "\n\n", $value) ?? $value;
+    } else {
+        $value = preg_replace('/\s+/u', " ", $value) ?? $value;
+    }
+
+    return trim($value);
+}
+
+$method = $_SERVER["REQUEST_METHOD"] ?? "GET";
 
 if ($method === "GET") {
-    $movieId = filter_input(INPUT_GET, "movie_id", FILTER_VALIDATE_INT);
-
-    if (!$movieId || $movieId <= 0) {
-        respond(["error" => "A valid movie ID is required."], 400);
-    }
-
-    $handle = getReviewFile($file);
-
-    if (!$handle) {
-        respond(["error" => "Could not access the reviews file."], 500);
-    }
-
-    flock($handle, LOCK_SH);
-    $reviews = readReviews($handle);
-    flock($handle, LOCK_UN);
-    fclose($handle);
-
-    sendReviews($reviews, $movieId, $username);
+    [$kind, $id] = parseTitle($_GET["kind"] ?? "movie", $_GET["movie_id"] ?? "");
+    respond(publicView(readReviews(storePath($kind, $id)), reviewerToken()));
 }
 
-if ($method === "POST" || $method === "DELETE") {
-    $input = json_decode(file_get_contents("php://input"), true);
+if ($method !== "POST") {
+    header("Allow: GET, POST");
+    respond(["error" => "Method not allowed."], 405);
+}
 
-    if (!is_array($input)) {
-        respond(["error" => "Invalid request data."], 400);
+/* ----- POST ----- */
+
+$origin = $_SERVER["HTTP_ORIGIN"] ?? "";
+
+if ($origin !== "") {
+    $originHost = strtolower((string)parse_url($origin, PHP_URL_HOST));
+    $selfHost = strtolower((string)parse_url("//" . ($_SERVER["HTTP_HOST"] ?? ""), PHP_URL_HOST));
+
+    if ($originHost === "" || $originHost !== $selfHost) {
+        respond(["error" => "Cross-origin requests are not allowed."], 403);
     }
+}
 
-    $movieId = filter_var(
-        $input["movie_id"] ?? null,
-        FILTER_VALIDATE_INT
-    );
+if (stripos((string)($_SERVER["CONTENT_TYPE"] ?? ""), "application/json") !== 0) {
+    respond(["error" => "Content-Type must be application/json."], 415);
+}
 
-    if (!$movieId || $movieId <= 0) {
-        respond(["error" => "A valid movie ID is required."], 400);
-    }
+$input = json_decode((string)file_get_contents("php://input", false, null, 0, 20000), true);
 
-    $handle = getReviewFile($file);
+if (!is_array($input)) {
+    respond(["error" => "Invalid request."], 400);
+}
 
-    if (!$handle) {
-        respond(["error" => "Could not access the reviews file."], 500);
-    }
+[$kind, $id] = parseTitle($input["kind"] ?? "movie", $input["movie_id"] ?? "");
 
-    if (!flock($handle, LOCK_EX)) {
-        fclose($handle);
-        respond(["error" => "Could not lock the reviews file."], 500);
-    }
+$rating = filter_var($input["rating"] ?? null, FILTER_VALIDATE_INT);
 
-    $reviews = readReviews($handle);
+if ($rating === false || $rating < 1 || $rating > 5) {
+    respond(["error" => "Please choose a rating from 1 to 5 stars."], 400);
+}
 
-    if ($method === "POST") {
-        $rating = filter_var(
-            $input["rating"] ?? null,
-            FILTER_VALIDATE_FLOAT
-        );
+$name = cleanText(currentUserName() ?? (is_string($input["name"] ?? null) ? $input["name"] : ""), false);
 
-        $title = trim($input["title"] ?? "");
-        $content = trim($input["review"] ?? "");
+if ($name === "" || mb_strlen($name) > MAX_NAME) {
+    respond(["error" => "Please enter a display name (up to " . MAX_NAME . " characters)."], 400);
+}
 
-        if (
-            $rating === false ||
-            $rating < 0.5 ||
-            $rating > 5 ||
-            fmod((float)$rating, 0.5) !== 0.0
-        ) {
-            flock($handle, LOCK_UN);
-            fclose($handle);
-            respond(["error" => "Choose a rating from 0.5 to 5 stars."], 400);
-        }
+$text = cleanText(is_string($input["text"] ?? null) ? $input["text"] : "", true);
 
-        if (mb_strlen($title) < 3 || mb_strlen($title) > 80) {
-            flock($handle, LOCK_UN);
-            fclose($handle);
-            respond(["error" => "The review title must be 3–80 characters."], 400);
-        }
+if (mb_strlen($text) < MIN_TEXT || mb_strlen($text) > MAX_TEXT) {
+    respond(["error" => "Reviews must be " . MIN_TEXT . " to " . MAX_TEXT . " characters."], 400);
+}
 
-        if (mb_strlen($content) < 10 || mb_strlen($content) > 2000) {
-            flock($handle, LOCK_UN);
-            fclose($handle);
-            respond(["error" => "Your review must be 10–2,000 characters."], 400);
-        }
+ensureStorage();
 
-        $existingIndex = null;
+$token = reviewerToken() ?: issueToken();
+$hash = hash("sha256", $token);
 
-        foreach ($reviews as $index => $review) {
-            if (
-                (int)($review["movie_id"] ?? 0) === $movieId &&
-                ($review["username"] ?? "") === $username
-            ) {
-                $existingIndex = $index;
+$list = mutateReviews(
+    storePath($kind, $id),
+    static function (array $list) use ($hash, $name, $rating, $text): array {
+        $now = gmdate("c");
+        $replaced = false;
+
+        foreach ($list as &$r) {
+            if (($r["reviewer"] ?? null) === $hash) {
+                $r["name"] = $name;
+                $r["rating"] = $rating;
+                $r["text"] = $text;
+                $r["created"] = $now;
+                $replaced = true;
                 break;
             }
         }
+        unset($r);
 
-        $now = date("c");
-
-        if ($existingIndex !== null) {
-            $reviews[$existingIndex]["rating"] = (float)$rating;
-            $reviews[$existingIndex]["title"] = $title;
-            $reviews[$existingIndex]["review"] = $content;
-            $reviews[$existingIndex]["updated_at"] = $now;
-        } else {
-            $reviews[] = [
-                "id" => bin2hex(random_bytes(16)),
-                "movie_id" => $movieId,
-                "username" => $username,
-                "rating" => (float)$rating,
-                "title" => $title,
-                "review" => $content,
-                "created_at" => $now,
-                "updated_at" => $now
+        if (!$replaced) {
+            $list[] = [
+                "id" => bin2hex(random_bytes(6)),
+                "reviewer" => $hash,
+                "name" => $name,
+                "rating" => $rating,
+                "text" => $text,
+                "created" => $now,
             ];
         }
-    }
 
-    if ($method === "DELETE") {
-        $reviewId = $input["review_id"] ?? "";
-
-        if (!is_string($reviewId) || $reviewId === "") {
-            flock($handle, LOCK_UN);
-            fclose($handle);
-            respond(["error" => "A review ID is required."], 400);
+        if (count($list) > MAX_REVIEWS_PER_TITLE) {
+            $list = array_slice($list, -MAX_REVIEWS_PER_TITLE);
         }
 
-        $found = false;
-
-        foreach ($reviews as $index => $review) {
-            if (
-                ($review["id"] ?? "") === $reviewId &&
-                (int)($review["movie_id"] ?? 0) === $movieId &&
-                ($review["username"] ?? "") === $username
-            ) {
-                unset($reviews[$index]);
-                $found = true;
-                break;
-            }
-        }
-
-        if (!$found) {
-            flock($handle, LOCK_UN);
-            fclose($handle);
-            respond(["error" => "Review not found or you do not own it."], 404);
-        }
-
-        $reviews = array_values($reviews);
+        return $list;
     }
+);
 
-    $output = json_encode(
-        ["reviews" => $reviews],
-        JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE
-    );
-
-    rewind($handle);
-    ftruncate($handle, 0);
-
-    $written = fwrite($handle, $output);
-    fflush($handle);
-
-    flock($handle, LOCK_UN);
-    fclose($handle);
-
-    if ($written === false) {
-        respond(["error" => "Could not save your review."], 500);
-    }
-
-    sendReviews($reviews, $movieId, $username);
-}
-
-header("Allow: GET, POST, DELETE");
-respond(["error" => "Method not allowed."], 405);
+respond(publicView($list, $token), 201);

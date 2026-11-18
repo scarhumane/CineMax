@@ -324,22 +324,15 @@ async function fetchTMDB(type, {
         page: String(page)
     });
 
-    if (query) {
-        parameters.set("query", query);
-    }
-
-    if (id !== null) {
-        parameters.set("id", String(id));
-    }
-
-    if (genre !== null) {
-        parameters.set("genre", String(genre));
-    }
+    if (query) parameters.set("query", query);
+    if (id !== null) parameters.set("id", String(id));
+    if (genre !== null) parameters.set("genre", String(genre));
     if (from) parameters.set("from", from);
     if (to) parameters.set("to", to);
 
     const response = await fetch(
-        `tmdb_movies.php?${parameters.toString()}`
+        `tmdb_movies.php?${parameters.toString()}`,
+        { cache: "no-store" }
     );
 
     let data;
@@ -351,12 +344,17 @@ async function fetchTMDB(type, {
     }
 
     if (!response.ok || !data || data.error) {
-        throw new Error(
-            data?.error || "Unable to fetch movie data."
-        );
+        throw new Error(data?.error || "Unable to fetch movie data.");
     }
 
-    return data;
+    // Support both cached and direct TMDB response structures.
+    const result = data.data ?? data;
+
+    if (result.error) {
+        throw new Error(result.error);
+    }
+
+    return result;
 }
 
 function normalizeTMDBMovie(movie) {
@@ -364,48 +362,101 @@ function normalizeTMDBMovie(movie) {
         return null;
     }
 
+    const title =
+        movie.title ||
+        movie.name ||
+        movie.original_title ||
+        movie.original_name ||
+        "Untitled";
+
+    // Find an existing sample movie with the same title.
+    const sampleMovie = SAMPLE_MOVIES.find(sample =>
+        sample.title.toLowerCase() === title.toLowerCase()
+    );
+
     const genres = movie.genre_ids
         ? movie.genre_ids.map(id => GENRE_NAMES[id]).filter(Boolean)
         : (movie.genres || []).map(genre => genre.name).filter(Boolean);
 
     return {
         id: String(movie.id),
-        title: movie.title || movie.name || movie.original_title || movie.original_name || "Untitled",
+        title,
+
         year: (movie.release_date || movie.first_air_date)
             ? Number((movie.release_date || movie.first_air_date).slice(0, 4))
             : "N/A",
+
         releaseDate: movie.release_date || movie.first_air_date || "",
+
         rating: Number(movie.vote_average || 0),
+
         genres,
+
         director: "",
         cast: [],
+
+        // Use the TMDB poster first, then the sample poster.
         poster: movie.poster_path
             ? `${TMDB_IMAGE_BASE}w500${movie.poster_path}`
-            : "",
+            : (sampleMovie?.poster || ""),
+
         backdrop: movie.backdrop_path
             ? `${TMDB_IMAGE_BASE}w1280${movie.backdrop_path}`
-            : "",
+            : (sampleMovie?.backdrop || ""),
+
         backdropSmall: movie.backdrop_path
             ? `${TMDB_IMAGE_BASE}w780${movie.backdrop_path}`
-            : "",
-        description: movie.overview || "No description available.",
-        mediaType: movie.media_type === "tv" || movie.name ? "tv" : "movie",
+            : (sampleMovie?.backdropSmall || ""),
+
+        description: movie.overview ||
+            sampleMovie?.description ||
+            "No description available.",
+
+        mediaType: movie.media_type === "tv" || movie.name
+            ? "tv"
+            : "movie",
+
         trending: false,
         topRated: false
     };
 }
 
-/* IMAGE FALLBACKS */
 
+/* IMAGE FALLBACKS */
 document.addEventListener("error", event => {
     const image = event.target;
 
     if (
         !image ||
         image.tagName !== "IMG" ||
-        !image.closest(".movie-poster, .continue-thumb, .backdrop-open")
+        !image.closest(
+            ".movie-poster, .continue-thumb, .backdrop-open, .home-backdrop-open"
+        )
     ) {
         return;
+    }
+
+    // Avoid repeatedly attempting the same failed fallback.
+    if (image.dataset.fallbackAttempted !== "true") {
+        image.dataset.fallbackAttempted = "true";
+
+        const posterContainer = image.closest(".movie-poster");
+
+        if (posterContainer) {
+            const title = image.alt.replace(/ poster$/, "");
+
+            const sampleMovie = SAMPLE_MOVIES.find(
+                movie => movie.title.toLowerCase() === title.toLowerCase()
+            );
+
+            if (
+                sampleMovie?.poster &&
+                sampleMovie.poster !== image.src
+            ) {
+                image.src = sampleMovie.poster;
+                return;
+            }
+        }
     }
 
     const placeholder = document.createElement("div");
@@ -414,7 +465,9 @@ document.addEventListener("error", event => {
     placeholder.textContent = image.alt.replace(/ poster$/, "");
 
     image.replaceWith(placeholder);
+
 }, true);
+
 
 /* MOVIE CARDS */
 
@@ -428,25 +481,53 @@ function createPoster(movie) {
     return `<div class="movie-poster">${content}</div>`;
 }
 
+
 function createMovieCard(movie, extraContent = "") {
+    const image =
+        movie.backdropSmall ||
+        movie.backdrop ||
+        movie.poster ||
+        "";
+
+    const releaseDate = movie.releaseDate
+        ? new Date(`${movie.releaseDate}T00:00:00`).toLocaleDateString(
+            "en-US",
+            {
+                month: "short",
+                day: "numeric",
+                year: "numeric"
+            }
+        )
+        : movie.year || "Release date unavailable";
+
     return `
-        <article class="movie-card">
-            <a href="#" class="movie-open"
-               data-open-movie="${escapeHTML(movie.id)}">
+        <article class="home-backdrop-card">
+            <a href="#"
+               class="home-backdrop-open"
+               data-open-movie="${escapeHTML(movie.id)}"
+               aria-label="View details for ${escapeHTML(movie.title)}">
 
-                ${createPoster(movie)}
+                ${image
+                    ? `<img
+                        src="${escapeHTML(image)}"
+                        alt="${escapeHTML(movie.title)}"
+                        loading="lazy">`
+                    : `<div class="home-backdrop-placeholder">
+                        ${escapeHTML(movie.title)}
+                    </div>`}
 
-                <div class="movie-info">
-                    <h3>${escapeHTML(movie.title)}</h3>
+                <div class="home-backdrop-overlay">
+                    <span class="home-backdrop-date">
+                        ${escapeHTML(releaseDate)}
+                    </span>
 
-                    <p class="movie-meta">
-                        ${escapeHTML(movie.year)} \u00B7
-                        ${escapeHTML((movie.genres || []).slice(0, 2).join(", "))}
-                    </p>
+                    <h3 class="home-backdrop-title">
+                        ${escapeHTML(movie.title)}
+                    </h3>
 
-                    <p class="movie-rating">
-                        \u2605 ${formatRating(movie.rating)}
-                    </p>
+                    <span class="home-backdrop-rating">
+                        ★ ${formatRating(movie.rating)}
+                    </span>
                 </div>
             </a>
 
@@ -529,7 +610,7 @@ function createTopCard(movie, rank) {
     return `
         <li class="top-card ${rank === 1 ? "is-first" : ""}">
             <span class="top-rank" aria-hidden="true">${rank}</span>
-            ${createMovieCard(movie)}
+            ${createBackdropCard(movie)}
         </li>
     `;
 }
@@ -779,6 +860,187 @@ function renderRecommendations(recommendations) {
     `;
 }
 
+/* MODAL TRAILER PLAYER */
+
+let youtubeApiPromise = null;
+let trailerPlayer = null;
+let trailerMountId = 0;
+
+function loadYouTubeApi() {
+    if (window.YT && typeof window.YT.Player === "function") {
+        return Promise.resolve(window.YT);
+    }
+
+    if (youtubeApiPromise) return youtubeApiPromise;
+
+    youtubeApiPromise = new Promise((resolve, reject) => {
+        const previousHandler = window.onYouTubeIframeAPIReady;
+
+        const timer = setTimeout(() => {
+            reject(new Error("YouTube player API timed out."));
+        }, 8000);
+
+        window.onYouTubeIframeAPIReady = () => {
+            clearTimeout(timer);
+
+            if (typeof previousHandler === "function") {
+                previousHandler();
+            }
+
+            resolve(window.YT);
+        };
+
+        const script = document.createElement("script");
+
+        script.src = "https://www.youtube.com/iframe_api";
+        script.async = true;
+        script.onerror = () => {
+            clearTimeout(timer);
+            reject(new Error("YouTube player API could not be loaded."));
+        };
+
+        document.head.appendChild(script);
+    });
+
+    return youtubeApiPromise;
+}
+
+function getTrailerCandidates(videos) {
+    const seen = new Set();
+
+    const rank = video =>
+        (video.type === "Trailer" ? 0 : 2) + (video.official ? 0 : 1);
+
+    return (videos || [])
+        .filter(video =>
+            video.site === "YouTube" &&
+            /^[\w-]{6,20}$/.test(video.key || "") &&
+            ["Trailer", "Teaser"].includes(video.type)
+        )
+        .sort((a, b) => rank(a) - rank(b))
+        .filter(video => {
+            if (seen.has(video.key)) return false;
+            seen.add(video.key);
+            return true;
+        })
+        .slice(0, 4);
+}
+
+function destroyTrailerPlayer() {
+    // Invalidates any trailer that is still being mounted.
+    trailerMountId++;
+
+    if (trailerPlayer && typeof trailerPlayer.destroy === "function") {
+        try {
+            trailerPlayer.destroy();
+        } catch (error) {
+            console.warn("Unable to remove the trailer player:", error);
+        }
+    }
+
+    trailerPlayer = null;
+}
+
+function showPosterFallback(media, panel, fallbackHTML, note = "") {
+    panel.classList.remove("has-trailer");
+
+    media.innerHTML = `${fallbackHTML}${
+        note ? `<p class="modal-trailer-note">${note}</p>` : ""
+    }`;
+}
+
+async function mountTrailer({ media, panel, candidates, fallbackHTML, title }) {
+    destroyTrailerPlayer();
+
+    const mountId = trailerMountId;
+    const isStale = () => mountId !== trailerMountId;
+
+    if (!candidates.length) {
+        showPosterFallback(media, panel, fallbackHTML);
+        return;
+    }
+
+    panel.classList.add("has-trailer");
+
+    media.innerHTML = `
+        <div class="modal-trailer-player">
+            <div id="modal-trailer-frame"></div>
+        </div>
+    `;
+
+    let YT = null;
+
+    try {
+        YT = await loadYouTubeApi();
+    } catch (error) {
+        console.warn("Using the basic YouTube embed:", error);
+    }
+
+    if (isStale()) return;
+
+    // The player API is unavailable, so use a plain embed without error detection.
+    if (!YT) {
+        media.innerHTML = `
+            <div class="modal-trailer-player">
+                <iframe
+                    src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(candidates[0].key)}?rel=0&modestbranding=1&playsinline=1"
+                    title="${escapeHTML(title)} trailer"
+                    allow="accelerometer; encrypted-media; picture-in-picture; fullscreen"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    allowfullscreen>
+                </iframe>
+            </div>
+        `;
+        return;
+    }
+
+    let index = 0;
+
+    const playerVars = {
+        rel: 0,
+        modestbranding: 1,
+        playsinline: 1
+    };
+
+    if (/^https?:$/.test(window.location.protocol)) {
+        playerVars.origin = window.location.origin;
+    }
+
+    trailerPlayer = new YT.Player("modal-trailer-frame", {
+        host: "https://www.youtube-nocookie.com",
+        videoId: candidates[0].key,
+        playerVars,
+        events: {
+            onError: () => {
+                if (isStale()) return;
+
+                index += 1;
+
+                // This video cannot be embedded: try the next trailer, if any.
+                if (index < candidates.length && trailerPlayer) {
+                    trailerPlayer.cueVideoById(candidates[index].key);
+                    return;
+                }
+
+                destroyTrailerPlayer();
+
+                showPosterFallback(
+                    media,
+                    panel,
+                    fallbackHTML,
+                    "This trailer cannot be played here."
+                );
+            }
+        }
+    });
+
+    const frame = media.querySelector("iframe");
+
+    if (frame) {
+        frame.title = `${title} trailer`;
+    }
+}
+
 function renderMovieDetails(movie, details) {
     const modal = getModal();
     const media = modal.querySelector(".modal-media");
@@ -798,7 +1060,7 @@ function renderMovieDetails(movie, details) {
         ? `${TMDB_IMAGE_BASE}w500${details.poster_path}`
         : movie.poster;
 
-    media.innerHTML = poster
+    const posterMarkup = poster
         ? `<img
             class="modal-poster"
             src="${escapeHTML(poster)}"
@@ -806,6 +1068,17 @@ function renderMovieDetails(movie, details) {
         : `<div class="poster-placeholder">
             ${escapeHTML(details.title)}
         </div>`;
+
+    // The embedded trailer replaces the poster; the poster is the fallback.
+    const trailerCandidates = getTrailerCandidates(details.videos?.results);
+
+    mountTrailer({
+        media,
+        panel,
+        candidates: trailerCandidates,
+        fallbackHTML: posterMarkup,
+        title: details.title || movie.title
+    });
 
     const director = (details.credits?.crew || [])
         .find(person => person.job === "Director");
@@ -817,15 +1090,6 @@ function renderMovieDetails(movie, details) {
         .slice(0, 3);
 
     const cast = details.credits?.cast || [];
-
-    const trailer = (details.videos?.results || []).find(video =>
-        video.site === "YouTube" &&
-        video.type === "Trailer" &&
-        video.official
-    ) || (details.videos?.results || []).find(video =>
-        video.site === "YouTube" &&
-        video.type === "Trailer"
-    );
 
     const genres = (details.genres || [])
         .map(genre => genre.name);
@@ -855,7 +1119,6 @@ function renderMovieDetails(movie, details) {
     register([watchlistMovie]);
 
     body.innerHTML = `
-        <p class="hero-label">CineMax Movie Guide</p>
 
         <h2 id="modal-title">
             ${escapeHTML(details.title || movie.title)}
@@ -891,15 +1154,8 @@ function renderMovieDetails(movie, details) {
         </div>
 
         <div class="modal-actions">
-            ${trailer
-                ? `<a
-                    class="modal-trailer"
-                    href="https://www.youtube.com/watch?v=${encodeURIComponent(trailer.key)}"
-                    target="_blank"
-                    rel="noopener noreferrer">
-                    <i data-lucide="play"></i>
-                    Watch Trailer
-                   </a>`
+            ${trailerCandidates.length
+                ? ""
                 : `<span class="modal-muted">No trailer available.</span>`}
 
             <button type="button" class="modal-watch"></button>
@@ -958,6 +1214,9 @@ async function openModal(movie) {
 
     if (!media || !body) return;
 
+    destroyTrailerPlayer();
+    modal.querySelector(".modal-panel")?.classList.remove("has-trailer");
+
     media.innerHTML = createPoster(movie);
 
     body.innerHTML = `
@@ -1002,6 +1261,14 @@ function closeModal() {
     if (!modal || modal.hidden) return;
 
     modalRequestNumber++;
+
+    // Stop the trailer so it does not keep playing behind the closed modal.
+    destroyTrailerPlayer();
+    modal.querySelector(".modal-panel")?.classList.remove("has-trailer");
+
+    const modalMedia = modal.querySelector(".modal-media");
+
+    if (modalMedia) modalMedia.innerHTML = "";
 
     modal.hidden = true;
     modal.classList.remove("active");
@@ -1052,7 +1319,7 @@ let homeLoaded = false;
 
 /* HOME CACHE (makes reloads instant) */
 
-const HOME_CACHE_KEY = "cinemax-home-cache-v1";
+const HOME_CACHE_KEY = "cinemax-home-cache-v2";
 const HOME_CACHE_MAX_AGE = 30 * 60 * 1000; // 30 minutes
 
 function readHomeCache() {
@@ -1472,7 +1739,7 @@ function renderTrending() {
 
     container.innerHTML = [...pool]
         .slice(0, 12)
-        .map(movie => createMovieCard(movie))
+        .map(movie => createBackdropCard(movie))
         .join("");
 }
 
@@ -1816,18 +2083,33 @@ function watchSections() {
 
 
 async function loadTMDB() {
+    console.log("Starting TMDB homepage data load...");
+
     const [trendingResult, topRatedResult] = await Promise.allSettled([
         fetchTMDB("trending"),
         fetchTMDB("top-rated")
     ]);
 
+    // TRENDING MOVIES
     if (trendingResult.status === "fulfilled") {
-        tmdbTrending = register(
-            (trendingResult.value.results || [])
-                .map(normalizeTMDBMovie)
-                .filter(Boolean)
-                .map(movie => ({ ...movie, trending: true }))
-        );
+        const results = trendingResult.value?.results;
+
+        if (!Array.isArray(results)) {
+            console.error(
+                "Trending response has an unexpected structure:",
+                trendingResult.value
+            );
+        } else {
+            tmdbTrending = register(
+                results
+                    .map(normalizeTMDBMovie)
+                    .filter(Boolean)
+                    .map(movie => ({
+                        ...movie,
+                        trending: true
+                    }))
+            );
+        }
     } else {
         console.error(
             "Trending movies could not be loaded:",
@@ -1835,32 +2117,49 @@ async function loadTMDB() {
         );
     }
 
+    // TOP RATED MOVIES
     if (topRatedResult.status === "fulfilled") {
-        tmdbTopRated = register(
-            (topRatedResult.value.results || [])
-                .map(normalizeTMDBMovie)
-                .filter(Boolean)
-                .map(movie => ({ ...movie, topRated: true }))
-        );
+        const results = topRatedResult.value?.results;
+
+        if (!Array.isArray(results)) {
+            console.error(
+                "Top Rated response has an unexpected structure:",
+                topRatedResult.value
+            );
+        } else {
+            tmdbTopRated = register(
+                results
+                    .map(normalizeTMDBMovie)
+                    .filter(Boolean)
+                    .map(movie => ({
+                        ...movie,
+                        topRated: true
+                    }))
+            );
+        }
     } else {
         console.error(
-            "Top rated movies could not be loaded:",
+            "Top Rated movies could not be loaded:",
             topRatedResult.reason
         );
     }
 
-    // Save available data for the next homepage visit.
+    // LOG RESULTS
+    console.log("Trending movies loaded:", tmdbTrending.length);
+    console.log("Top Rated movies loaded:", tmdbTopRated.length);
+
+    // CACHE AVAILABLE DATA
     if (tmdbTrending.length && tmdbTopRated.length) {
         writeHomeCache(tmdbTrending, tmdbTopRated);
     }
 
-    // Render movie rows immediately.
+    // RENDER HOMEPAGE ROWS
     homeLoaded = true;
 
     renderTrending();
     renderTopRated();
 
-    // Load the hero backdrop separately.
+    // LOAD HERO CAROUSEL
     if (tmdbTrending.length) {
         setHero(tmdbTrending).then(heroReady => {
             if (!heroReady && !heroMovies.length) {
@@ -1871,25 +2170,32 @@ async function loadTMDB() {
         fallbackHero();
     }
 
+    // ERROR STATUS
     const failures = [trendingResult, topRatedResult]
         .filter(result => result.status === "rejected")
         .map(result => result.reason);
 
     const status = $("movie-service-status");
 
-    if (status && failures.length) {
-        const missingKey = failures.some(error =>
-            String(error?.message || error).includes(
-                "TMDB_API_KEY is not configured."
-            )
-        );
+    if (status) {
+        if (failures.length) {
+            const missingKey = failures.some(error =>
+                String(error?.message || error).includes(
+                    "TMDB_API_KEY is not configured."
+                )
+            );
 
-        status.textContent = missingKey
-            ? "Live movie data is unavailable. Copy tmdb_config.example.php to tmdb_config.php and add your TMDB API key."
-            : "Some live movie data could not be loaded. Showing available previews.";
+            status.textContent = missingKey
+                ? "Live movie data is unavailable. Check your TMDB API configuration."
+                : "Some live movie data could not be loaded. Showing available previews.";
 
-        status.hidden = false;
+            status.hidden = false;
+        } else {
+            status.hidden = true;
+        }
     }
+
+    console.log("TMDB homepage loading finished.");
 }
 
 async function loadMoviesCatalog() {
