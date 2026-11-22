@@ -1,0 +1,25 @@
+{
+    "users": [
+        {
+            "username": "ultimate",
+            "email": "ultimate@gmail.com",
+            "password": "$2y$12$eipXTlC4fpemVyTkbq8jYepHbnKsZ4tVxvVOi4duje7P7wGJZFBaG",
+            "role": "user",
+            "subscription_plan": "CineMax Ultimate",
+            "billing_period": "monthly",
+            "subscription_status": "active",
+            "payment_method": "Card",
+            "payment_reference": "12345678",
+            "customer_name": "Yuli"
+        },
+        {
+            "username": "basic",
+            "email": "basic@gmail.com",
+            "password": "$2y$12$ohAGxglV47TCYvYbe3RvteUQNaZH7bjr/mTI8S1pD5htSqGe.7URm",
+            "role": "user",
+            "subscription_plan": "CineMax Basic",
+            "billing_period": "forever",
+            "subscription_status": "active"
+        }
+    ]
+}
