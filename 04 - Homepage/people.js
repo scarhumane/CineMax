@@ -1,4 +1,3 @@
-
 const $ = id => document.getElementById(id);
 
 const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/";
@@ -236,6 +235,22 @@ function createPersonCard(person) {
     `;
 }
 
+function updatePeopleCount(total) {
+    const counter = $("people-count");
+
+    if (!counter) return;
+
+    const noun = activeRole === "actor"
+        ? "actor"
+        : activeRole === "director"
+            ? "director"
+            : "person";
+
+    counter.textContent = total
+        ? `${total} ${total === 1 ? noun : (noun === "person" ? "people" : noun + "s")}`
+        : "";
+}
+
 function renderPeople(list = people) {
     const container = $("people-list");
 
@@ -250,6 +265,7 @@ function renderPeople(list = people) {
     }
 
     if (!filteredPeople.length) {
+        updatePeopleCount(0);
         const query = $("people-search")?.value.trim();
         const label = activeRole === "actor" ? "actors" : activeRole === "director" ? "directors" : "people";
         container.innerHTML = `
@@ -262,6 +278,8 @@ function renderPeople(list = people) {
 
         return;
     }
+
+    updatePeopleCount(filteredPeople.length);
 
     container.innerHTML = filteredPeople
         .map(createPersonCard)

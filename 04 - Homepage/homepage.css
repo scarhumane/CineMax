@@ -263,7 +263,7 @@ main {
 
 
 .hero-section {
-    margin-top: 60px;
+    margin-top: 24px;
 }
 
 .hero-stage {
@@ -1012,106 +1012,149 @@ main {
 }
 
 /* GENRE RESULTS */
-
-#genre-results-section {
-    width: 100%;
-    margin-top: 0;
-    padding-top: 10px;
-    border-top: 1px solid var(--line);
-    scroll-margin-top: 110px;
-}
-
-#genre-results-section .genre-results-header {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-    width: 100%;
-    margin: 0 0 20px;
-}
-
-#genre-results-section #back-to-genres {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    align-self: flex-end;
-    width: fit-content;
-    max-width: 100%;
-    gap: 9px;
-    margin: 0;
-    padding: 10px 17px;
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    background: var(--glass);
-    color: var(--mist);
-    font-family: var(--body);
-    font-size: 13px;
-    text-align: right;
-    cursor: pointer;
-    transition: all var(--transition);
-}
-
-#genre-results-section #back-to-genres:hover {
-    border-color: var(--ice);
-    background: var(--ice-soft);
-    color: var(--ice);
-}
-
-#genre-results-section #back-to-genres svg {
-    width: 16px;
-    height: 16px;
-    flex-shrink: 0;
-}
-
-#genre-results-section .section-header {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    width: 100%;
-    margin: 0;
-}
-
-#genre-results-title {
-    margin: 0;
-    color: var(--ember);
-    font-family: var(--display);
-    font-size: clamp(32px, 3.5vw, 42px);
-    font-weight: 500;
-}
-
-#genre-movies {
+#genre-results-section #genre-movies {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     align-items: start;
-    gap: 28px 20px;
+    gap: 22px 12px;
     width: 100%;
-    margin: 0;
-    padding: 5px 0 25px;
 }
 
-#genre-movies .movie-card {
+#genre-results-section #genre-movies > .search-results-count,
+#genre-results-section #genre-movies > .no-results {
+    grid-column: 1 / -1;
+}
+
+#genre-results-section .genre-search-card {
     display: flex;
-    flex-direction: column;
-    width: 100%;
     min-width: 0;
+    flex-direction: column;
+    padding: 0;
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    transition: transform .2s ease;
 }
 
-#genre-movies .movie-info {
-    padding: 11px 2px;
+#genre-results-section .genre-search-card:hover {
+    transform: translateY(-4px);
 }
 
-#genre-movies .movie-info h3 {
-    font-size: 14px;
+#genre-results-section .genre-search-open {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 10px;
+    color: inherit;
+    text-decoration: none;
 }
 
-#genre-movies .movie-meta {
+#genre-results-section .genre-search-image {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-radius: 12px;
+    background: #151b27;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, .24);
+}
+
+#genre-results-section .genre-search-image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform .35s ease;
+}
+
+#genre-results-section .genre-search-card:hover .genre-search-image img {
+    transform: scale(1.045);
+}
+
+#genre-results-section .genre-search-placeholder {
+    display: grid;
+    width: 100%;
+    height: 100%;
+    min-height: 100px;
+    place-items: center;
+    padding: 12px;
+    color: var(--frost, #d6e9f5);
+    text-align: center;
+    background: #142238;
+}
+
+#genre-results-section .genre-search-info {
+    min-width: 0;
+    padding: 0 2px;
+}
+
+#genre-results-section .genre-search-title {
+    overflow: hidden;
+    margin: 0 0 6px;
+    color: var(--frost, #d6e9f5);
+    font-size: 15px;
+    line-height: 1.3;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#genre-results-section .genre-search-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px 7px;
+    margin: 0;
+    color: var(--mist, #93abbd);
     font-size: 12px;
+    line-height: 1.45;
 }
 
-#genre-results-section[hidden],
-#genres-list[hidden] {
-    display: none !important;
+#genre-results-section .genre-search-separator {
+    color: rgba(255, 255, 255, .35);
 }
+
+#genre-results-section .genre-search-rating {
+    color: var(--ember, #f0c27a);
+    font-weight: 700;
+}
+
+@media (max-width: 1200px) {
+    #genre-results-section #genre-movies {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 900px) {
+    #genre-results-section #genre-movies {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px 12px;
+    }
+}
+
+@media (max-width: 600px) {
+    #genre-results-section #genre-movies {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px 10px;
+    }
+
+    #genre-results-section .genre-search-title {
+        font-size: 13px;
+    }
+
+    #genre-results-section .genre-search-meta {
+        gap: 4px 5px;
+        font-size: 11px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #genre-results-section .genre-search-card,
+    #genre-results-section .genre-search-image img {
+        transition: none;
+    }
+}
+
 
 /* PEOPLE CONTROLS */
 
@@ -2476,11 +2519,10 @@ main {
 .homepage-container.is-searching #continue,
 .homepage-container.is-searching #movies,
 .homepage-container.is-searching #toprated,
-.homepage-container.is-searching #watchlist {
+.homepage-container.is-searching #watchlist,
+.homepage-container.is-searching .catalog-row-section {
     display: none !important;
 }
-
-.homepage-container.is-searching .catalog-row-section { display: none !important; }
 
 .homepage-container.is-searching #search-results-section {
     display: block !important;
@@ -2504,9 +2546,9 @@ main {
 
 .homepage-container.is-searching #search-results {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     align-items: start;
-    gap: 28px 22px;
+    gap: 22px 12px;
     width: 100%;
     margin-top: 20px;
 }
@@ -2518,29 +2560,130 @@ main {
     font-size: 13px;
 }
 
-.homepage-container.is-searching #search-results .movie-card {
+/* One movie result */
+.homepage-container.is-searching #search-results .search-result-card {
     display: flex;
-    flex-direction: column;
-    width: 100%;
     min-width: 0;
-}
-
-.homepage-container.is-searching #search-results .movie-open {
-    display: flex;
     flex-direction: column;
-    width: 100%;
+    gap: 10px;
+    padding: 0;
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    color: inherit;
     text-decoration: none;
+    transition: transform .2s ease;
 }
 
-.homepage-container.is-searching #search-results .movie-poster {
+.homepage-container.is-searching #search-results .search-result-card:hover {
+    transform: translateY(-4px);
+}
+
+/* Wide landscape thumbnail — never a portrait poster */
+.homepage-container.is-searching #search-results .search-result-poster {
+    position: relative;
     width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-radius: 12px;
+    background: #151b27;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, .24);
 }
 
-.homepage-container.is-searching #search-results .movie-poster img {
+.homepage-container.is-searching #search-results .search-result-poster img {
     display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: transform .35s ease;
+}
+
+.homepage-container.is-searching #search-results .search-result-card:hover .search-result-poster img {
+    transform: scale(1.045);
+}
+
+.homepage-container.is-searching #search-results .search-result-poster-fallback {
+    display: grid;
+    width: 100%;
+    height: 100%;
+    min-height: 100px;
+    place-items: center;
+    padding: 12px;
+    color: var(--frost);
+    text-align: center;
+    background: #142238;
+}
+
+/* Title and metadata only — no description */
+.homepage-container.is-searching #search-results .search-result-info {
+    min-width: 0;
+    padding: 0 2px;
+}
+
+.homepage-container.is-searching #search-results .search-result-title {
+    overflow: hidden;
+    margin: 0 0 6px;
+    color: var(--frost);
+    font-size: 15px;
+    line-height: 1.3;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.homepage-container.is-searching #search-results .search-result-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px 7px;
+    color: var(--mist);
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.homepage-container.is-searching #search-results .search-result-separator {
+    color: rgba(255, 255, 255, .35);
+}
+
+.homepage-container.is-searching #search-results .search-result-rating {
+    color: var(--ember);
+    font-weight: 700;
+}
+
+@media (max-width: 1200px) {
+    .homepage-container.is-searching #search-results {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 900px) {
+    .homepage-container.is-searching #search-results {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px 12px;
+    }
+}
+
+@media (max-width: 600px) {
+    .homepage-container.is-searching #search-results {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px 10px;
+    }
+
+    .homepage-container.is-searching #search-results .search-result-title {
+        font-size: 13px;
+    }
+
+    .homepage-container.is-searching #search-results .search-result-meta {
+        gap: 4px 5px;
+        font-size: 11px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .homepage-container.is-searching #search-results .search-result-card,
+    .homepage-container.is-searching #search-results .search-result-poster img {
+        transition: none;
+    }
 }
 
 .profile-menu {
@@ -2798,5 +2941,1290 @@ main {
         scroll-behavior: auto !important;
         transition: none !important;
         animation: none !important;
+    }
+}
+/* CineMax community reviews */
+.reviews-section { margin-top: 1.5rem; }
+.reviews-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.reviews-heading h3 { margin-bottom: .25rem; }
+.reviews-heading [data-review-summary] { margin-top: 0; }
+.review-form { display: grid; gap: .65rem; margin: 1rem 0 1.25rem; padding: 1rem; border: 1px solid var(--border-color, rgba(255,255,255,.12)); border-radius: 12px; background: var(--surface-color, rgba(255,255,255,.035)); }
+.review-form h4 { margin: 0 0 .2rem; }
+.review-form label { font-size: .88rem; font-weight: 600; }
+.review-form select, .review-form textarea { width: 100%; padding: .75rem .85rem; color: inherit; font: inherit; background: var(--input-background, rgba(0,0,0,.2)); border: 1px solid var(--border-color, rgba(255,255,255,.16)); border-radius: 8px; }
+.review-form textarea { resize: vertical; min-height: 100px; }
+.review-form-footer { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+.review-form-footer small { opacity: .7; }
+.review-submit-button, .review-delete-button { border: 0; border-radius: 8px; padding: .65rem 1rem; font: inherit; font-weight: 600; cursor: pointer; }
+.review-submit-button { color: white; background: var(--accent-color, #6c63ff); }
+.review-submit-button:disabled, .review-delete-button:disabled { opacity: .55; cursor: wait; }
+.review-feedback { min-height: 1.2em; margin: 0; font-size: .85rem; opacity: .8; }
+.community-review-list { display: grid; gap: .85rem; }
+.community-review { padding: 1rem; border: 1px solid var(--border-color, rgba(255,255,255,.12)); border-radius: 12px; }
+.community-review-top { display: flex; align-items: center; gap: .7rem; }
+.reviewer-avatar { display: grid; place-items: center; flex: 0 0 38px; width: 38px; height: 38px; border-radius: 50%; font-weight: 700; background: var(--surface-color, rgba(255,255,255,.1)); }
+.reviewer-details { display: grid; gap: .15rem; min-width: 0; }
+.reviewer-details span { font-size: .78rem; opacity: .65; }
+.community-review-rating { margin-left: auto; color: #f5bd4f; white-space: nowrap; }
+.community-review-rating small { color: inherit; font-size: .75rem; }
+.community-review-text { margin: .8rem 0 0; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.community-review-actions { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-top: .8rem; }
+.your-review-label { font-size: .78rem; opacity: .7; }
+.review-delete-button { padding: .35rem .65rem; color: #ff8d8d; background: transparent; border: 1px solid currentColor; }
+.reviews-empty-state { padding: 1rem; text-align: center; border: 1px dashed var(--border-color, rgba(255,255,255,.18)); border-radius: 12px; }
+.reviews-empty-state p { margin: 0 0 .3rem; font-weight: 600; }
+.reviews-empty-state span { font-size: .88rem; opacity: .7; }
+@media (max-width: 520px) { .review-form-footer { align-items: flex-start; flex-direction: column; } .review-submit-button { width: 100%; } }
+
+.review-submit-button {
+    min-height: 54px;
+    padding: .8rem 1.35rem;
+    color: #c9dce5;
+    background: rgba(91, 157, 179, .12);
+    border: 1px solid rgba(105, 190, 215, .38);
+    border-radius: 8px;
+    font-weight: 600;
+    transition: background .2s ease, border-color .2s ease, transform .2s ease;
+}
+.review-submit-button:hover:not(:disabled) {
+    background: rgba(91, 157, 179, .2);
+    border-color: rgba(125, 211, 235, .62);
+}
+.review-submit-button:active:not(:disabled) { transform: translateY(1px); }
+.review-rating-note {
+    margin: -.25rem 0 .2rem;
+    color: var(--muted-text, #9aabb7);
+    font-size: .88rem;
+}
+
+/*CINEMAX HERO TRAILER BACKGROUND*/
+
+.hero-slide::after {
+    background-position: center 35%;
+    transition: opacity 0.35s ease;
+}
+
+.hero-slide.has-hero-trailer::after {
+    opacity: 0;
+}
+
+.hero-video-background {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    background: #07101d;
+}
+
+.hero-video-background iframe {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 177.78vh);
+    height: max(100%, 56.25vw);
+    min-width: 100%;
+    min-height: 100%;
+    transform: translate(-50%, -50%);
+    border: 0;
+    pointer-events: none;
+}
+
+.hero-slide::before {
+    z-index: 1;
+    background:
+        linear-gradient(90deg,
+            rgba(3, 7, 14, 0.82) 0%,
+            rgba(3, 7, 14, 0.66) 32%,
+            rgba(3, 7, 14, 0.38) 62%,
+            rgba(3, 7, 14, 0.20) 100%),
+        linear-gradient(0deg,
+            rgba(3, 7, 14, 0.58),
+            rgba(3, 7, 14, 0.08) 65%);
+}
+
+.hero-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.hero-button {
+    gap: 9px;
+    cursor: pointer;
+}
+
+.hero-button svg {
+    width: 17px;
+    height: 17px;
+    stroke-width: 2.5;
+}
+
+.hero-button-secondary {
+    border-color: rgba(235, 244, 250, 0.72);
+    background: rgba(7, 16, 29, 0.62);
+    color: #f3f7fa;
+    backdrop-filter: blur(8px);
+}
+
+.hero-button-secondary:hover {
+    border-color: var(--ember);
+    background: rgba(7, 16, 29, 0.88);
+    color: var(--ember);
+}
+
+.hero-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.48;
+    transform: none;
+}
+
+.hero-button:disabled:hover {
+    background: var(--ember);
+    color: #04121a;
+}
+
+.hero-trailer-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: grid;
+    place-items: center;
+    padding: 28px;
+    background: rgba(1, 5, 10, 0.94);
+    backdrop-filter: blur(12px);
+}
+
+.hero-trailer-dialog {
+    position: relative;
+    width: min(1100px, 100%);
+    margin: auto;
+}
+
+.hero-trailer-frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-radius: 14px;
+    background: #000;
+    box-shadow: 0 24px 90px rgba(0, 0, 0, 0.6);
+}
+
+.hero-trailer-frame iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+.hero-trailer-close {
+    position: absolute;
+    top: -48px;
+    right: 0;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    border-radius: 50%;
+    background: rgba(14, 23, 34, 0.88);
+    color: #fff;
+    font-size: 28px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.hero-trailer-close:hover {
+    border-color: var(--ember);
+    color: var(--ember);
+}
+
+body.hero-trailer-open {
+    overflow: hidden;
+}
+
+@media (max-width: 600px) {
+    .hero-actions {
+        gap: 9px;
+    }
+
+    .hero-actions .hero-button {
+        min-height: 42px;
+        padding: 10px 19px;
+        font-size: 13px;
+    }
+
+    .hero-trailer-overlay {
+        padding: 16px;
+    }
+
+    .hero-trailer-frame {
+        border-radius: 8px;
+    }
+
+    .hero-trailer-close {
+        top: -48px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hero-video-background {
+        display: none;
+    }
+}
+.hero-video-background {
+    display: none !important;
+}
+.hero-slide.has-hero-trailer::after {
+    opacity: 1 !important;
+}
+
+/* ==========================================================
+   CINEMAX — GENRES PAGE
+   Loaded AFTER homepage.css. Uses the same tokens (--ice,
+   --ember, --frost, --mist, --line, --display, --body).
+   The header / search bar is not touched.
+   ========================================================== */
+
+/* ---------- PAGE INTRO ---------- */
+
+#genres > .content-section > .genres-intro {
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 38px;
+    text-align: center;
+}
+
+#genres .genres-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--ember);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+}
+
+#genres .genres-eyebrow::before,
+#genres .genres-eyebrow::after {
+    content: "";
+    width: 34px;
+    height: 1px;
+    background: var(--ember);
+    opacity: 0.7;
+}
+
+#genres > .content-section > .genres-intro h1 {
+    font-size: clamp(40px, 4.6vw, 58px);
+    letter-spacing: 0.01em;
+}
+
+#genres > .content-section > .genres-intro p {
+    max-width: 52ch;
+    margin-inline: auto;
+    font-size: 16px;
+}
+
+/* ---------- TOOLBAR (count + hint) ---------- */
+
+.genres-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+    color: var(--mist);
+    font-size: 13px;
+}
+
+.genres-count {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 3px 14px;
+    border: 1px solid rgba(92, 195, 220, 0.3);
+    border-radius: 999px;
+    background: var(--ice-soft);
+    color: var(--ice);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+}
+
+.genres-count:empty {
+    display: none;
+}
+
+/* ---------- GENRE CARDS ---------- */
+
+#genres-list.genres-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 18px;
+}
+
+#genres-list .genre-card {
+    gap: 18px;
+    min-height: 118px;
+    padding: 20px 22px;
+    cursor: pointer;
+    animation: genre-rise 0.55s ease both;
+    animation-delay: calc(var(--i, 0) * 35ms);
+}
+
+#genres-list .genre-card:focus-visible {
+    outline: 2px solid var(--ice);
+    outline-offset: 3px;
+    border-radius: 10px;
+}
+
+.genre-card-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 52px;
+    width: 52px;
+    height: 52px;
+    border: 1px solid rgba(92, 195, 220, 0.3);
+    border-radius: 14px;
+    background: var(--ice-soft);
+    color: var(--ice);
+    transition:
+        background var(--transition),
+        border-color var(--transition),
+        color var(--transition),
+        transform var(--transition);
+}
+
+.genre-card-icon svg {
+    width: 24px;
+    height: 24px;
+    stroke-width: 1.7;
+}
+
+.genre-card-text {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.genre-card-name {
+    overflow: hidden;
+    font-family: var(--display);
+    font-size: clamp(23px, 1.9vw, 28px);
+    font-weight: 500;
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.genre-card-cta {
+    color: var(--mist);
+    font-family: var(--body);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    transition: color var(--transition);
+}
+
+.genre-card-arrow {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 18px;
+    height: 18px;
+    color: var(--ember);
+    opacity: 0;
+    transform: translate(-6px, 6px);
+    transition: opacity var(--transition), transform var(--transition);
+}
+
+#genres-list .genre-card:hover .genre-card-icon,
+#genres-list .genre-card:focus-visible .genre-card-icon {
+    border-color: rgba(240, 194, 122, 0.55);
+    background: var(--ember-soft);
+    color: var(--ember);
+    transform: scale(1.06) rotate(-4deg);
+}
+
+#genres-list .genre-card:hover .genre-card-cta,
+#genres-list .genre-card:focus-visible .genre-card-cta {
+    color: var(--frost);
+}
+
+#genres-list .genre-card:hover .genre-card-arrow,
+#genres-list .genre-card:focus-visible .genre-card-arrow {
+    opacity: 1;
+    transform: translate(0, 0);
+}
+
+@keyframes genre-rise {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ---------- RESULTS VIEW ---------- */
+
+#genre-results-section {
+    margin-top: 0;
+}
+
+.genre-results-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px 20px;
+    margin-bottom: 26px;
+    padding-bottom: 22px;
+    border-bottom: 1px solid var(--line);
+}
+
+.genre-results-header .section-header {
+    margin: 0;
+}
+
+.genre-results-header .section-header h2 {
+    font-size: clamp(34px, 3.8vw, 46px);
+}
+
+.back-to-genres {
+    order: 2;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 18px 9px 14px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: rgba(7, 16, 29, 0.55);
+    color: #c3d6e4;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    transition:
+        border-color var(--transition),
+        color var(--transition),
+        background var(--transition);
+}
+
+.back-to-genres svg {
+    width: 16px;
+    height: 16px;
+    transition: transform var(--transition);
+}
+
+.back-to-genres:hover,
+.back-to-genres:focus-visible {
+    border-color: var(--line-hover);
+    background: var(--ice-soft);
+    color: var(--ice);
+}
+
+.back-to-genres:hover svg {
+    transform: translateX(-3px);
+}
+
+/* result count line */
+
+#genre-movies > .search-results-count {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 6px;
+    color: var(--mist);
+    font-size: 13px;
+    letter-spacing: 0.04em;
+}
+
+#genre-movies > .search-results-count::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--ember);
+    box-shadow: 0 0 0 4px var(--ember-soft);
+}
+
+/* movie cards */
+
+#genre-results-section .genre-search-card {
+    animation: genre-rise 0.5s ease both;
+}
+
+#genre-results-section .genre-search-image {
+    border: 1px solid var(--line);
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+#genre-results-section .genre-search-image::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(0deg, rgba(3, 7, 14, 0.55), transparent 45%);
+    opacity: 0.7;
+    transition: opacity var(--transition);
+}
+
+#genre-results-section .genre-search-card:hover .genre-search-image,
+#genre-results-section .genre-search-open:focus-visible .genre-search-image {
+    border-color: rgba(240, 194, 122, 0.6);
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.4);
+}
+
+#genre-results-section .genre-search-card:hover .genre-search-image::after {
+    opacity: 0.25;
+}
+
+#genre-results-section .genre-search-title {
+    transition: color var(--transition);
+}
+
+#genre-results-section .genre-search-card:hover .genre-search-title {
+    color: var(--ember);
+}
+
+#genre-results-section .genre-search-placeholder {
+    background:
+        radial-gradient(circle at 100% 0%, rgba(92, 195, 220, 0.16), transparent 65%),
+        linear-gradient(135deg, rgba(13, 34, 51, 0.96), rgba(5, 12, 23, 0.98));
+    font-family: var(--display);
+    font-size: 18px;
+}
+
+/* ---------- LOADING / EMPTY MESSAGES ---------- */
+
+#genres-list > .no-results,
+#genre-movies > .no-results {
+    grid-column: 1 / -1;
+    padding: 46px 20px;
+    border: 1px dashed var(--line);
+    border-radius: 12px;
+    background: rgba(7, 16, 29, 0.4);
+    color: var(--mist);
+    font-size: 14px;
+}
+
+/* ---------- RESPONSIVE ---------- */
+
+@media (max-width: 800px) {
+    #genres > .content-section > .genres-intro {
+        margin-bottom: 28px;
+    }
+
+    #genres-list.genres-grid {
+        grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    }
+
+    .genres-hint {
+        display: none;
+    }
+}
+
+@media (max-width: 600px) {
+    #genres-list.genres-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 11px;
+    }
+
+    .genre-results-header {
+        flex-wrap: nowrap;
+        gap: 12px;
+    }
+
+    .genre-results-header .section-header {
+        min-width: 0;
+    }
+
+    .genre-results-header .section-header h2 {
+        font-size: 28px;
+    }
+
+    .back-to-genres {
+        padding: 8px 13px 8px 10px;
+        font-size: 12px;
+    }
+
+    #genres-list .genre-card {
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        gap: 12px;
+        min-height: 112px;
+        padding: 16px;
+    }
+
+    .genre-card-icon {
+        flex-basis: 42px;
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+    }
+
+    .genre-card-icon svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .genre-card-name {
+        font-size: 21px;
+    }
+
+    .genre-card-cta,
+    .genre-card-arrow {
+        display: none;
+    }
+
+    #genres > .content-section > .genres-intro h1 {
+        font-size: 38px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #genres-list .genre-card,
+    #genre-results-section .genre-search-card {
+        animation: none;
+    }
+}
+
+/* ==========================================================
+   MOVIE CARDS (Home + Movies pages)
+   Same look as the Genres results: wide image, title and info
+   underneath, gold border / gold title / slight zoom on hover.
+   The hero carousel is not included.
+   ========================================================== */
+
+/* ---- row cards: Trending, Top Rated, Movies page rows ---- */
+
+.backdrop-card .backdrop-open {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    aspect-ratio: auto;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    color: inherit;
+}
+
+.backdrop-card .backdrop-open::after {
+    display: none;
+}
+
+.backdrop-image {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #151b27;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.24);
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.backdrop-image::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(0deg, rgba(3, 7, 14, 0.55), transparent 45%);
+    opacity: 0.7;
+    transition: opacity var(--transition);
+}
+
+.backdrop-image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.35s ease;
+}
+
+.backdrop-image .backdrop-placeholder,
+.backdrop-image .poster-placeholder {
+    background:
+        radial-gradient(circle at 100% 0%, rgba(92, 195, 220, 0.16), transparent 65%),
+        linear-gradient(135deg, rgba(13, 34, 51, 0.96), rgba(5, 12, 23, 0.98));
+    color: var(--frost);
+    font-family: var(--display);
+    font-size: 18px;
+}
+
+.backdrop-info {
+    min-width: 0;
+    padding: 0 2px;
+}
+
+.backdrop-title {
+    overflow: hidden;
+    margin: 0 0 6px;
+    color: var(--frost);
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.3;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: color var(--transition);
+}
+
+.backdrop-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px 7px;
+    margin: 0;
+    color: var(--mist);
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.backdrop-separator {
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.backdrop-rating {
+    color: var(--ember);
+    font-weight: 700;
+}
+
+.backdrop-card:hover .backdrop-image,
+.backdrop-card:focus-within .backdrop-image {
+    border-color: rgba(240, 194, 122, 0.6);
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.4);
+}
+
+.backdrop-card:hover .backdrop-image::after,
+.backdrop-card:focus-within .backdrop-image::after {
+    opacity: 0.25;
+}
+
+.backdrop-card:hover .backdrop-image img,
+.backdrop-card:focus-within .backdrop-image img {
+    transform: scale(1.045);
+}
+
+.backdrop-card:hover .backdrop-title,
+.backdrop-card:focus-within .backdrop-title {
+    color: var(--ember);
+}
+
+/* Top Rated: keep the big rank number level with the image */
+
+/* room for the hover lift so the top border is never clipped */
+.movie-row {
+    padding-top: 10px;
+}
+
+.backdrop-row {
+    padding-top: 8px;
+}
+
+.top-rated-list {
+    align-items: flex-start;
+    padding-top: 12px;
+}
+
+.top-card {
+    --top-card-width: clamp(250px, 30vw, 340px);
+    align-items: flex-start;
+}
+
+.top-card .top-rank {
+    display: flex;
+    align-items: flex-end;
+    height: calc(var(--top-card-width) * 9 / 16);
+    padding-bottom: 0;
+}
+
+.top-card .backdrop-card {
+    flex: 0 0 var(--top-card-width);
+}
+
+/* ---- Continue Watching: one gold border, same as the others ---- */
+
+.continue-thumb {
+    border-radius: 12px;
+}
+
+#continue .continue-card:hover .continue-thumb,
+#continue .continue-card:focus-within .continue-thumb {
+    border: 1px solid rgba(240, 194, 122, 0.6) !important;
+    border-color: rgba(240, 194, 122, 0.6) !important;
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.4) !important;
+}
+
+#continue .continue-card:hover .continue-thumb::after,
+#continue .continue-card:focus-within .continue-thumb::after {
+    border-color: transparent;
+}
+
+.continue-thumb img {
+    transition: transform 0.35s ease;
+}
+
+.continue-card:hover .continue-thumb img,
+.continue-card:focus-within .continue-thumb img {
+    transform: scale(1.045);
+}
+
+.movie-card .movie-info h3 {
+    transition: color var(--transition);
+}
+
+.movie-card:hover .movie-info h3,
+.movie-card:focus-within .movie-info h3 {
+    color: var(--ember);
+}
+
+/* ---- homepage search results: same gold hover ---- */
+
+.homepage-container.is-searching #search-results .search-result-poster {
+    border: 1px solid var(--line);
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.homepage-container.is-searching #search-results .search-result-title {
+    transition: color var(--transition);
+}
+
+.homepage-container.is-searching #search-results .search-result-card:hover .search-result-poster {
+    border-color: rgba(240, 194, 122, 0.6);
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.4);
+}
+
+.homepage-container.is-searching #search-results .search-result-card:hover .search-result-title {
+    color: var(--ember);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .backdrop-image img,
+    .continue-thumb img {
+        transition: none;
+    }
+}
+
+/* ---- loading skeletons for the Movies page rows ---- */
+
+.backdrop-skeleton {
+    pointer-events: none;
+}
+
+.backdrop-skeleton .backdrop-image,
+.skeleton-line {
+    background:
+        linear-gradient(
+            100deg,
+            rgba(214, 233, 245, 0.04) 30%,
+            rgba(214, 233, 245, 0.11) 50%,
+            rgba(214, 233, 245, 0.04) 70%
+        ),
+        #0d1826;
+    background-size: 220% 100%;
+    animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.backdrop-skeleton .backdrop-image::after {
+    display: none;
+}
+
+.skeleton-line {
+    width: 70%;
+    height: 12px;
+    margin: 4px 0 8px;
+    border-radius: 6px;
+}
+
+.skeleton-line.short {
+    width: 45%;
+    height: 10px;
+    margin-bottom: 0;
+}
+
+@keyframes skeleton-shimmer {
+    from { background-position: 120% 0; }
+    to   { background-position: -120% 0; }
+}
+/* ==========================================================
+   NETFLIX-STYLE MOVIE MODAL (when a trailer is available)
+   Trailer sits flush at the top of the card, the details
+   come underneath on a solid dark panel.
+   ========================================================== */
+
+.modal-panel.has-trailer {
+    width: min(940px, 100%);
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    /* keep the movie backdrop (set by .modal-panel above) behind the details */
+    background-color: #0a1220;
+    box-shadow: 0 30px 90px rgba(0, 0, 0, 0.75);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(214, 233, 245, 0.25) transparent;
+}
+
+/* video: edge to edge, no frame, no radius of its own */
+.modal-panel.has-trailer .modal-media {
+    position: relative;
+    z-index: 0;
+}
+
+.modal-panel.has-trailer .modal-trailer-player {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+/* details underneath */
+.modal-panel.has-trailer .modal-body {
+    padding: 8px clamp(22px, 4vw, 44px) 44px;
+}
+
+.modal-panel.has-trailer .modal-body h2 {
+    margin-bottom: 10px;
+    font-size: clamp(30px, 4.4vw, 46px);
+}
+
+.modal-panel.has-trailer .modal-meta {
+    margin-bottom: 16px;
+    font-size: 14px;
+}
+
+.modal-panel.has-trailer .modal-description {
+    max-width: 70ch;
+    font-size: 15px;
+    line-height: 1.7;
+}
+
+.modal-panel.has-trailer .modal-actions {
+    margin-top: 22px;
+}
+
+/* close button: solid dark circle so it is readable over any video */
+.modal-panel.has-trailer .modal-close {
+    top: 14px;
+    right: 14px;
+    z-index: 5;
+    width: 38px;
+    height: 38px;
+    border-color: rgba(255, 255, 255, 0.22);
+    background: rgba(10, 18, 32, 0.88);
+    color: #fff;
+}
+
+.modal-panel.has-trailer .modal-close:hover {
+    border-color: var(--ember);
+    color: var(--ember);
+}
+
+@media (max-width: 800px) {
+    .modal-panel.has-trailer {
+        padding: 0;
+        gap: 0;
+    }
+
+    .modal-panel.has-trailer .modal-body {
+        padding: 6px 20px 32px;
+    }
+}
+
+@media (max-width: 600px) {
+    .modal-panel.has-trailer .modal-close {
+        top: 8px;
+        right: 8px;
+        width: 34px;
+        height: 34px;
+    }
+}
+
+/* ==========================================================
+   PEOPLE PAGE: same intro + toolbar design as the Genres page
+   ========================================================== */
+
+#people .section-header.people-intro {
+    align-items: center;
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 38px;
+    text-align: center;
+}
+
+#people .people-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--ember);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+}
+
+#people .people-eyebrow::before,
+#people .people-eyebrow::after {
+    content: "";
+    width: 34px;
+    height: 1px;
+    background: var(--ember);
+    opacity: 0.7;
+}
+
+#people .section-header.people-intro h1 {
+    font-size: clamp(40px, 4.6vw, 58px);
+    letter-spacing: 0.01em;
+}
+
+#people .section-header.people-intro p {
+    max-width: 52ch;
+    margin: 0 auto;
+    color: var(--mist);
+    font-size: 16px;
+}
+
+.people-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+    color: var(--mist);
+    font-size: 13px;
+}
+
+.people-count {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 3px 14px;
+    border: 1px solid rgba(92, 195, 220, 0.3);
+    border-radius: 999px;
+    background: var(--ice-soft);
+    color: var(--ice);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+}
+
+.people-count:empty {
+    display: none;
+}
+
+@media (max-width: 800px) {
+    #people .section-header.people-intro {
+        align-items: center;
+        margin-bottom: 28px;
+    }
+}
+
+@media (max-width: 600px) {
+    .people-toolbar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    #people .section-header.people-intro h1 {
+        font-size: 38px;
+    }
+}
+
+/* ----------------------------------------------------------
+   PEOPLE CARDS: same look as the Genre cards
+   ---------------------------------------------------------- */
+
+#people.content-section {
+    padding-bottom: 48px;
+}
+
+#people-list.people-grid {
+    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+    gap: 18px;
+}
+
+#people-list .person-card {
+    position: relative;
+    isolation: isolate;
+    gap: 20px;
+    min-height: 136px;
+    padding: 20px 22px;
+    overflow: hidden;
+    border: 1px solid rgba(92, 195, 220, 0.2);
+    border-radius: 10px;
+    background:
+        radial-gradient(circle at 100% 0%, rgba(92, 195, 220, 0.16), transparent 65%),
+        linear-gradient(135deg, rgba(13, 34, 51, 0.96), rgba(5, 12, 23, 0.98));
+    animation: genre-rise 0.55s ease both;
+}
+
+#people-list .person-card::after {
+    content: "";
+    position: absolute;
+    right: -25px;
+    bottom: -45px;
+    z-index: -1;
+    width: 115px;
+    height: 115px;
+    border: 1px solid rgba(240, 194, 122, 0.13);
+    border-radius: 50%;
+    box-shadow:
+        0 0 0 14px rgba(240, 194, 122, 0.025),
+        0 0 0 29px rgba(92, 195, 220, 0.025);
+    transition: transform 0.4s ease;
+}
+
+#people-list .person-card:hover,
+#people-list .person-card:focus-visible {
+    transform: translateY(-5px);
+    border-color: rgba(240, 194, 122, 0.65);
+    background:
+        radial-gradient(circle at 100% 0%, rgba(240, 194, 122, 0.2), transparent 65%),
+        linear-gradient(135deg, rgba(24, 42, 55, 0.98), rgba(7, 16, 29, 0.98));
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+}
+
+#people-list .person-card:hover::after {
+    transform: scale(1.2);
+}
+
+#people-list .person-card:focus-visible {
+    outline: 2px solid var(--ice);
+    outline-offset: 3px;
+}
+
+#people-list .person-image {
+    width: 84px;
+    height: 84px;
+    border-width: 2px;
+}
+
+#people-list .person-image-fallback {
+    font-size: 28px;
+}
+
+#people-list .person-name {
+    margin: 0 0 4px;
+    font-family: var(--display);
+    font-size: clamp(22px, 1.8vw, 26px);
+    font-weight: 500;
+    line-height: 1.1;
+    white-space: nowrap;
+    transition: color var(--transition);
+}
+
+#people-list .person-card:hover .person-name {
+    color: var(--ember);
+}
+
+#people-list .person-role {
+    margin: 0 0 9px;
+    color: var(--ice);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+}
+
+#people-list .person-known-for {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    color: var(--mist);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+#people-list .person-known-for-label {
+    display: inline;
+    margin: 0 6px 0 0;
+    color: var(--mist);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    opacity: 0.8;
+}
+
+#people-list .person-credit-type {
+    color: var(--mist);
+    font-size: 10px;
+    text-transform: capitalize;
+    opacity: 0.7;
+}
+
+#people-list > .loading-state,
+#people-list > .empty-state {
+    grid-column: 1 / -1;
+}
+
+@media (max-width: 560px) {
+    #people-list.people-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #people-list .person-image {
+        width: 72px;
+        height: 72px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #people-list .person-card {
+        animation: none;
+    }
+}
+
+/* ----------------------------------------------------------
+   HERO: keep long titles from pushing the buttons out of view
+   ---------------------------------------------------------- */
+
+.hero-content {
+    padding-block: clamp(24px, 3vw, 44px);
+}
+
+.hero-content h1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: clamp(40px, 4.4vw, 68px);
+    line-height: 1.04;
+    padding-bottom: 0.06em; /* stops descenders (g, y, p) being clipped */
+}
+
+.hero-description {
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+}
+
+@media (max-width: 900px) {
+    .hero-content h1 {
+        font-size: clamp(34px, 7vw, 50px);
+    }
+}
+
+@media (max-width: 600px) {
+    .hero-content h1 {
+        font-size: clamp(30px, 9vw, 40px);
+    }
+
+    .hero-description {
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
     }
 }

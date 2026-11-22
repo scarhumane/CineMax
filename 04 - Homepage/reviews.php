@@ -2,66 +2,47 @@
 
 declare(strict_types=1);
 
-const REVIEW_DIR = __DIR__ . "/reviews_data";
+require_once __DIR__ . "/functions.php";
+
+start_session();
+
+const REVIEW_DIR = __DIR__ . "/reviews.json";
 const MAX_REVIEWS_PER_TITLE = 500;
-const MAX_NAME = 40;
 const MAX_TEXT = 1500;
 const MIN_TEXT = 3;
-const COOKIE_NAME = "cm_reviewer";
 
 header("Content-Type: application/json; charset=utf-8");
 header("Cache-Control: no-store");
 header("X-Content-Type-Options: nosniff");
-
-/*
- * If CineMax has logged-in users, return the signed-in display name here
- * (for example from $_SESSION) and it will be used instead of the typed name.
- */
-function currentUserName(): ?string
-{
-    return null;
-}
 
 function respond(array $payload, int $status = 200): never
 {
     http_response_code($status);
     echo json_encode(
         $payload,
-        JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE
+        JSON_UNESCAPED_SLASHES
+            | JSON_UNESCAPED_UNICODE
+            | JSON_INVALID_UTF8_SUBSTITUTE
     );
     exit;
 }
 
-function isHttps(): bool
+function requireReviewAccount(): array
 {
-    return (!empty($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] !== "off")
-        || ($_SERVER["SERVER_PORT"] ?? "") === "443";
-}
+    if (($_SESSION["logged_in"] ?? false) !== true) {
+        respond(["error" => "Please sign in to access CineMax reviews."], 401);
+    }
 
-function reviewerToken(): string
-{
-    $cookie = $_COOKIE[COOKIE_NAME] ?? "";
+    $username = $_SESSION["username"] ?? null;
 
-    return is_string($cookie) && preg_match('/^[a-f0-9]{32}$/', $cookie)
-        ? $cookie
-        : "";
-}
+    if (!is_string($username) || trim($username) === "") {
+        respond(["error" => "Your account session is incomplete. Please sign in again."], 401);
+    }
 
-function issueToken(): string
-{
-    $token = bin2hex(random_bytes(16));
+    $userKey = hash("sha256", strtolower(trim($username)));
+    $displayName = current_user_name();
 
-    setcookie(COOKIE_NAME, $token, [
-        "expires" => time() + 60 * 60 * 24 * 365,
-        "path" => "/",
-        "secure" => isHttps(),
-        "httponly" => true,
-        "samesite" => "Lax",
-    ]);
-
-    $_COOKIE[COOKIE_NAME] = $token;
-
-    return $token;
+    return [$userKey, $displayName];
 }
 
 function ensureStorage(): void
@@ -88,7 +69,7 @@ function parseTitle(mixed $kind, mixed $id): array
     $id = filter_var($id, FILTER_VALIDATE_INT);
 
     if (!in_array($kind, ["movie", "tv"], true) || $id === false || $id < 1 || $id > 99999999) {
-        respond(["error" => "A valid movie ID is required."], 400);
+        respond(["error" => "A valid movie or TV ID is required."], 400);
     }
 
     return [$kind, $id];
@@ -101,14 +82,35 @@ function storePath(string $kind, int $id): string
 
 function decodeList(string|false $raw): array
 {
-    $list = json_decode($raw === false || $raw === "" ? "[]" : $raw, true);
+    if ($raw === false || trim($raw) === "") {
+        return [];
+    }
 
+    $list = json_decode($raw, true);
     return is_array($list) ? $list : [];
 }
 
 function readReviews(string $path): array
 {
-    return is_file($path) ? decodeList(@file_get_contents($path)) : [];
+    if (!is_file($path)) {
+        return [];
+    }
+
+    $handle = @fopen($path, "rb");
+    if ($handle === false) {
+        respond(["error" => "Unable to read reviews."], 500);
+    }
+
+    try {
+        if (!flock($handle, LOCK_SH)) {
+            respond(["error" => "Unable to read reviews."], 500);
+        }
+        $list = decodeList(stream_get_contents($handle));
+        flock($handle, LOCK_UN);
+        return $list;
+    } finally {
+        fclose($handle);
+    }
 }
 
 function mutateReviews(string $path, callable $change): array
@@ -120,49 +122,78 @@ function mutateReviews(string $path, callable $change): array
     }
 
     try {
-        flock($handle, LOCK_EX);
-        $list = $change(decodeList(stream_get_contents($handle)));
-        ftruncate($handle, 0);
+        if (!flock($handle, LOCK_EX)) {
+            respond(["error" => "Unable to save your review."], 500);
+        }
+
         rewind($handle);
-        fwrite($handle, json_encode($list, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        $list = $change(decodeList(stream_get_contents($handle)));
+        $json = json_encode(
+            $list,
+            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE
+        );
+
+        if ($json === false || !ftruncate($handle, 0)) {
+            respond(["error" => "Unable to save your review."], 500);
+        }
+
+        rewind($handle);
+        if (fwrite($handle, $json) === false) {
+            respond(["error" => "Unable to save your review."], 500);
+        }
+
         fflush($handle);
         flock($handle, LOCK_UN);
+        return $list;
     } finally {
         fclose($handle);
     }
-
-    return $list;
 }
 
-function publicView(array $list, string $token): array
+function publicView(array $list, string $userKey, string $csrfToken): array
 {
-    usort($list, static fn($a, $b) => strcmp((string)($b["created"] ?? ""), (string)($a["created"] ?? "")));
+    $list = array_values(array_filter($list, static fn($review) =>
+        is_array($review) && isset($review["user_key"], $review["id"])
+    ));
 
-    $hash = $token === "" ? null : hash("sha256", $token);
+    usort($list, static fn($a, $b) =>
+        strcmp((string)($b["created"] ?? ""), (string)($a["created"] ?? ""))
+    );
+
     $out = [];
     $sum = 0;
+    $ownReview = null;
 
-    foreach ($list as $r) {
-        $rating = (int)($r["rating"] ?? 0);
+    foreach ($list as $review) {
+        $rating = (int)($review["rating"] ?? 0);
         $sum += $rating;
-        $out[] = [
-            "id" => (string)($r["id"] ?? ""),
-            "name" => (string)($r["name"] ?? "Anonymous"),
+
+        $item = [
+            "id" => (string)$review["id"],
+            "name" => (string)($review["name"] ?? "CineMax member"),
             "rating" => $rating,
-            "text" => (string)($r["text"] ?? ""),
-            "created" => (string)($r["created"] ?? ""),
-            "mine" => $hash !== null && ($r["reviewer"] ?? null) === $hash,
+            "text" => (string)($review["text"] ?? ""),
+            "created" => (string)($review["created"] ?? ""),
+            "mine" => hash_equals($userKey, (string)$review["user_key"]),
         ];
+
+        if ($item["mine"]) {
+            $ownReview = $item;
+        }
+
+        $out[] = $item;
     }
 
     return [
         "reviews" => $out,
+        "own_review" => $ownReview,
         "count" => count($out),
         "average" => count($out) ? round($sum / count($out), 1) : 0,
+        "csrf_token" => $csrfToken,
     ];
 }
 
-function cleanText(string $value, bool $multiline): string
+function cleanReviewText(string $value): string
 {
     if (!mb_check_encoding($value, "UTF-8")) {
         return "";
@@ -170,111 +201,156 @@ function cleanText(string $value, bool $multiline): string
 
     $value = str_replace(["\r\n", "\r"], "\n", $value);
     $value = preg_replace('/[^\P{C}\n]+/u', "", $value) ?? "";
-
-    if ($multiline) {
-        $value = preg_replace("/\n{3,}/", "\n\n", $value) ?? $value;
-    } else {
-        $value = preg_replace('/\s+/u', " ", $value) ?? $value;
-    }
+    $value = preg_replace("/\n{3,}/", "\n\n", $value) ?? $value;
 
     return trim($value);
 }
 
+function csrfToken(): string
+{
+    if (!isset($_SESSION["reviews_csrf_token"]) || !is_string($_SESSION["reviews_csrf_token"])) {
+        $_SESSION["reviews_csrf_token"] = bin2hex(random_bytes(32));
+    }
+
+    return $_SESSION["reviews_csrf_token"];
+}
+
+function verifyWriteRequest(): void
+{
+    $origin = $_SERVER["HTTP_ORIGIN"] ?? "";
+
+    if ($origin !== "") {
+        $originHost = strtolower((string)parse_url($origin, PHP_URL_HOST));
+        $selfHost = strtolower((string)parse_url("//" . ($_SERVER["HTTP_HOST"] ?? ""), PHP_URL_HOST));
+
+        if ($originHost === "" || $originHost !== $selfHost) {
+            respond(["error" => "Cross-origin requests are not allowed."], 403);
+        }
+    }
+
+    $provided = $_SERVER["HTTP_X_CSRF_TOKEN"] ?? "";
+    $expected = csrfToken();
+
+    if (!is_string($provided) || !hash_equals($expected, $provided)) {
+        respond(["error" => "Your session security token expired. Refresh the page and try again."], 403);
+    }
+
+    if (stripos((string)($_SERVER["CONTENT_TYPE"] ?? ""), "application/json") !== 0) {
+        respond(["error" => "Content-Type must be application/json."], 415);
+    }
+}
+
+function readJsonBody(): array
+{
+    $raw = file_get_contents("php://input", false, null, 0, 20000);
+    $input = json_decode($raw === false ? "" : $raw, true);
+
+    if (!is_array($input)) {
+        respond(["error" => "Invalid request."], 400);
+    }
+
+    return $input;
+}
+
+[$userKey, $displayName] = requireReviewAccount();
 $method = $_SERVER["REQUEST_METHOD"] ?? "GET";
 
 if ($method === "GET") {
     [$kind, $id] = parseTitle($_GET["kind"] ?? "movie", $_GET["movie_id"] ?? "");
-    respond(publicView(readReviews(storePath($kind, $id)), reviewerToken()));
+    ensureStorage();
+    respond(publicView(readReviews(storePath($kind, $id)), $userKey, csrfToken()));
 }
 
-if ($method !== "POST") {
-    header("Allow: GET, POST");
+if (!in_array($method, ["POST", "DELETE"], true)) {
+    header("Allow: GET, POST, DELETE");
     respond(["error" => "Method not allowed."], 405);
 }
 
-/* ----- POST ----- */
-
-$origin = $_SERVER["HTTP_ORIGIN"] ?? "";
-
-if ($origin !== "") {
-    $originHost = strtolower((string)parse_url($origin, PHP_URL_HOST));
-    $selfHost = strtolower((string)parse_url("//" . ($_SERVER["HTTP_HOST"] ?? ""), PHP_URL_HOST));
-
-    if ($originHost === "" || $originHost !== $selfHost) {
-        respond(["error" => "Cross-origin requests are not allowed."], 403);
-    }
-}
-
-if (stripos((string)($_SERVER["CONTENT_TYPE"] ?? ""), "application/json") !== 0) {
-    respond(["error" => "Content-Type must be application/json."], 415);
-}
-
-$input = json_decode((string)file_get_contents("php://input", false, null, 0, 20000), true);
-
-if (!is_array($input)) {
-    respond(["error" => "Invalid request."], 400);
-}
-
+verifyWriteRequest();
+$input = readJsonBody();
 [$kind, $id] = parseTitle($input["kind"] ?? "movie", $input["movie_id"] ?? "");
-
-$rating = filter_var($input["rating"] ?? null, FILTER_VALIDATE_INT);
-
-if ($rating === false || $rating < 1 || $rating > 5) {
-    respond(["error" => "Please choose a rating from 1 to 5 stars."], 400);
-}
-
-$name = cleanText(currentUserName() ?? (is_string($input["name"] ?? null) ? $input["name"] : ""), false);
-
-if ($name === "" || mb_strlen($name) > MAX_NAME) {
-    respond(["error" => "Please enter a display name (up to " . MAX_NAME . " characters)."], 400);
-}
-
-$text = cleanText(is_string($input["text"] ?? null) ? $input["text"] : "", true);
-
-if (mb_strlen($text) < MIN_TEXT || mb_strlen($text) > MAX_TEXT) {
-    respond(["error" => "Reviews must be " . MIN_TEXT . " to " . MAX_TEXT . " characters."], 400);
-}
-
 ensureStorage();
+$path = storePath($kind, $id);
 
-$token = reviewerToken() ?: issueToken();
-$hash = hash("sha256", $token);
+if ($method === "POST") {
+    $rating = filter_var($input["rating"] ?? null, FILTER_VALIDATE_INT);
+
+    if ($rating === false || $rating < 1 || $rating > 5) {
+        respond(["error" => "Please choose a rating from 1 to 5 stars."], 400);
+    }
+
+    $text = cleanReviewText(is_string($input["text"] ?? null) ? $input["text"] : "");
+    $length = mb_strlen($text);
+
+    if ($length < MIN_TEXT || $length > MAX_TEXT) {
+        respond(["error" => "Reviews must be " . MIN_TEXT . " to " . MAX_TEXT . " characters."], 400);
+    }
+
+    $list = mutateReviews(
+        $path,
+        static function (array $list) use ($userKey, $displayName, $rating, $text): array {
+            $now = gmdate("c");
+            $found = false;
+
+            foreach ($list as &$review) {
+                if (($review["user_key"] ?? null) === $userKey) {
+                    $review["name"] = $displayName;
+                    $review["rating"] = $rating;
+                    $review["text"] = $text;
+                    $review["created"] = $now;
+                    $found = true;
+                    break;
+                }
+            }
+            unset($review);
+
+            if (!$found) {
+                $list[] = [
+                    "id" => bin2hex(random_bytes(8)),
+                    "user_key" => $userKey,
+                    "name" => $displayName,
+                    "rating" => $rating,
+                    "text" => $text,
+                    "created" => $now,
+                ];
+            }
+
+            if (count($list) > MAX_REVIEWS_PER_TITLE) {
+                $list = array_slice($list, -MAX_REVIEWS_PER_TITLE);
+            }
+
+            return $list;
+        }
+    );
+
+    respond(publicView($list, $userKey, csrfToken()));
+}
+
+$reviewId = $input["review_id"] ?? "";
+if (!is_string($reviewId) || !preg_match('/^[a-f0-9]{16}$/', $reviewId)) {
+    respond(["error" => "A valid review ID is required."], 400);
+}
 
 $list = mutateReviews(
-    storePath($kind, $id),
-    static function (array $list) use ($hash, $name, $rating, $text): array {
-        $now = gmdate("c");
-        $replaced = false;
+    $path,
+    static function (array $list) use ($userKey, $reviewId): array {
+        $found = false;
+        $updated = [];
 
-        foreach ($list as &$r) {
-            if (($r["reviewer"] ?? null) === $hash) {
-                $r["name"] = $name;
-                $r["rating"] = $rating;
-                $r["text"] = $text;
-                $r["created"] = $now;
-                $replaced = true;
-                break;
+        foreach ($list as $review) {
+            if (($review["id"] ?? null) === $reviewId && ($review["user_key"] ?? null) === $userKey) {
+                $found = true;
+                continue;
             }
-        }
-        unset($r);
-
-        if (!$replaced) {
-            $list[] = [
-                "id" => bin2hex(random_bytes(6)),
-                "reviewer" => $hash,
-                "name" => $name,
-                "rating" => $rating,
-                "text" => $text,
-                "created" => $now,
-            ];
+            $updated[] = $review;
         }
 
-        if (count($list) > MAX_REVIEWS_PER_TITLE) {
-            $list = array_slice($list, -MAX_REVIEWS_PER_TITLE);
+        if (!$found) {
+            respond(["error" => "Review not found or you do not have permission to delete it."], 404);
         }
 
-        return $list;
+        return $updated;
     }
 );
 
-respond(publicView($list, $token), 201);
+respond(publicView($list, $userKey, csrfToken()));

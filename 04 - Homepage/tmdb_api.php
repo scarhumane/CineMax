@@ -306,7 +306,8 @@ function getTVDetails(int $tvId): array
 
     return tmdbRequest("/tv/" . $tvId, [
         "language" => "en-US",
-        "append_to_response" => "credits,videos,recommendations"
+        "append_to_response" => "credits,videos,recommendations",
+        "include_video_language" => "en,null"
     ]);
 }
 
@@ -339,11 +340,13 @@ function discoverMovies(string $genres, int $page = 1, array $dates = []): array
 
 function getNewReleases(string $from, string $to, int $page = 1): array
 {
-    return discoverMovies("", $page, [
+    return tmdbRequest("/discover/movie", [
+        "language" => "en-US",
         "sort_by" => "release_date.desc",
         "release_date.gte" => $from,
         "release_date.lte" => $to,
-        "with_release_type" => "2|3"
+        "with_release_type" => "2|3",
+        "page" => max(1, $page)
     ]);
 }
 
@@ -457,7 +460,8 @@ function getMovieDetails(int $movieId): array
 
     return tmdbRequest("/movie/" . $movieId, [
         "language" => "en-US",
-        "append_to_response" => "credits,videos,recommendations"
+        "append_to_response" => "credits,videos,recommendations",
+        "include_video_language" => "en,null"
     ]);
 }
 

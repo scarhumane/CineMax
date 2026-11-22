@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -8,10 +7,10 @@
 
     <title>CineMax — People</title>
 
-    <link rel="stylesheet" href="homepage.css?v=people-20261118">
+    <link rel="stylesheet" href="homepage.css?v=people-20261122">
 
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="people.js?v=people-20261118" defer></script>
+    <script src="people.js?v=people-20261122" defer></script>
     <script src="profile_menu.js" defer></script>
 </head>
 
@@ -60,44 +59,47 @@
 
             <section class="content-section" id="people">
 
-                <!-- PAGE HEADER -->
-                <div class="section-header">
+                <!-- PAGE INTRO -->
+                <div class="section-header people-intro">
+                    <span class="people-eyebrow">Browse by people</span>
+                    <h1>Explore Cast &amp; Directors</h1>
+                    <p>Discover movies through the people behind the stage.</p>
+                </div>
 
-                    <h1>Discover People</h1>
 
-                    <!-- ROLE FILTERS -->
-                    <div class="people-controls">
+                <!-- TOOLBAR: count + role filters -->
+                <div class="people-toolbar">
 
-                        <div class="people-filters">
+                    <span class="people-count" id="people-count" aria-live="polite"></span>
 
-                            <button
-                                type="button"
-                                class="filter-button active"
-                                data-role="all"
-                                aria-pressed="true"
-                            >
-                                All
-                            </button>
+                    <div class="people-filters">
 
-                            <button
-                                type="button"
-                                class="filter-button"
-                                data-role="actor"
-                                aria-pressed="false"
-                            >
-                                Actors
-                            </button>
+                        <button
+                            type="button"
+                            class="filter-button active"
+                            data-role="all"
+                            aria-pressed="true"
+                        >
+                            All
+                        </button>
 
-                            <button
-                                type="button"
-                                class="filter-button"
-                                data-role="director"
-                                aria-pressed="false"
-                            >
-                                Directors
-                            </button>
+                        <button
+                            type="button"
+                            class="filter-button"
+                            data-role="actor"
+                            aria-pressed="false"
+                        >
+                            Actors
+                        </button>
 
-                        </div>
+                        <button
+                            type="button"
+                            class="filter-button"
+                            data-role="director"
+                            aria-pressed="false"
+                        >
+                            Directors
+                        </button>
 
                     </div>
 

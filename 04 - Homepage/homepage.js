@@ -474,7 +474,7 @@ document.addEventListener("error", event => {
 function createPoster(movie) {
     const content = movie.poster
         ? `<img src="${escapeHTML(movie.poster)}"
-                alt="${escapeHTML(movie.title)} poster"
+                alt="${escapeHTML(movie.title)} movie image"
                 loading="lazy">`
         : `<div class="poster-placeholder">${escapeHTML(movie.title)}</div>`;
 
@@ -538,29 +538,43 @@ function createMovieCard(movie, extraContent = "") {
 
 function createBackdropCard(movie) {
     const image = movie.backdropSmall || movie.backdrop || movie.poster;
-    const reminder = String(movie.id) !== "1003596"
-        && movie.releaseDate
-        && movie.releaseDate > new Date().toISOString().slice(0, 10)
+    const today = new Date().toISOString().slice(0, 10);
+    const isUpcoming = Boolean(movie.releaseDate) && movie.releaseDate > today;
+    const reminder = String(movie.id) !== "1003596" && isUpcoming
         ? `<button type="button" class="remind-button ${isReminderSaved(movie.id) ? "is-saved" : ""}" data-remind-movie="${escapeHTML(movie.id)}" aria-pressed="${isReminderSaved(movie.id)}">${isReminderSaved(movie.id) ? "Reminder saved" : "Remind me"}</button>`
         : "";
-    const releaseDate = movie.releaseDate
-        ? `<span class="backdrop-release-date">${new Date(`${movie.releaseDate}T00:00:00`).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}</span>`
-        : "";
+    const releaseText = isUpcoming
+        ? new Date(`${movie.releaseDate}T00:00:00`).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })
+        : (movie.year && movie.year !== "N/A"
+            ? String(movie.year)
+            : "Release date unavailable");
+    const genreText = (movie.genres || []).slice(0, 2).join(", ") || "Genre unavailable";
+    const ratingText = Number(movie.rating) > 0
+        ? `\u2605 ${formatRating(movie.rating)}`
+        : "Not rated";
     return `
         <article class="backdrop-card">
             <a href="#" class="backdrop-open" data-open-movie="${escapeHTML(movie.id)}" aria-label="View details for ${escapeHTML(movie.title)}">
-                ${image
-                    ? `<img src="${escapeHTML(image)}" alt="${escapeHTML(movie.title)}" loading="lazy">`
-                    : `<div class="backdrop-placeholder">${escapeHTML(movie.title)}</div>`}
-                <span class="backdrop-card-title">${escapeHTML(movie.title)}</span>
-                <span class="backdrop-card-rating">★ ${formatRating(movie.rating)}</span>
-                ${releaseDate}
+                <div class="backdrop-image">
+                    ${image
+                        ? `<img src="${escapeHTML(image)}" alt="${escapeHTML(movie.title)}" loading="lazy" decoding="async">`
+                        : `<div class="backdrop-placeholder">${escapeHTML(movie.title)}</div>`}
+                </div>
+                <div class="backdrop-info">
+                    <h3 class="backdrop-title">${escapeHTML(movie.title)}</h3>
+                    <p class="backdrop-meta">
+                        <span>${escapeHTML(releaseText)}</span>
+                        <span class="backdrop-separator">\u2022</span>
+                        <span>${escapeHTML(genreText)}</span>
+                        <span class="backdrop-separator">\u2022</span>
+                        <span class="backdrop-rating">${escapeHTML(ratingText)}</span>
+                    </p>
+                </div>
             </a>
             ${reminder}
         </article>
     `;
 }
-
 function renderBackdropRow(id, movies, loadingText) {
     const container = $(id);
     if (!container) return;
@@ -846,7 +860,7 @@ function renderRecommendations(recommendations) {
                         ${movie.poster
                             ? `<img
                                 src="${escapeHTML(movie.poster)}"
-                                alt="${escapeHTML(movie.title)} poster"
+                                alt="${escapeHTML(movie.title)} movie image"
                                 loading="lazy">`
                             : `<div class="poster-placeholder">
                                 ${escapeHTML(movie.title)}
@@ -859,6 +873,319 @@ function renderRecommendations(recommendations) {
         </section>
     `;
 }
+
+
+/* ACCOUNT-BASED COMMUNITY REVIEWS */
+
+let reviewCsrfToken = "";
+
+function renderReviewSection(movieId, kind = "movie") {
+    return `
+        <section class="modal-section reviews-section"
+                 data-reviews-section
+                 data-movie-id="${escapeHTML(movieId)}"
+                 data-review-kind="${escapeHTML(kind)}">
+            <div class="reviews-heading">
+                <div>
+                    <h3>Community Reviews</h3>
+                    <p class="modal-muted" data-review-summary>Loading reviews...</p>
+                </div>
+            </div>
+            <div class="review-form-container" data-review-form-container>
+                <p class="modal-muted">Loading your review form...</p>
+            </div>
+            <div class="community-review-list" data-review-list aria-live="polite">
+                <p class="modal-muted">Loading community reviews...</p>
+            </div>
+        </section>
+    `;
+}
+
+function formatReviewDate(value) {
+    if (!value) return "Recently";
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "Recently";
+
+    return date.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric"
+    });
+}
+
+function renderReviewForm(movieId, kind, ownReview = null) {
+    const text = ownReview?.text || "";
+
+    return `
+        <form class="review-form" data-review-form>
+            <h4>${ownReview ? "Edit your review" : "Write a review"}</h4>
+            <p class="review-rating-note">
+                Your review will use the rating you selected above.
+            </p>
+
+            <textarea id="review-text-${escapeHTML(movieId)}"
+                      name="text"
+                      rows="4"
+                      minlength="3"
+                      maxlength="1500"
+                      placeholder="What did you think about this movie?"
+                      required>${escapeHTML(text)}</textarea>
+
+            <div class="review-form-footer">
+                <small>3–1,500 characters</small>
+                <button type="submit" class="review-submit-button">
+                    ${ownReview ? "Update review" : "Post review"}
+                </button>
+            </div>
+            <p class="review-feedback" data-review-feedback role="status"></p>
+        </form>
+    `;
+}
+
+function renderCommunityReviews(reviews, movieId, kind) {
+    if (!reviews.length) {
+        return `
+            <div class="reviews-empty-state">
+                <p>No community reviews yet.</p>
+                <span>Be the first CineMax member to share your thoughts.</span>
+            </div>
+        `;
+    }
+
+    return reviews.map(review => `
+        <article class="community-review" data-review-id="${escapeHTML(review.id)}">
+            <div class="community-review-top">
+                <div class="reviewer-avatar" aria-hidden="true">
+                    ${escapeHTML(String(review.name || "U").trim().charAt(0).toUpperCase())}
+                </div>
+                <div class="reviewer-details">
+                    <strong>${escapeHTML(review.name || "CineMax member")}</strong>
+                    <span>${escapeHTML(formatReviewDate(review.created))}</span>
+                </div>
+                <span class="community-review-rating" aria-label="${Number(review.rating)} out of 5 stars">
+                    ${"★".repeat(Math.max(0, Math.min(5, Number(review.rating) || 0)))}
+                    <small>${Number(review.rating)}/5</small>
+                </span>
+            </div>
+            <p class="community-review-text">${escapeHTML(review.text || "")}</p>
+            ${review.mine ? `
+                <div class="community-review-actions">
+                    <span class="your-review-label">Your review</span>
+                    <button type="button"
+                            class="review-delete-button"
+                            data-delete-review="${escapeHTML(review.id)}"
+                            data-review-movie="${escapeHTML(movieId)}"
+                            data-review-kind="${escapeHTML(kind)}">
+                        Delete
+                    </button>
+                </div>
+            ` : ""}
+        </article>
+    `).join("");
+}
+
+function paintMovieReviews(section, data, movieId, kind) {
+    if (!section?.isConnected) return;
+
+    const summary = section.querySelector("[data-review-summary]");
+    const formContainer = section.querySelector("[data-review-form-container]");
+    const list = section.querySelector("[data-review-list]");
+    const reviews = Array.isArray(data.reviews) ? data.reviews : [];
+    const ownReview = reviews.find(review => review.mine) || null;
+
+    if (summary) {
+        const count = Number(data.count || 0);
+        const average = Number(data.average || 0);
+        summary.textContent = count
+            ? `${average.toFixed(1)}/5 · ${count} ${count === 1 ? "review" : "reviews"}`
+            : "No ratings yet";
+    }
+
+    if (formContainer) {
+        formContainer.innerHTML = renderReviewForm(movieId, kind, ownReview);
+    }
+
+    if (list) {
+        list.innerHTML = renderCommunityReviews(reviews, movieId, kind);
+    }
+}
+
+async function loadMovieReviews(movieId, kind = "movie") {
+    const section = document.querySelector(
+        `[data-reviews-section][data-movie-id="${CSS.escape(String(movieId))}"]`
+    );
+
+    if (!section) return;
+
+    const parameters = new URLSearchParams({
+        kind,
+        movie_id: String(movieId)
+    });
+
+    try {
+        const response = await fetch(`reviews.php?${parameters.toString()}`, {
+            method: "GET",
+            credentials: "same-origin",
+            cache: "no-store"
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || data.error) {
+            throw new Error(data.error || "Unable to load reviews.");
+        }
+
+        if (data.csrf_token) reviewCsrfToken = data.csrf_token;
+
+        // Keep the existing Your Rating stars and the review rating in sync.
+        const ownReview = Array.isArray(data.reviews)
+            ? data.reviews.find(review => review.mine)
+            : null;
+        if (ownReview && Number(ownReview.rating) >= 1 && Number(ownReview.rating) <= 5) {
+            savePersonalRating(movieId, Number(ownReview.rating));
+            const movie = getMovie(movieId);
+            const personalSection = document.querySelector(
+                ".personal-rating-section"
+            );
+            if (movie && personalSection) {
+                personalSection.outerHTML = renderPersonalRating(movie);
+            }
+        }
+
+        paintMovieReviews(section, data, movieId, kind);
+    } catch (error) {
+        console.error("Unable to load community reviews:", error);
+
+        const formContainer = section.querySelector("[data-review-form-container]");
+        const list = section.querySelector("[data-review-list]");
+        const summary = section.querySelector("[data-review-summary]");
+
+        if (summary) summary.textContent = "Reviews are currently unavailable.";
+        if (formContainer) {
+            formContainer.innerHTML = `<p class="modal-muted">${escapeHTML(error.message)}</p>`;
+        }
+        if (list) list.innerHTML = "";
+    }
+}
+
+async function saveMovieReview(form) {
+    const section = form.closest("[data-reviews-section]");
+    if (!section) return;
+
+    const movieId = section.dataset.movieId;
+    const kind = section.dataset.reviewKind || "movie";
+    const submitButton = form.querySelector('[type="submit"]');
+    const feedback = form.querySelector("[data-review-feedback]");
+    const rating = Number(getPersonalRatings()[String(movieId)] || 0);
+    const text = form.elements.text.value.trim();
+
+    if (rating < 1 || rating > 5) {
+        if (feedback) feedback.textContent = "Please choose a rating in the Your Rating section above first.";
+        return;
+    }
+
+    if (submitButton) submitButton.disabled = true;
+    if (feedback) feedback.textContent = "Saving your review...";
+
+    try {
+        const response = await fetch("reviews.php", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-Token": reviewCsrfToken
+            },
+            body: JSON.stringify({
+                kind,
+                movie_id: movieId,
+                rating,
+                text
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || data.error) {
+            throw new Error(data.error || "Unable to save your review.");
+        }
+
+        if (data.csrf_token) reviewCsrfToken = data.csrf_token;
+
+        // Posting/updating a review also updates the existing personal rating.
+        savePersonalRating(movieId, rating);
+        const movie = getMovie(movieId);
+        const personalSection = document.querySelector(
+            ".personal-rating-section"
+        );
+        if (movie && personalSection) {
+            personalSection.outerHTML = renderPersonalRating(movie);
+        }
+
+        paintMovieReviews(section, data, movieId, kind);
+
+        const newFeedback = section.querySelector("[data-review-feedback]");
+        if (newFeedback) newFeedback.textContent = "Your review has been saved.";
+    } catch (error) {
+        console.error("Unable to save review:", error);
+        if (feedback) feedback.textContent = error.message;
+    } finally {
+        if (submitButton?.isConnected) submitButton.disabled = false;
+    }
+}
+
+async function deleteMovieReview(button) {
+    const movieId = button.dataset.reviewMovie;
+    const kind = button.dataset.reviewKind || "movie";
+    const reviewId = button.dataset.deleteReview;
+
+    if (!movieId || !reviewId || !window.confirm("Delete your review for this title?")) {
+        return;
+    }
+
+    button.disabled = true;
+
+    try {
+        const response = await fetch("reviews.php", {
+            method: "DELETE",
+            credentials: "same-origin",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-Token": reviewCsrfToken
+            },
+            body: JSON.stringify({
+                kind,
+                movie_id: movieId,
+                review_id: reviewId
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || data.error) {
+            throw new Error(data.error || "Unable to delete your review.");
+        }
+
+        if (data.csrf_token) reviewCsrfToken = data.csrf_token;
+
+        const section = button.closest("[data-reviews-section]");
+        paintMovieReviews(section, data, movieId, kind);
+    } catch (error) {
+        console.error("Unable to delete review:", error);
+        alert(error.message || "Unable to delete your review.");
+        button.disabled = false;
+    }
+}
+
+document.addEventListener("submit", event => {
+    const form = event.target;
+    if (!(form instanceof HTMLFormElement) || !form.matches("[data-review-form]")) {
+        return;
+    }
+
+    event.preventDefault();
+    saveMovieReview(form);
+});
 
 /* MODAL TRAILER PLAYER */
 
@@ -876,27 +1203,39 @@ function loadYouTubeApi() {
     youtubeApiPromise = new Promise((resolve, reject) => {
         const previousHandler = window.onYouTubeIframeAPIReady;
 
+        const fail = message => {
+            youtubeApiPromise = null;
+            reject(new Error(message));
+        };
+
         const timer = setTimeout(() => {
-            reject(new Error("YouTube player API timed out."));
-        }, 8000);
+            fail("YouTube player API timed out.");
+        }, 10000);
 
         window.onYouTubeIframeAPIReady = () => {
             clearTimeout(timer);
 
-            if (typeof previousHandler === "function") {
-                previousHandler();
+            try {
+                if (typeof previousHandler === "function") {
+                    previousHandler();
+                }
+            } catch (error) {
+                console.warn("Previous YouTube API callback failed:", error);
             }
 
-            resolve(window.YT);
+            if (window.YT && typeof window.YT.Player === "function") {
+                resolve(window.YT);
+            } else {
+                fail("YouTube player API loaded without a Player constructor.");
+            }
         };
 
         const script = document.createElement("script");
-
         script.src = "https://www.youtube.com/iframe_api";
         script.async = true;
         script.onerror = () => {
             clearTimeout(timer);
-            reject(new Error("YouTube player API could not be loaded."));
+            fail("YouTube player API could not be loaded.");
         };
 
         document.head.appendChild(script);
@@ -1165,16 +1504,18 @@ function renderMovieDetails(movie, details) {
         ${renderProviders(details.watch_providers)}
         ${renderCast(cast)}
 
-        <section class="modal-section">
-            <h3>Reviews</h3>
-            <p class="modal-muted">
-                Review submission and community reviews will be connected
-                to your CineMax account in the next step.
-            </p>
-        </section>
+        ${renderReviewSection(
+            watchlistMovie.id,
+            movie.mediaType === "tv" ? "tv" : "movie"
+        )}
 
         ${renderRecommendations(details.recommendations?.results)}
     `;
+
+    loadMovieReviews(
+        watchlistMovie.id,
+        movie.mediaType === "tv" ? "tv" : "movie"
+    );
 
     const button = body.querySelector(".modal-watch");
 
@@ -1200,6 +1541,7 @@ function renderMovieDetails(movie, details) {
     refreshIcons();
 }
 
+
 async function openModal(movie) {
     const modal = getModal();
 
@@ -1215,31 +1557,37 @@ async function openModal(movie) {
     if (!media || !body) return;
 
     destroyTrailerPlayer();
+
     modal.querySelector(".modal-panel")?.classList.remove("has-trailer");
 
-    media.innerHTML = createPoster(movie);
-
-    body.innerHTML = `
-        <p class="hero-label">CineMax Movie Guide</p>
-        <h2 id="modal-title">${escapeHTML(movie.title)}</h2>
-        <p class="modal-muted">Loading movie information...</p>
-    `;
-
-    showModal();
+    modal.hidden = true;
 
     try {
-        const details = await fetchTMDB(movie.mediaType === "tv" ? "tv" : "movie", {
-            id: movie.id
-        });
+        const details = await fetchTMDB(
+            movie.mediaType === "tv" ? "tv" : "movie",
+            {
+                id: movie.id
+            }
+        );
 
-        if (requestId !== modalRequestNumber || modal.hidden) {
+        if (requestId !== modalRequestNumber) {
             return;
         }
 
         const compatibleDetails = movie.mediaType === "tv"
-            ? { ...details, title: details.name || movie.title, release_date: details.first_air_date, runtime: details.episode_run_time?.[0], watch_providers: null }
+            ? {
+                ...details,
+                title: details.name || movie.title,
+                release_date: details.first_air_date,
+                runtime: details.episode_run_time?.[0],
+                watch_providers: null
+            }
             : details;
+
         renderMovieDetails(movie, compatibleDetails);
+
+        showModal();
+
     } catch (error) {
         if (requestId !== modalRequestNumber) return;
 
@@ -1252,8 +1600,13 @@ async function openModal(movie) {
                 Please try again.
             </p>
         `;
+
+        media.innerHTML = createPoster(movie);
+
+        showModal();
     }
 }
+
 
 function closeModal() {
     const modal = getModal();
@@ -1390,9 +1743,41 @@ function fallbackHero() {
     buildHero();
 }
 
-// Only rebuilds the hero(carosel) when the featured movies actually changed.
+async function loadHeroTrailerData(movies) {
+    const results = await Promise.allSettled(movies.map(async movie => {
+        // Sample fallback IDs are slugs, not TMDB IDs.
+        if (!/^\d+$/.test(String(movie.id))) {
+            movie.heroTrailerCandidates = [];
+            return movie;
+        }
+
+        try {
+            const details = await fetchTMDB(
+                movie.mediaType === "tv" ? "tv" : "movie",
+                { id: movie.id }
+            );
+
+            movie.heroTrailerCandidates = getTrailerCandidates(
+                details.videos?.results
+            );
+        } catch (error) {
+            console.warn(`Unable to load trailer for ${movie.title}:`, error);
+            movie.heroTrailerCandidates = [];
+        }
+
+        return movie;
+    }));
+
+    return results.map((result, index) => {
+        if (result.status === "fulfilled") return result.value;
+        movies[index].heroTrailerCandidates = [];
+        return movies[index];
+    });
+}
+
+// Only rebuilds the hero carousel when the featured movies actually changed.
 async function setHero(movies) {
-    const picks = movies.filter(movie => movie.backdrop).slice(0, 5);
+    const picks = movies.slice(0, 5);
 
     if (!picks.length) return false;
 
@@ -1400,11 +1785,18 @@ async function setHero(movies) {
         picks.length === heroMovies.length &&
         picks.every((movie, index) => movie.id === heroMovies[index].id);
 
-    if (same) return true;
+    if (same && heroMovies.every(movie => Array.isArray(movie.heroTrailerCandidates))) {
+        return true;
+    }
 
-    const firstReady = await preloadHeroImages(picks);
+    const firstMovie = picks[0];
+    if (firstMovie.backdrop) {
+        await preloadHeroImage(firstMovie.backdrop);
+    }
 
-    if (!firstReady) return false;
+    // TMDB's trending list does not include video keys, so load the video
+    // metadata for each featured title before rendering the carousel.
+    await loadHeroTrailerData(picks);
 
     heroMovies = picks;
     buildHero();
@@ -1420,7 +1812,6 @@ function preloadHeroImage(url) {
     }
 
     const image = new Image();
-
     image.fetchPriority = "high";
     image.src = url;
 
@@ -1429,14 +1820,12 @@ function preloadHeroImage(url) {
         .catch(() => false);
 
     heroImageCache.set(url, loading);
-
     return loading;
 }
 
 async function preloadHeroImages(movies) {
     const firstMovie = movies.find(movie => movie.backdrop);
-
-    if (!firstMovie) return false;
+    if (!firstMovie) return true;
 
     const firstReady = await preloadHeroImage(firstMovie.backdrop);
 
@@ -1447,6 +1836,217 @@ async function preloadHeroImages(movies) {
     return firstReady;
 }
 
+let heroBackgroundPlayers = new Map();
+let heroBackgroundRequest = 0;
+
+function stopHeroBackgroundVideos() {
+    // Invalidate any API load or player callback that is still in progress.
+    heroBackgroundRequest++;
+
+    for (const player of heroBackgroundPlayers.values()) {
+        if (player && typeof player.destroy === "function") {
+            try {
+                player.destroy();
+            } catch (error) {
+                console.warn("Unable to stop hero background trailer:", error);
+            }
+        }
+    }
+
+    heroBackgroundPlayers.clear();
+
+    const hero = $("cinemaShowcase");
+    if (!hero) return;
+
+    hero.querySelectorAll(".hero-video-background").forEach(container => {
+        container.innerHTML = "";
+        container.closest(".hero-slide")?.classList.remove("has-hero-trailer");
+    });
+}
+
+async function mountHeroBackgroundVideo(index) {
+    const hero = $("cinemaShowcase");
+    const slide = hero?.querySelectorAll(".hero-slide")[index];
+    const movie = heroMovies[index];
+    const videoContainer = slide?.querySelector(".hero-video-background");
+    const candidate = movie?.heroTrailerCandidates?.[0];
+
+    if (!slide || !videoContainer) return;
+
+    // Every slide change replaces the previous player, including a player
+    // already mounted on this same slide. This prevents duplicate iframes.
+    stopHeroBackgroundVideos();
+    const requestId = ++heroBackgroundRequest;
+
+    if (!candidate?.key || reducedMotion) return;
+
+    try {
+        const YT = await loadYouTubeApi();
+
+        if (
+            requestId !== heroBackgroundRequest ||
+            !slide.isConnected ||
+            !slide.classList.contains("active")
+        ) {
+            return;
+        }
+
+        const playerId = `hero-background-player-${requestId}`;
+        videoContainer.innerHTML = `<div id="${playerId}"></div>`;
+
+        const player = new YT.Player(playerId, {
+            host: "https://www.youtube-nocookie.com",
+            videoId: candidate.key,
+            playerVars: {
+                autoplay: 1,
+                controls: 0,
+                disablekb: 1,
+                fs: 0,
+                iv_load_policy: 3,
+                loop: 1,
+                modestbranding: 1,
+                playsinline: 1,
+                playlist: candidate.key,
+                rel: 0,
+                // Start a little into the preview to skip the opening rating card.
+                // The separate Play button still opens the trailer from the beginning.
+                start: 7,
+                ...( /^https?:$/.test(window.location.protocol)
+                    ? { origin: window.location.origin }
+                    : {} )
+            },
+            events: {
+                onReady: event => {
+                    if (
+                        requestId !== heroBackgroundRequest ||
+                        !slide.isConnected ||
+                        !slide.classList.contains("active")
+                    ) {
+                        event.target.destroy();
+                        return;
+                    }
+
+                    heroBackgroundPlayers.set(index, event.target);
+                    event.target.mute();
+                    event.target.setVolume(0);
+                    event.target.seekTo(7, true);
+                    event.target.playVideo();
+                    slide.classList.add("has-hero-trailer");
+                },
+                onStateChange: event => {
+                    if (requestId !== heroBackgroundRequest) return;
+
+                    if (event.data === YT.PlayerState.PLAYING) {
+                        // Keep the cinematic preview muted even after a browser
+                        // or player state change.
+                        event.target.mute();
+                    } else if (event.data === YT.PlayerState.ENDED) {
+                        // The playlist parameter normally handles looping;
+                        // this is an additional single-video fallback.
+                        event.target.seekTo(7, true);
+                        event.target.playVideo();
+                    }
+                },
+                onError: event => {
+                    if (requestId !== heroBackgroundRequest) return;
+
+                    console.warn(
+                        `Hero trailer unavailable for ${movie.title}:`,
+                        event.data
+                    );
+
+                    const currentPlayer = heroBackgroundPlayers.get(index);
+                    if (currentPlayer === event.target) {
+                        heroBackgroundPlayers.delete(index);
+                    }
+
+                    try {
+                        event.target.destroy();
+                    } catch (error) {
+                        console.warn("Unable to remove failed hero trailer:", error);
+                    }
+
+                    videoContainer.innerHTML = "";
+                    slide.classList.remove("has-hero-trailer");
+                }
+            }
+        });
+
+        // Store it immediately so a slide change can destroy it before onReady.
+        heroBackgroundPlayers.set(index, player);
+    } catch (error) {
+        if (requestId !== heroBackgroundRequest) return;
+
+        console.warn(
+            `Hero background trailer could not be started for ${movie.title}:`,
+            error
+        );
+
+        videoContainer.innerHTML = "";
+        slide.classList.remove("has-hero-trailer");
+    }
+}
+
+function openHeroTrailer(movie) {
+    const candidate = movie?.heroTrailerCandidates?.[0];
+
+    if (!candidate?.key) {
+        return;
+    }
+
+    closeHeroTrailer();
+
+    const overlay = document.createElement("div");
+    overlay.className = "hero-trailer-overlay";
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-modal", "true");
+    overlay.setAttribute("aria-label", `${movie.title} trailer`);
+
+    const embedUrl = new URL(
+        `https://www.youtube-nocookie.com/embed/${encodeURIComponent(candidate.key)}`
+    );
+    embedUrl.search = new URLSearchParams({
+        autoplay: "1",
+        controls: "1",
+        playsinline: "1",
+        rel: "0",
+        modestbranding: "1"
+    }).toString();
+
+    overlay.innerHTML = `
+        <div class="hero-trailer-dialog">
+            <button type="button"
+                    class="hero-trailer-close"
+                    data-close-hero-trailer
+                    aria-label="Close trailer">&times;</button>
+            <div class="hero-trailer-frame">
+                <iframe
+                    src="${escapeHTML(embedUrl.toString())}"
+                    title="${escapeHTML(movie.title)} official trailer"
+                    allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    allowfullscreen>
+                </iframe>
+            </div>
+        </div>
+    `;
+
+    overlay.addEventListener("click", event => {
+        if (event.target === overlay || event.target.closest("[data-close-hero-trailer]")) {
+            closeHeroTrailer();
+        }
+    });
+
+    document.body.appendChild(overlay);
+    document.body.classList.add("hero-trailer-open");
+    overlay.querySelector("[data-close-hero-trailer]")?.focus();
+}
+
+function closeHeroTrailer() {
+    document.querySelector(".hero-trailer-overlay")?.remove();
+    document.body.classList.remove("hero-trailer-open");
+}
+
 function buildHero() {
     const hero = $("cinemaShowcase");
     const dots = $("dots");
@@ -1454,44 +2054,59 @@ function buildHero() {
     if (!hero || !dots || !heroMovies.length) return;
 
     const buildNumber = ++heroBuildNumber;
-
     clearInterval(heroTimer);
+    stopHeroBackgroundVideos();
 
     heroIndex = 0;
     heroSlideRequest++;
 
-    hero.innerHTML = heroMovies.map((movie, index) => `
-        <div class="hero-slide ${index === 0 ? "active" : ""}"
-             ${movie.backdrop
-                ? `style="--hero-backdrop:url('${escapeHTML(movie.backdrop)}')"`
-                : ""}
-             aria-hidden="${index === 0 ? "false" : "true"}">
+    hero.innerHTML = heroMovies.map((movie, index) => {
+        const hasTrailer = Boolean(movie.heroTrailerCandidates?.length);
+        return `
+            <div class="hero-slide ${index === 0 ? "active" : ""}"
+                 ${movie.backdrop
+                    ? `style="--hero-backdrop:url('${escapeHTML(movie.backdrop)}')"`
+                    : ""}
+                 aria-hidden="${index === 0 ? "false" : "true"}">
 
-            <div class="hero-content">
-                <p class="hero-label">Featured film</p>
+                <div class="hero-video-background" aria-hidden="true"></div>
 
-                <h1>${escapeHTML(movie.title)}</h1>
+                <div class="hero-content">
+                    <p class="hero-label">Featured film</p>
 
-                <p class="hero-description">
-                    ${escapeHTML(movie.description)}
-                </p>
+                    <h1>${escapeHTML(movie.title)}</h1>
 
-                <p class="hero-meta">
-                    ${escapeHTML(movie.year)}
-                    \u00B7 \u2605 ${formatRating(movie.rating)}
-                    ${movie.genres.length
-                        ? " \u00B7 " + escapeHTML(movie.genres.slice(0, 3).join(", "))
-                        : ""}
-                </p>
+                    <p class="hero-description">
+                        ${escapeHTML(movie.description)}
+                    </p>
 
-                <button type="button"
-                        class="hero-button"
-                        data-open-movie="${escapeHTML(movie.id)}">
-                    Explore Movie
-                </button>
+                    <p class="hero-meta">
+                        ${escapeHTML(movie.year)}
+                        \u00B7 \u2605 ${formatRating(movie.rating)}
+                        ${movie.genres.length
+                            ? " \u00B7 " + escapeHTML(movie.genres.slice(0, 3).join(", "))
+                            : ""}
+                    </p>
+
+                    <div class="hero-actions">
+                        <button type="button"
+                                class="hero-button hero-play-button"
+                                data-play-hero-trailer="${escapeHTML(movie.id)}"
+                                ${hasTrailer ? "" : "disabled title=\"Trailer unavailable\""}>
+                            <i data-lucide="play" aria-hidden="true"></i>
+                            <span>Play</span>
+                        </button>
+
+                        <button type="button"
+                                class="hero-button hero-button-secondary"
+                                data-open-movie="${escapeHTML(movie.id)}">
+                            Explore
+                        </button>
+                    </div>
+                </div>
             </div>
-        </div>
-    `).join("") + `
+        `;
+    }).join("") + `
         <button type="button"
                 class="hero-arrow prev"
                 data-hero-nav="-1"
@@ -1520,7 +2135,6 @@ function buildHero() {
 
     heroMovies.forEach(async (movie, index) => {
         const slide = slides[index];
-
         if (!slide) return;
 
         const ready = movie.backdrop
@@ -1529,13 +2143,16 @@ function buildHero() {
 
         if (buildNumber !== heroBuildNumber || !slide.isConnected) return;
 
+        // Show the text even if the static backdrop failed to load; the video
+        // background (when available) can still provide the hero artwork.
         slide.classList.add("backdrop-ready");
 
-        if (!ready) {
+        if (!ready && movie.backdrop) {
             console.warn(`Backdrop unavailable for ${movie.title}`);
         }
     });
 
+    mountHeroBackgroundVideo(0);
     refreshIcons();
     startHeroTimer();
 }
@@ -1562,7 +2179,7 @@ async function showHeroSlide(index) {
 
     slide.classList.add("backdrop-ready");
 
-    if (!ready) {
+    if (!ready && movie.backdrop) {
         console.warn(`Backdrop unavailable for ${movie.title}`);
     }
 
@@ -1577,6 +2194,9 @@ async function showHeroSlide(index) {
         dot.classList.toggle("active", i === heroIndex);
         dot.setAttribute("aria-current", String(i === heroIndex));
     });
+
+    // Stop the previous background trailer and start the newly active one.
+    mountHeroBackgroundVideo(heroIndex);
 }
 
 function startHeroTimer() {
@@ -1828,6 +2448,54 @@ function showResults(title, html) {
     resultsSection.hidden = false;
 }
 
+
+function createSearchResultCard(movie) {
+    // Prefer a wide TMDB backdrop for the Netflix-style landscape thumbnail.
+    const image = movie.backdropSmall || movie.backdrop || movie.poster || "";
+
+    const releaseDate = movie.releaseDate
+        ? new Date(`${movie.releaseDate}T00:00:00`).toLocaleDateString(
+            undefined,
+            { year: "numeric", month: "short", day: "numeric" }
+        )
+        : (movie.year && movie.year !== "N/A"
+            ? String(movie.year)
+            : "Release date unavailable");
+
+    const genres = Array.isArray(movie.genres) && movie.genres.length
+        ? movie.genres.slice(0, 2).join(", ")
+        : "Genre unavailable";
+
+    const rating = Number(movie.rating) > 0
+        ? `★ ${formatRating(movie.rating)}`
+        : "Not rated";
+
+    return `
+        <a href="#" class="search-result-card"
+           data-open-movie="${escapeHTML(movie.id)}"
+           aria-label="View details for ${escapeHTML(movie.title)}">
+            <div class="search-result-poster">
+                ${image
+                    ? `<img src="${escapeHTML(image)}"
+                            alt="${escapeHTML(movie.title)}"
+                            loading="lazy">`
+                    : `<div class="search-result-poster-fallback">${escapeHTML(movie.title)}</div>`}
+            </div>
+
+            <div class="search-result-info">
+                <h3 class="search-result-title">${escapeHTML(movie.title)}</h3>
+                <div class="search-result-meta">
+                    <span>${escapeHTML(releaseDate)}</span>
+                    <span class="search-result-separator">•</span>
+                    <span>${escapeHTML(genres)}</span>
+                    <span class="search-result-separator">•</span>
+                    <span class="search-result-rating">${escapeHTML(rating)}</span>
+                </div>
+            </div>
+        </a>
+    `;
+}
+
 function clearResults() {
     requestNumber++;
     clearTimeout(searchTimer);
@@ -1899,9 +2567,7 @@ async function performSearch(query) {
                     "${escapeHTML(term)}"
                 </p>
 
-                ${foundMovies.map(movie =>
-                    createMovieCard(movie)
-                ).join("")}
+                ${foundMovies.map(createSearchResultCard).join("")}
             `
         );
     } catch (error) {
@@ -1941,6 +2607,22 @@ document.addEventListener("click", event => {
     if (!(event.target instanceof Element)) return;
 
     const target = event.target;
+
+    const playHeroButton = target.closest("[data-play-hero-trailer]");
+    if (playHeroButton) {
+        const movie = getMovie(playHeroButton.dataset.playHeroTrailer);
+        if (movie?.heroTrailerCandidates?.length) {
+            event.preventDefault();
+            openHeroTrailer(movie);
+        }
+        return;
+    }
+
+    const closeHeroButton = target.closest("[data-close-hero-trailer]");
+    if (closeHeroButton) {
+        closeHeroTrailer();
+        return;
+    }
 
     const openButton = target.closest("[data-open-movie]");
 
@@ -1986,6 +2668,13 @@ document.addEventListener("click", event => {
         return;
     }
 
+    const deleteReviewButton = target.closest("[data-delete-review]");
+
+    if (deleteReviewButton) {
+        deleteMovieReview(deleteReviewButton);
+        return;
+    }
+
     const removeButton = target.closest("[data-remove-watchlist]");
 
     if (removeButton) {
@@ -2010,7 +2699,11 @@ document.addEventListener("click", event => {
 
 document.addEventListener("keydown", event => {
     if (event.key === "Escape") {
-        closeModal();
+        if (document.querySelector(".hero-trailer-overlay")) {
+            closeHeroTrailer();
+        } else {
+            closeModal();
+        }
         return;
     }
 
@@ -2080,8 +2773,6 @@ function watchSections() {
 }
 
 /* LOAD LIVE TMDB DATA */
-
-
 async function loadTMDB() {
     console.log("Starting TMDB homepage data load...");
 
@@ -2234,31 +2925,99 @@ async function loadMoviesCatalog() {
             + additionalRows.slice(5).map(([id]) => createCatalogSection(id, catalogTitle(id))).join("");
     }
     renderBackdropRow("award-winners", awardWinners, "Award winners are unavailable right now.");
-    rows.forEach(([id]) => renderBackdropRow(id, [], "Loading recommendations..."));
-    const results = await Promise.allSettled(rows.map(([id, type, , genre]) => {
-        if (type === "new-releases") return fetchTMDB(type, { from: pastDate.toISOString().slice(0, 10), to: today });
-        return fetchTMDB(type, genre ? { genre } : {});
-    }));
-    let failed = false;
-    results.forEach((result, index) => {
-        const [id, , errorText] = rows[index];
-        if (result.status === "fulfilled") {
-            const movies = register((result.value.results || []).map(normalizeTMDBMovie).filter(Boolean));
-            renderBackdropRow(id, movies, errorText);
-        } else {
-            failed = true;
-            console.error(`Unable to load ${id}:`, result.reason);
-            renderBackdropRow(id, [], errorText);
+    const rowById = new Map(rows.map(row => [row[0], row]));
+
+    function rowSkeletonHTML() {
+        return Array.from({ length: 6 }, () => `
+            <article class="backdrop-card backdrop-skeleton" aria-hidden="true">
+                <div class="backdrop-image"></div>
+                <div class="backdrop-info">
+                    <div class="skeleton-line"></div>
+                    <div class="skeleton-line short"></div>
+                </div>
+            </article>
+        `).join("");
+    }
+
+    // Remember each row for a few minutes so coming back to the page is instant.
+    const ROW_CACHE_MS = 10 * 60 * 1000;
+
+    function rowCacheKey(type, genre) {
+        return `cinemax-row:${type}:${genre || ""}`;
+    }
+
+    function readRowCache(key) {
+        try {
+            const saved = JSON.parse(sessionStorage.getItem(key) || "null");
+            if (saved && Array.isArray(saved.results) && Date.now() - saved.time < ROW_CACHE_MS) {
+                return saved.results;
+            }
+        } catch {}
+        return null;
+    }
+
+    function writeRowCache(key, results) {
+        try {
+            sessionStorage.setItem(key, JSON.stringify({ time: Date.now(), results }));
+        } catch {}
+    }
+
+    function paintRow(id, rawResults, errorText) {
+        const movies = register((rawResults || []).map(normalizeTMDBMovie).filter(Boolean));
+        renderBackdropRow(id, movies, errorText);
+        refreshIcons();
+    }
+
+    // Each row loads and paints on its own, so one slow request never blocks the others.
+    async function loadRow([id, type, errorText, genre]) {
+        const key = rowCacheKey(type, genre);
+        const cached = readRowCache(key);
+        if (cached) {
+            paintRow(id, cached, errorText);
+            return;
         }
+        try {
+            const data = type === "new-releases"
+                ? await fetchTMDB(type, { from: pastDate.toISOString().slice(0, 10), to: today })
+                : await fetchTMDB(type, genre ? { genre } : {});
+            const raw = data.results || [];
+            writeRowCache(key, raw);
+            paintRow(id, raw, errorText);
+        } catch (error) {
+            console.error(`Unable to load ${id}:`, error);
+            renderBackdropRow(id, [], errorText);
+            const status = $("movie-service-status");
+            if (status) {
+                status.textContent = "Some movie rows could not be loaded. Check your TMDB connection and try again.";
+                status.hidden = false;
+            }
+        }
+    }
+
+    rows.forEach(([id]) => {
+        const container = $(id);
+        if (container) container.innerHTML = rowSkeletonHTML();
     });
-    const status = $("movie-service-status");
-    if (status && failed) {
-        status.textContent = "Some movie rows could not be loaded. Check your TMDB connection and try again.";
-        status.hidden = false;
+
+    // Only fetch a row when it is close to the screen instead of all 13 at once.
+    if ("IntersectionObserver" in window) {
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) return;
+                observer.unobserve(entry.target);
+                const row = rowById.get(entry.target.id);
+                if (row) loadRow(row);
+            });
+        }, { rootMargin: "500px 0px" });
+        rows.forEach(([id]) => {
+            const container = $(id);
+            if (container) observer.observe(container);
+        });
+    } else {
+        rows.forEach(loadRow);
     }
     refreshIcons();
 }
-
 const catalogTitles = {
     "new-releases": "New Releases",
     "top-rated-movies": "Top Rated / Critically Acclaimed Movies",
