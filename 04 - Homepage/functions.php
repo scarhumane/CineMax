@@ -1,7 +1,7 @@
-
 <?php
 
 require_once __DIR__ . "/profile_menu.php";
+require_once __DIR__ . "/../06 - Admin/admin_auth.php";
 
 
 function start_session(): void
@@ -26,7 +26,6 @@ function current_user_name(): string
 
     return "User";
 }
-
 
 function current_user_plan(): string
 {
@@ -82,12 +81,43 @@ function render_homepage(): void
     render_page("homepage.html");
 }
 
+function render_movie_navigation(): string
+{
+    if (current_user_is_admin()) {
+        return '
+            <nav class="homepage-nav">
+                <a href="../06 - Admin/admin_movies.php">Manage Movies</a>
+            </nav>
+        ';
+    }
+
+    return '
+        <nav class="homepage-nav">
+            <a href="homepage.php">Home</a>
+            <a href="movies.php" class="active">Movies</a>
+            <a href="genres.php">Genres</a>
+            <a href="people.php">People</a>
+            <a href="watchlist.php">Watchlist</a>
+        </nav>
+    ';
+}
+
 
 function render_page(string $filename): void
 {
     start_session();
 
-    $file = __DIR__ . "/" . $filename;
+    if (
+        current_user_is_admin()
+        && $filename !== "admin_movies.html"
+    ) {
+        header("Location: ../06 - Admin/admin_movies.php");
+        exit;
+    }
+
+    $file = $filename === "admin_movies.html"
+        ? __DIR__ . "/../06 - Admin/admin_movies.html"
+        : __DIR__ . "/" . $filename;
 
     if (!is_file($file) || !is_readable($file)) {
         http_response_code(404);
@@ -109,6 +139,9 @@ function render_page(string $filename): void
             "{{profile_initial}}",
             "{{profile_plan}}",
             "{{profile_menu}}",
+            "{{admin_csrf_token}}",
+            "{{admin_mode}}",
+            "{{movie_navigation}}",
             "{{current_year}}"
         ],
         [
@@ -116,6 +149,9 @@ function render_page(string $filename): void
             e(first_letter($name)),
             e(current_user_plan()),
             render_profile_menu(),
+            e(admin_csrf_token()),
+            current_user_is_admin() ? "true" : "false",
+            render_movie_navigation(),
             date("Y")
         ],
         $html
@@ -123,4 +159,3 @@ function render_page(string $filename): void
 
     echo $html;
 }
-

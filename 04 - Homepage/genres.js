@@ -6,8 +6,6 @@ const reducedMotion = window.matchMedia(
 
 ).matches;
 
-const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/";
-
 /* HELPERS */
 
 function escapeHTML(value) {
@@ -58,8 +56,6 @@ function refreshIcons() {
 
 /* GENRE LOOKUP */
 
-const GENRE_NAMES = {};
-
 let genres = [];
 
 let selectedGenre = null;
@@ -88,7 +84,7 @@ function getMovie(id) {
 
 }
 
-/* TMDB */
+/* LOCAL MOVIE CATALOG */
 
 async function fetchTMDB(type, {
 
@@ -134,6 +130,7 @@ async function fetchTMDB(type, {
 
     );
 
+
     let data;
 
     try {
@@ -162,11 +159,13 @@ async function fetchTMDB(type, {
 
     return data;
 
+
 }
 
-/* MOVIE NORMALIZATION */
+/* LOCAL MOVIE NORMALIZATION */
 
 function normalizeTMDBMovie(movie) {
+
 
     if (!movie || !movie.id) {
 
@@ -233,6 +232,7 @@ function normalizeTMDBMovie(movie) {
         description: movie.overview ||
 
             "No description available."
+
 
     };
 
@@ -457,7 +457,7 @@ function renderGenres() {
     if (!genres.length) {
         if (count) count.textContent = "";
         container.innerHTML = loadingHTML(
-            "No genres are available right now."
+            "No genres are available yet. Add genre details to movies in the CineMax catalog."
         );
         return;
     }
@@ -472,6 +472,7 @@ function renderGenres() {
             class="genre-card"
             style="--i: ${index}"
             data-genre="${Number(genre.id)}"
+
             aria-pressed="false"
         >
             <span class="genre-card-icon" aria-hidden="true">
@@ -518,6 +519,7 @@ async function loadGenres() {
 
         });
 
+
         renderGenres();
 
     } catch (error) {
@@ -533,6 +535,7 @@ async function loadGenres() {
         genreList.innerHTML = loadingHTML(
 
             message
+
 
         );
 
@@ -558,6 +561,7 @@ async function showGenre(genreId) {
 
     );
 
+
     if (!genre) return;
 
     clearTimeout(searchTimer);
@@ -568,7 +572,7 @@ async function showGenre(genreId) {
 
     const current = movieRequestNumber;
 
-    selectedGenre = Number(genre.id);
+    selectedGenre = genre.id;
 
     if (genreSearch) {
 
@@ -614,6 +618,7 @@ async function showGenre(genreId) {
 
         });
 
+
         if (current !== movieRequestNumber) return;
 
         const movies = register(
@@ -621,6 +626,7 @@ async function showGenre(genreId) {
             (data.results || [])
 
                 .map(normalizeTMDBMovie)
+
 
                 .filter(Boolean)
 
@@ -706,6 +712,7 @@ async function searchGenreMovies(query) {
 
         });
 
+
         if (current !== searchRequestNumber) return;
 
         const movies = register(
@@ -713,6 +720,7 @@ async function searchGenreMovies(query) {
             (data.results || [])
 
                 .map(normalizeTMDBMovie)
+
 
                 .filter(Boolean)
 
@@ -992,6 +1000,22 @@ async function openModal(movie) {
     media.innerHTML = createPoster(movie);
     body.innerHTML = modalBodyHTML(movie, null);
 
+
+    body.querySelector("[data-play-movie]")?.addEventListener("click", () => {
+        const embedURL = getYouTubeEmbedURL(movie.youtube_url);
+        if (!embedURL) return;
+        media.innerHTML = `
+            <iframe
+                class="modal-video"
+                src="${escapeHTML(embedURL)}?autoplay=1"
+                title="Play ${escapeHTML(movie.title)}"
+                allow="autoplay; encrypted-media; picture-in-picture"
+                referrerpolicy="strict-origin-when-cross-origin"
+                allowfullscreen>
+            </iframe>
+        `;
+    });
+
     showModal();
 
     try {
@@ -1033,6 +1057,21 @@ async function openModal(movie) {
     }
 }
 
+function getYouTubeEmbedURL(value) {
+    if (typeof value !== "string") return "";
+
+    try {
+        const url = new URL(value);
+        const match = url.protocol === "https:"
+            && url.hostname === "www.youtube-nocookie.com"
+            ? url.pathname.match(/^\/embed\/([A-Za-z0-9_-]{11})$/)
+            : null;
+        return match ? `https://www.youtube-nocookie.com/embed/${match[1]}` : "";
+    } catch {
+        return "";
+    }
+}
+
 function closeModal() {
     const modal = getModal();
 
@@ -1053,6 +1092,7 @@ function closeModal() {
     modal.hidden = true;
     modal.classList.remove("active");
     modal.setAttribute("aria-hidden", "true");
+    modal.querySelector(".modal-media").innerHTML = "";
 
     document.body.classList.remove("modal-open");
 

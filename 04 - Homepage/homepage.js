@@ -1,10 +1,9 @@
 const $ = id => document.getElementById(id);
+const adminMode = $("movie-catalog")?.dataset.adminMode === "true";
 
 const reducedMotion = window.matchMedia(
     "(prefers-reduced-motion: reduce)"
 ).matches;
-
-const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/";
 
 function refreshIcons() {
     if (typeof lucide !== "undefined") {
@@ -114,31 +113,10 @@ async function toggleWatchlist(movie) {
     return true;
 }
 
-const GENRE_NAMES = {
-    28: "Action",
-    12: "Adventure",
-    16: "Animation",
-    35: "Comedy",
-    80: "Crime",
-    99: "Documentary",
-    18: "Drama",
-    10751: "Family",
-    14: "Fantasy",
-    36: "History",
-    27: "Horror",
-    10402: "Music",
-    9648: "Mystery",
-    10749: "Romance",
-    878: "Sci-Fi",
-    10770: "TV Movie",
-    53: "Thriller",
-    10752: "War",
-    37: "Western"
-};
-
 /* MOVIE DATA */
 
 const movieIndex = new Map();
+let localCatalogMovies = [];
 
 function register(movies) {
     movies.forEach(movie => {
@@ -422,6 +400,7 @@ function normalizeTMDBMovie(movie) {
 }
 
 
+
 /* IMAGE FALLBACKS */
 document.addEventListener("error", event => {
     const image = event.target;
@@ -581,6 +560,7 @@ function renderBackdropRow(id, movies, loadingText) {
     container.innerHTML = movies.length
         ? movies.slice(0, 20).map(createBackdropCard).join("")
         : loadingHTML(loadingText);
+
 }
 
 function createContinueCard(movie, progress) {
@@ -634,7 +614,10 @@ function createTopCard(movie, rank) {
 let lastFocused = null;
 let modalRequestNumber = 0;
 
-const PERSONAL_RATING_KEY = "cinemax-personal-ratings";
+const LEGACY_PERSONAL_RATING_KEY = "cinemax-personal-ratings";
+const ratingUsername = document.querySelector(".profile-menu")?.dataset.profileUsername || "";
+const PERSONAL_RATING_KEY = `${LEGACY_PERSONAL_RATING_KEY}:${ratingUsername.toLowerCase()}`;
+const ratingCsrfToken = document.querySelector(".profile-menu")?.dataset.csrfToken || "";
 
 function getModal() {
     return $("movie-modal");
@@ -662,6 +645,91 @@ function savePersonalRating(movieId, rating) {
         );
     } catch (error) {
         console.warn("Unable to save your rating:", error);
+    }
+}
+
+function getLegacyPersonalRatings() {
+    try {
+        const ratings = JSON.parse(localStorage.getItem(LEGACY_PERSONAL_RATING_KEY));
+        return ratings && typeof ratings === "object" && !Array.isArray(ratings)
+            ? ratings
+            : {};
+    } catch {
+        return {};
+    }
+}
+
+async function requestPersonalRatings(method, ratings) {
+    const options = {
+        method,
+        credentials: "same-origin",
+        headers: { Accept: "application/json" }
+    };
+
+    if (method === "POST") {
+        options.headers["Content-Type"] = "application/json";
+        options.headers["X-CSRF-Token"] = ratingCsrfToken;
+        options.body = JSON.stringify({ ratings });
+    }
+
+    const response = await fetch("movie_ratings.php", options);
+    let data;
+
+    try {
+        data = await response.json();
+    } catch {
+        throw new Error("The rating service returned an invalid response.");
+    }
+
+    if (!response.ok || !data.success || !data.ratings || typeof data.ratings !== "object") {
+        throw new Error(data.error || "Unable to sync movie ratings.");
+    }
+
+    return data.ratings;
+}
+
+async function syncPersonalRatings() {
+    const localRatings = getPersonalRatings();
+    const legacyRatings = getLegacyPersonalRatings();
+
+    try {
+        const serverRatings = await requestPersonalRatings("GET");
+        const pendingRatings = {};
+
+        for (const [movieId, rating] of Object.entries(localRatings)) {
+            if (Number(serverRatings[movieId]) !== Number(rating)) {
+                pendingRatings[movieId] = rating;
+            }
+        }
+
+        for (const [movieId, rating] of Object.entries(legacyRatings)) {
+            if (!(movieId in serverRatings) && !(movieId in localRatings)) {
+                pendingRatings[movieId] = rating;
+            }
+        }
+
+        const ratings = Object.keys(pendingRatings).length
+            ? await requestPersonalRatings("POST", pendingRatings)
+            : serverRatings;
+
+        localStorage.setItem(PERSONAL_RATING_KEY, JSON.stringify(ratings));
+        localStorage.removeItem(LEGACY_PERSONAL_RATING_KEY);
+        return ratings;
+    } catch (error) {
+        console.error("Movie ratings could not be synced:", error);
+        return { ...legacyRatings, ...localRatings };
+    }
+}
+
+async function savePersonalRatingToServer(movieId, rating) {
+    const ratings = await requestPersonalRatings("POST", {
+        [String(movieId)]: rating
+    });
+
+    try {
+        localStorage.setItem(PERSONAL_RATING_KEY, JSON.stringify(ratings));
+    } catch (error) {
+        console.warn("Unable to cache your synced rating:", error);
     }
 }
 
@@ -699,7 +767,9 @@ function renderPersonalRating(movie) {
     const currentRating = Number(ratings[String(movie.id)] || 0);
 
     return `
-        <section class="modal-section personal-rating-section">
+        <section
+            class="modal-section personal-rating-section"
+            data-rating-movie-section="${escapeHTML(movie.id)}">
             <h3>Your Rating</h3>
 
             <div class="personal-rating-stars"
@@ -787,7 +857,7 @@ function renderProviders(providerData) {
 
                         ${provider.logo_path
                             ? `<img
-                                src="${TMDB_IMAGE_BASE}w92${escapeHTML(provider.logo_path)}"
+                                src="${escapeHTML(provider.logo_path)}"
                                 alt=""
                                 loading="lazy">`
                             : ""}
@@ -798,7 +868,7 @@ function renderProviders(providerData) {
             </div>
 
             <p class="modal-muted">
-                Availability is provided by TMDB and may change.
+                Availability information is provided with the movie catalog.
             </p>
         </section>
     `;
@@ -817,7 +887,7 @@ function renderCast(cast) {
                     <article class="modal-cast-item">
                         ${person.profile_path
                             ? `<img
-                                src="${TMDB_IMAGE_BASE}w185${escapeHTML(person.profile_path)}"
+                                src="${escapeHTML(person.photo || person.profile_path)}"
                                 alt="${escapeHTML(person.name)}"
                                 loading="lazy">`
                             : `<div class="cast-placeholder">
@@ -834,7 +904,7 @@ function renderCast(cast) {
 
 function renderRecommendations(recommendations) {
     const movies = (recommendations || [])
-        .map(normalizeTMDBMovie)
+        .map(movie => movie && movie.id ? { ...movie, id: String(movie.id) } : null)
         .filter(Boolean);
 
     register(movies);
@@ -1386,18 +1456,14 @@ function renderMovieDetails(movie, details) {
     const body = modal.querySelector(".modal-body");
     const panel = modal.querySelector(".modal-panel");
 
-    const backdrop = details.backdrop_path
-        ? `${TMDB_IMAGE_BASE}original${details.backdrop_path}`
-        : movie.backdrop;
+    const backdrop = details.backdrop || movie.backdrop;
 
     panel.style.setProperty(
         "--modal-backdrop",
         backdrop ? `url("${backdrop}")` : "none"
     );
 
-    const poster = details.poster_path
-        ? `${TMDB_IMAGE_BASE}w500${details.poster_path}`
-        : movie.poster;
+    const poster = details.poster || movie.poster;
 
     const posterMarkup = poster
         ? `<img
@@ -1547,8 +1613,6 @@ async function openModal(movie) {
 
     if (!modal || !movie) return;
 
-    const requestId = ++modalRequestNumber;
-
     lastFocused = document.activeElement;
 
     const media = modal.querySelector(".modal-media");
@@ -1608,6 +1672,7 @@ async function openModal(movie) {
 }
 
 
+
 function closeModal() {
     const modal = getModal();
 
@@ -1630,6 +1695,8 @@ function closeModal() {
 
     modal.querySelector(".modal-panel")
         ?.style.removeProperty("--modal-backdrop");
+    modal.querySelector(".modal-media").innerHTML = "";
+    modal.querySelector(".modal-media").innerHTML = "";
 
     if (lastFocused && typeof lastFocused.focus === "function") {
         lastFocused.focus();
@@ -1651,23 +1718,43 @@ document.addEventListener("click", event => {
     savePersonalRating(movieId, rating);
 
     const movie = getMovie(movieId);
+    let updatedSection = null;
 
     if (movie) {
         const section = ratingButton.closest(".personal-rating-section");
 
         if (section) {
             section.outerHTML = renderPersonalRating(movie);
+            updatedSection = Array.from(
+                document.querySelectorAll(".personal-rating-section")
+            ).find(element => element.dataset.ratingMovieSection === String(movieId));
         }
     }
+
+    const label = updatedSection?.querySelector(".personal-rating-label");
+    if (label) {
+        label.textContent = "Saving your rating...";
+    }
+
+    savePersonalRatingToServer(movieId, rating).then(() => {
+        if (label?.isConnected) {
+            label.textContent = `Your rating: ${rating}/5`;
+        }
+    }).catch(error => {
+        console.error("Movie rating could not be saved:", error);
+        if (label?.isConnected) {
+            label.textContent = "Saved on this device only; rating sync failed.";
+        }
+    });
 });
 
 /* HOME DATA STATE */
 
-let tmdbTrending = [];
-let tmdbTopRated = [];
+let localTrendingMovies = [];
+let localTopRatedMovies = [];
+let catalogLoadError = "";
 
-// true once loadTMDB() has finished (success or failure).
-// Until then, the rows show a loading message instead of sample movies.
+// Keep the rows in a loading state until the local catalog request finishes.
 let homeLoaded = false;
 
 /* HOME CACHE (makes reloads instant) */
@@ -1825,6 +1912,7 @@ function preloadHeroImage(url) {
 
 async function preloadHeroImages(movies) {
     const firstMovie = movies.find(movie => movie.backdrop);
+
     if (!firstMovie) return true;
 
     const firstReady = await preloadHeroImage(firstMovie.backdrop);
@@ -2283,61 +2371,19 @@ async function renderContinueWatching() {
 
     if (!container) return;
 
-    // Instant render from cache, no network needed.
-    const cached = readContinueCache();
-
-    if (cached) {
-        cached.forEach(item => register([item.movie]));
-        paintContinueWatching(container, cached);
-        return;
-    }
-
-    container.innerHTML = loadingHTML("Loading your movies...");
-
-    const results = await Promise.allSettled(
-        continueWatching.map(async item => {
-            const data = await fetchTMDB("search", {
-                query: item.title
-            });
-
-            const match = (data.results || []).find(movie =>
-                movie.title?.toLowerCase() === item.title.toLowerCase() &&
-                movie.release_date?.startsWith(String(item.year))
+    const available = continueWatching
+        .map(item => {
+            const movie = localCatalogMovies.find(candidate =>
+                candidate.title.toLowerCase() === item.title.toLowerCase()
             );
-
-            if (!match) return null;
-
-            const movie = normalizeTMDBMovie(match);
-
-            if (!movie) return null;
-
-            register([movie]);
-
-            return { movie, progress: item.progress };
+            return movie ? { movie, progress: item.progress } : null;
         })
-    );
-
-    const available = results
-        .filter(result => result.status === "fulfilled" && result.value)
-        .map(result => result.value);
-
-    results
-        .filter(result => result.status === "rejected")
-        .forEach(result =>
-            console.error("Continue Watching error:", result.reason)
-        );
+        .filter(Boolean);
 
     if (available.length) {
         paintContinueWatching(container, available);
-
-        // Only cache a complete result.
-        if (available.length === continueWatching.length) {
-            writeContinueCache(available);
-        }
     } else {
-        container.innerHTML = results.some(result => result.status === "rejected")
-            ? loadingHTML("Unable to load your movies right now.")
-            : loadingHTML("No movies available.");
+        container.innerHTML = loadingHTML("No matching locally cataloged movies are available.");
     }
 }
 
@@ -2348,14 +2394,19 @@ function renderTrending() {
 
     if (!container) return;
 
-    if (!tmdbTrending.length && !homeLoaded) {
+    if (!localTrendingMovies.length && !homeLoaded) {
         container.innerHTML = loadingHTML("Loading trending movies...");
         return;
     }
 
-    const pool = tmdbTrending.length
-        ? tmdbTrending
-        : SAMPLE_MOVIES.filter(movie => movie.trending);
+    const pool = localTrendingMovies;
+
+    if (!pool.length) {
+        container.innerHTML = loadingHTML(
+            catalogLoadError || "No movies have been added to the local catalog yet."
+        );
+        return;
+    }
 
     container.innerHTML = [...pool]
         .slice(0, 12)
@@ -2368,14 +2419,19 @@ function renderTopRated() {
 
     if (!container) return;
 
-    if (!tmdbTopRated.length && !homeLoaded) {
+    if (!localTopRatedMovies.length && !homeLoaded) {
         container.innerHTML = `<li>${loadingHTML("Loading top rated movies...")}</li>`;
         return;
     }
 
-    const pool = tmdbTopRated.length
-        ? tmdbTopRated
-        : SAMPLE_MOVIES.filter(movie => movie.topRated);
+    const pool = localTopRatedMovies;
+
+    if (!pool.length) {
+        container.innerHTML = `<li>${loadingHTML(
+            catalogLoadError || "No movies have been added to the local catalog yet."
+        )}</li>`;
+        return;
+    }
 
     container.innerHTML = [...pool]
         .sort((a, b) => b.rating - a.rating)
@@ -2523,9 +2579,25 @@ async function performSearch(query) {
 
     setSearchMode(true);
 
+    const foundMovies = localCatalogMovies.filter(movie => {
+        const searchText = [
+            movie.title,
+            movie.description,
+            ...(movie.genres || []),
+            movie.director,
+            ...(movie.cast || []).map(person => person.name)
+        ].join(" ").toLowerCase();
+
+        return searchText.includes(term.toLowerCase());
+    });
+
+    if (current !== requestNumber) return;
+
     showResults(
         "Search Results",
-        loadingHTML(`Searching for "${term}"...`)
+        foundMovies.length
+            ? `<p class="search-results-count">${foundMovies.length} local movies found for "${escapeHTML(term)}"</p>${foundMovies.map(createMovieCard).join("")}`
+            : `<div class="empty-state"><h3>No Movies Found</h3><p>No local catalog movies match "${escapeHTML(term)}".</p></div>`
     );
 
     try {
@@ -2580,6 +2652,7 @@ async function performSearch(query) {
             loadingHTML("Unable to search right now. Please try again.")
         );
     }
+
 }
 
 if (searchInput) {
@@ -2887,6 +2960,7 @@ async function loadTMDB() {
     }
 
     console.log("TMDB homepage loading finished.");
+
 }
 
 async function loadMoviesCatalog() {
@@ -3062,11 +3136,12 @@ document.addEventListener("click", event => {
 /* INITIALIZE PAGE */
 
 renderWatchlist();
-loadWatchlist().catch(error => {
-    console.error("Unable to load the account watchlist:", error);
-});
+if (!adminMode) {
+    loadWatchlist().catch(error => {
+        console.error("Unable to load the account watchlist:", error);
+    });
+}
 watchSections();
-renderContinueWatching();
 
 showHeroSkeleton();
 

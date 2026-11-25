@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Movies | CineMax</title>
+    <link rel="stylesheet" href="../04 - Homepage/homepage.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="admin_movies.js" defer></script>
+    <script src="../04 - Homepage/profile_menu.js" defer></script>
+</head>
+
+<body>
+    <div class="homepage-container">
+        <header class="homepage-header">
+            <a href="admin_movies.php" class="website-logo">CINEMAX</a>
+            <div class="header-right">
+                {{profile_menu}}
+            </div>
+        </header>
+
+        <main class="admin-page" data-csrf-token="{{admin_csrf_token}}">
+            <div class="admin-toolbar">
+                <section class="admin-heading">
+                    <p class="hero-label">CINEMAX ADMIN</p>
+                    <h1>Manage the movie collection</h1>
+                    <p>
+                        Add movies, YouTube links, genres, and people to the
+                        CineMax catalog.
+                    </p>
+                </section>
+            </div>
+
+            <section
+                id="add-movie-panel"
+                class="admin-panel admin-form-panel"
+                aria-labelledby="add-movie-heading"
+                hidden>
+                <h2 id="add-movie-heading">Add a movie</h2>
+                <section class="tmdb-import-panel" aria-labelledby="tmdb-import-heading">
+                    <h3 id="tmdb-import-heading">Find a movie on TMDB</h3>
+                    <form id="tmdb-search-form" class="tmdb-search-controls">
+                        <label for="tmdb-search-query">Movie title</label>
+                        <input
+                            type="search"
+                            id="tmdb-search-query"
+                            maxlength="160"
+                            placeholder="Search TMDB by movie title"
+                        >
+                        <button
+                            type="submit"
+                            id="tmdb-search-button"
+                            class="admin-submit-button">
+                            Search TMDB
+                        </button>
+                    </form>
+                    <p class="modal-muted">
+                        Search requires TMDB_API_KEY in the PHP environment.
+                        Choose a result to fill in its details, then add it to
+                        CineMax. Removing it later only removes it from this
+                        website. This product uses the TMDB API but is not
+                        endorsed or certified by TMDB.
+                    </p>
+                    <p
+                        id="tmdb-search-status"
+                        class="admin-status"
+                        role="status"
+                        aria-live="polite"></p>
+                    <div
+                        id="tmdb-search-results"
+                        class="tmdb-search-results"
+                        aria-live="polite"></div>
+                </section>
+
+                <form id="admin-movie-form" class="admin-movie-form">
+                    <label>
+                        Catalog ID (optional)
+                        <input
+                            type="text"
+                            name="id"
+                            maxlength="80"
+                            placeholder="Generated automatically"
+                        >
+                    </label>
+                    <label>
+                        Movie title
+                        <input
+                            type="text"
+                            name="title"
+                            maxlength="160"
+                            required
+                        >
+                    </label>
+                    <label class="admin-description-field">
+                        YouTube movie link (optional)
+                        <input
+                            type="url"
+                            name="youtube_url"
+                            maxlength="500"
+                            placeholder="https://www.youtube.com/watch?v=..."
+                        >
+                    </label>
+                    <label>
+                        Release year
+                        <input
+                            type="number"
+                            name="year"
+                            min="1888"
+                            max="2100"
+                            step="1"
+                        >
+                    </label>
+                    <label>
+                        Genres (comma-separated)
+                        <input
+                            type="text"
+                            name="genres"
+                            maxlength="300"
+                            placeholder="Drama, Science Fiction"
+                        >
+                    </label>
+                    <label class="admin-description-field">
+                        Poster image URL (optional)
+                        <input
+                            type="text"
+                            name="poster"
+                            placeholder="Paste an image URL or import details from TMDB"
+                        >
+                    </label>
+                    <label>
+                        Banner / backdrop image URL (optional)
+                        <input
+                            type="text"
+                            name="backdrop"
+                            placeholder="https://... or a local image path"
+                        >
+                    </label>
+                    <label>
+                        Director (optional)
+                        <input type="text" name="director" maxlength="120">
+                    </label>
+                    <label>
+                        Director photo URL (optional)
+                        <input
+                            type="text"
+                            name="director_photo"
+                            placeholder="https://... or a local image path"
+                        >
+                    </label>
+                    <label class="admin-description-field">
+                        Cast (one person per line: Name | Photo URL)
+                        <textarea
+                            name="cast"
+                            rows="5"
+                            maxlength="2000"
+                            placeholder="Actor Name | https://example.com/actor.jpg"
+                        ></textarea>
+                    </label>
+                    <label class="admin-description-field">
+                        Synopsis (optional)
+                        <textarea name="description" rows="4" maxlength="2000"></textarea>
+                    </label>
+                    <button class="admin-submit-button" type="submit">
+                        Add to collection
+                    </button>
+                    <button
+                        class="admin-cancel-button"
+                        type="button"
+                        id="cancel-add-movie-button">
+                        Cancel
+                    </button>
+                </form>
+            </section>
+
+            <p id="admin-status" class="admin-status" role="status" aria-live="polite"></p>
+
+            <section
+                id="admin-catalog-panel"
+                class="admin-panel admin-catalog-panel"
+                aria-labelledby="managed-movies-heading">
+                <div class="admin-catalog-heading">
+                    <h2 id="managed-movies-heading">Movie Collection</h2>
+                    <button
+                        type="button"
+                        id="show-add-movie-button"
+                        class="admin-add-button"
+                        aria-expanded="false"
+                        aria-controls="add-movie-panel admin-catalog-panel">
+                        <span id="show-add-movie-icon" aria-hidden="true">+</span>
+                        <span id="show-add-movie-label">Add Movie</span>
+                    </button>
+                </div>
+                <div id="admin-movie-list" class="admin-movie-list" aria-live="polite">
+                    <p class="modal-muted">Loading movies...</p>
+                </div>
+            </section>
+        </main>
+
+        <footer class="homepage-footer">
+            <p>&copy; {{current_year}} CineMax. All rights reserved.</p>
+        </footer>
+    </div>
+</body>
+
+</html>

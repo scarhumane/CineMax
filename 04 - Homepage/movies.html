@@ -25,13 +25,7 @@
                 CINEMAX
             </a>
 
-            <nav class="homepage-nav">
-                <a href="homepage.php">Home</a>
-                <a href="movies.php" class="active">Movies</a>
-                <a href="genres.php">Genres</a>
-                <a href="people.php">People</a>
-                <a href="watchlist.php">Watchlist</a>
-            </nav>
+            {{movie_navigation}}
 
             <div class="header-right">
 
@@ -53,7 +47,19 @@
 
         </header>
 
-        <main id="movie-catalog">
+        <main id="movie-catalog" data-admin-mode="{{admin_mode}}">
+
+            <section
+                class="content-section"
+                id="admin-movies-section"
+                hidden
+            >
+                <div class="section-header">
+                    <h1>CineMax Collection</h1>
+                    <p>Movies selected by the CineMax team.</p>
+                </div>
+                <div class="movie-grid" id="admin-movies-grid"></div>
+            </section>
 
             <p
                 class="service-status"
@@ -80,6 +86,7 @@
             <section class="content-section catalog-row-section" id="popular-section">
                 <div class="section-header">
                     <h1>Popular Movies</h1>
+
                     <div class="row-controls">
                         <button type="button" class="row-control" data-row="popular-movies" data-dir="-1" aria-label="Scroll popular movies left"><i data-lucide="chevron-left"></i></button>
                         <button type="button" class="row-control" data-row="popular-movies" data-dir="1" aria-label="Scroll popular movies right"><i data-lucide="chevron-right"></i></button>
