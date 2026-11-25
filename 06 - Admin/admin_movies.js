@@ -1,7 +1,17 @@
 const adminMovieForm = document.getElementById("admin-movie-form");
 const adminMovieList = document.getElementById("admin-movie-list");
 const adminStatus = document.getElementById("admin-status");
-const posterLookupButton = document.getElementById("lookup-poster-button");
+const addMoviePanel = document.getElementById("add-movie-panel");
+const adminCatalogPanel = document.getElementById("admin-catalog-panel");
+const showAddMovieButton = document.getElementById("show-add-movie-button");
+const showAddMovieIcon = document.getElementById("show-add-movie-icon");
+const showAddMovieLabel = document.getElementById("show-add-movie-label");
+const cancelAddMovieButton = document.getElementById("cancel-add-movie-button");
+const tmdbSearchForm = document.getElementById("tmdb-search-form");
+const tmdbSearchQuery = document.getElementById("tmdb-search-query");
+const tmdbSearchButton = document.getElementById("tmdb-search-button");
+const tmdbSearchStatus = document.getElementById("tmdb-search-status");
+const tmdbSearchResults = document.getElementById("tmdb-search-results");
 const adminCsrfToken = document.querySelector(".admin-page")?.dataset.csrfToken || "";
 
 function escapeAdminHTML(value) {
@@ -42,31 +52,133 @@ async function requestAdminMovies(method = "GET", payload = null) {
     return data;
 }
 
-function renderAdminMovies(movies) {
-    if (!movies.length) {
-        adminMovieList.innerHTML = '<p class="modal-muted">No movies have been added yet.</p>';
+async function requestTmdb(payload) {
+    const response = await fetch("tmdb_movies.php", {
+        method: "POST",
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            "X-CSRF-Token": adminCsrfToken
+        },
+        body: JSON.stringify(payload)
+    });
+    let data;
+
+    try {
+        data = await response.json();
+    } catch {
+        throw new Error("TMDB returned an invalid response.");
+    }
+
+    if (!response.ok || !data.success) {
+        throw new Error(data.error || "Unable to load movies from TMDB.");
+    }
+
+    return data;
+}
+
+function renderTmdbResults(results) {
+    if (!results.length) {
+        tmdbSearchResults.innerHTML = '<p class="modal-muted">No matching movies found.</p>';
         return;
     }
 
-    adminMovieList.innerHTML = movies.map(movie => `
-        <article class="admin-movie-row">
-            <div>
-                <h3>${escapeAdminHTML(movie.title)}</h3>
-                <p>
-                    Catalog ID ${escapeAdminHTML(movie.id)}
-                    ${movie.year ? ` · ${escapeAdminHTML(movie.year)}` : ""}
-                    ${Array.isArray(movie.genres) && movie.genres.length ? ` · ${escapeAdminHTML(movie.genres.join(", "))}` : ""}
-                    ${movie.youtube_url ? ` · <a href="${escapeAdminHTML(movie.youtube_url)}" target="_blank" rel="noopener noreferrer">YouTube link</a>` : ""}
-                </p>
+    tmdbSearchResults.innerHTML = results.map(movie => `
+        <article class="tmdb-result">
+            ${movie.poster
+                ? `<img src="${escapeAdminHTML(movie.poster)}" alt="" loading="lazy">`
+                : '<div class="tmdb-result-poster" aria-hidden="true"></div>'}
+            <div class="tmdb-result-info">
+                <h4>${escapeAdminHTML(movie.title)}</h4>
+                <p>${escapeAdminHTML(movie.year || "Release year unavailable")}</p>
+                <p>${escapeAdminHTML(movie.overview || "No synopsis provided by TMDB.")}</p>
             </div>
             <button
                 type="button"
-                class="admin-remove-button"
-                data-remove-admin-movie="${escapeAdminHTML(movie.id)}">
-                Remove
+                class="admin-submit-button tmdb-use-button"
+                data-use-tmdb-movie="${escapeAdminHTML(movie.id)}">
+                Use details
             </button>
         </article>
     `).join("");
+}
+
+function renderAdminMovies(movies) {
+    if (!movies.length) {
+        adminMovieList.innerHTML = `
+            <p class="modal-muted admin-empty-state">
+                No movies have been added yet.
+            </p>
+        `;
+        return;
+    }
+
+    adminMovieList.innerHTML = `
+        <div class="admin-table-scroll">
+            <table class="admin-movie-table">
+                <thead>
+                    <tr>
+                        <th scope="col">ID</th>
+                        <th scope="col">Title</th>
+                        <th scope="col">Year</th>
+                        <th scope="col">Genre</th>
+                        <th scope="col">Director</th>
+                        <th scope="col">Average Rating</th>
+                        <th scope="col">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${movies.map((movie, index) => {
+                        const genres = Array.isArray(movie.genres)
+                            ? movie.genres.join(", ")
+                            : "";
+                        const rating = Number(movie.rating);
+
+                        return `
+                            <tr>
+                                <td class="admin-table-id">#${index + 1}</td>
+                                <th scope="row" class="admin-table-title">
+                                    ${escapeAdminHTML(movie.title)}
+                                </th>
+                                <td>${escapeAdminHTML(movie.year || "—")}</td>
+                                <td>${escapeAdminHTML(genres || "—")}</td>
+                                <td>${escapeAdminHTML(movie.director || "—")}</td>
+                                <td class="admin-table-rating">
+                                    ${Number.isFinite(rating) && rating > 0
+                                        ? `${rating.toFixed(1)}${movie.rating_count ? ` (${escapeAdminHTML(movie.rating_count)})` : ""}`
+                                        : "—"}
+                                </td>
+                                <td>
+                                    <button
+                                        type="button"
+                                        class="admin-remove-button"
+                                        data-remove-admin-movie="${escapeAdminHTML(movie.id)}"
+                                        aria-label="Remove ${escapeAdminHTML(movie.title)}">
+                                        Remove
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join("")}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+function setAddMoviePanelOpen(isOpen) {
+    addMoviePanel.hidden = !isOpen;
+    adminCatalogPanel.hidden = isOpen;
+    showAddMovieIcon.hidden = isOpen;
+    showAddMovieButton.setAttribute("aria-expanded", String(isOpen));
+    showAddMovieLabel.textContent = isOpen ? "Movie Collection" : "Add Movie";
+
+    if (isOpen) {
+        adminStatus.textContent = "";
+        adminMovieForm.elements.title.focus();
+    } else {
+        showAddMovieButton.focus();
+    }
 }
 
 async function loadAdminMovies() {
@@ -88,15 +200,15 @@ adminMovieForm.addEventListener("submit", async event => {
     const payload = Object.fromEntries(formData.entries());
 
     try {
-        const data = await requestAdminMovies("POST", payload);
-        renderAdminMovies(data.movies);
+        await requestAdminMovies("POST", payload);
         adminMovieForm.reset();
+        await loadAdminMovies();
+        setAddMoviePanelOpen(false);
         adminStatus.textContent = "Movie added to the CineMax Collection.";
     } catch (error) {
         adminStatus.textContent = error.message;
     }
 });
-
 adminMovieList.addEventListener("click", async event => {
     const button = event.target.closest("[data-remove-admin-movie]");
 
@@ -106,10 +218,10 @@ adminMovieList.addEventListener("click", async event => {
     adminStatus.textContent = "";
 
     try {
-        const data = await requestAdminMovies("DELETE", {
+        await requestAdminMovies("DELETE", {
             id: button.dataset.removeAdminMovie
         });
-        renderAdminMovies(data.movies);
+        await loadAdminMovies();
         adminStatus.textContent = "Movie removed from the CineMax Collection.";
     } catch (error) {
         adminStatus.textContent = error.message;
@@ -119,48 +231,81 @@ adminMovieList.addEventListener("click", async event => {
 
 loadAdminMovies();
 
-posterLookupButton.addEventListener("click", async () => {
-    const title = adminMovieForm.elements.title.value.trim();
-    const posterInput = adminMovieForm.elements.poster;
+showAddMovieButton.addEventListener("click", () => {
+    setAddMoviePanelOpen(addMoviePanel.hidden);
+});
 
+cancelAddMovieButton.addEventListener("click", () => {
+    adminMovieForm.reset();
     adminStatus.textContent = "";
-    if (!title) {
-        adminStatus.textContent = "Enter a movie title before searching for its poster.";
-        adminMovieForm.elements.title.focus();
+    setAddMoviePanelOpen(false);
+});
+
+tmdbSearchForm.addEventListener("submit", async event => {
+    event.preventDefault();
+    const query = tmdbSearchQuery.value.trim();
+
+    tmdbSearchStatus.textContent = "";
+    tmdbSearchResults.replaceChildren();
+    if (!query) {
+        tmdbSearchStatus.textContent = "Enter a movie title to search TMDB.";
+        tmdbSearchQuery.focus();
         return;
     }
 
-    posterLookupButton.disabled = true;
-    posterLookupButton.textContent = "Searching posters...";
+    tmdbSearchButton.disabled = true;
+    tmdbSearchButton.textContent = "Searching...";
+    tmdbSearchResults.innerHTML = '<p class="modal-muted">Searching TMDB...</p>';
 
     try {
-        const response = await fetch("poster_lookup.php", {
-            method: "POST",
-            headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-                "X-CSRF-Token": adminCsrfToken
-            },
-            body: JSON.stringify({ title })
-        });
-        let data;
-
-        try {
-            data = await response.json();
-        } catch {
-            throw new Error("The poster service returned an invalid response.");
-        }
-
-        if (!response.ok || !data.success || !data.poster_url) {
-            throw new Error(data.error || "Unable to find a poster for that title.");
-        }
-
-        posterInput.value = data.poster_url;
-        adminStatus.textContent = "Poster found and added to the movie form.";
+        const data = await requestTmdb({ action: "search", query });
+        renderTmdbResults(data.results);
     } catch (error) {
-        adminStatus.textContent = error.message;
+        tmdbSearchResults.replaceChildren();
+        tmdbSearchStatus.textContent = error.message;
     } finally {
-        posterLookupButton.disabled = false;
-        posterLookupButton.textContent = "Find poster by title";
+        tmdbSearchButton.disabled = false;
+        tmdbSearchButton.textContent = "Search TMDB";
+    }
+});
+
+tmdbSearchResults.addEventListener("click", async event => {
+    const button = event.target.closest("[data-use-tmdb-movie]");
+    if (!button || button.disabled) return;
+
+    button.disabled = true;
+    button.textContent = "Loading details...";
+    tmdbSearchStatus.textContent = "";
+
+    try {
+        const data = await requestTmdb({
+            action: "details",
+            tmdb_id: button.dataset.useTmdbMovie
+        });
+        const movie = data.movie;
+
+        adminMovieForm.elements.id.value = movie.id;
+        adminMovieForm.elements.title.value = movie.title;
+        adminMovieForm.elements.year.value = movie.year;
+        adminMovieForm.elements.genres.value = movie.genres;
+        adminMovieForm.elements.poster.value = movie.poster;
+        adminMovieForm.elements.backdrop.value = movie.backdrop;
+        adminMovieForm.elements.director.value = movie.director;
+        adminMovieForm.elements.director_photo.value = movie.director_photo;
+        adminMovieForm.elements.cast.value = movie.cast
+            .map(person => person.photo
+                ? `${person.name} | ${person.photo}`
+                : person.name)
+            .join("\n");
+        adminMovieForm.elements.description.value = movie.description;
+
+        adminStatus.textContent = "TMDB details loaded. Add a YouTube link if available, then add to the collection.";
+        tmdbSearchStatus.textContent = "Details loaded into the movie form.";
+        adminMovieForm.elements.youtube_url.focus();
+    } catch (error) {
+        tmdbSearchStatus.textContent = error.message;
+    } finally {
+        button.disabled = false;
+        button.textContent = "Use details";
     }
 });

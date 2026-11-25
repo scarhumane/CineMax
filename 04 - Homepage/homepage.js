@@ -352,7 +352,9 @@ async function loadAdminMovies() {
     const container = $("admin-movies-grid");
 
     try {
-        const response = await fetch("admin_movies_api.php", {
+        await syncPersonalRatings();
+
+        const response = await fetch("../06 - Admin/admin_movies_api.php", {
             headers: { Accept: "application/json" }
         });
         const data = await response.json();
@@ -468,7 +470,10 @@ function createTopCard(movie, rank) {
 let lastFocused = null;
 let modalRequestNumber = 0;
 
-const PERSONAL_RATING_KEY = "cinemax-personal-ratings";
+const LEGACY_PERSONAL_RATING_KEY = "cinemax-personal-ratings";
+const ratingUsername = document.querySelector(".profile-menu")?.dataset.profileUsername || "";
+const PERSONAL_RATING_KEY = `${LEGACY_PERSONAL_RATING_KEY}:${ratingUsername.toLowerCase()}`;
+const ratingCsrfToken = document.querySelector(".profile-menu")?.dataset.csrfToken || "";
 
 function getModal() {
     return $("movie-modal");
@@ -496,6 +501,91 @@ function savePersonalRating(movieId, rating) {
         );
     } catch (error) {
         console.warn("Unable to save your rating:", error);
+    }
+}
+
+function getLegacyPersonalRatings() {
+    try {
+        const ratings = JSON.parse(localStorage.getItem(LEGACY_PERSONAL_RATING_KEY));
+        return ratings && typeof ratings === "object" && !Array.isArray(ratings)
+            ? ratings
+            : {};
+    } catch {
+        return {};
+    }
+}
+
+async function requestPersonalRatings(method, ratings) {
+    const options = {
+        method,
+        credentials: "same-origin",
+        headers: { Accept: "application/json" }
+    };
+
+    if (method === "POST") {
+        options.headers["Content-Type"] = "application/json";
+        options.headers["X-CSRF-Token"] = ratingCsrfToken;
+        options.body = JSON.stringify({ ratings });
+    }
+
+    const response = await fetch("movie_ratings.php", options);
+    let data;
+
+    try {
+        data = await response.json();
+    } catch {
+        throw new Error("The rating service returned an invalid response.");
+    }
+
+    if (!response.ok || !data.success || !data.ratings || typeof data.ratings !== "object") {
+        throw new Error(data.error || "Unable to sync movie ratings.");
+    }
+
+    return data.ratings;
+}
+
+async function syncPersonalRatings() {
+    const localRatings = getPersonalRatings();
+    const legacyRatings = getLegacyPersonalRatings();
+
+    try {
+        const serverRatings = await requestPersonalRatings("GET");
+        const pendingRatings = {};
+
+        for (const [movieId, rating] of Object.entries(localRatings)) {
+            if (Number(serverRatings[movieId]) !== Number(rating)) {
+                pendingRatings[movieId] = rating;
+            }
+        }
+
+        for (const [movieId, rating] of Object.entries(legacyRatings)) {
+            if (!(movieId in serverRatings) && !(movieId in localRatings)) {
+                pendingRatings[movieId] = rating;
+            }
+        }
+
+        const ratings = Object.keys(pendingRatings).length
+            ? await requestPersonalRatings("POST", pendingRatings)
+            : serverRatings;
+
+        localStorage.setItem(PERSONAL_RATING_KEY, JSON.stringify(ratings));
+        localStorage.removeItem(LEGACY_PERSONAL_RATING_KEY);
+        return ratings;
+    } catch (error) {
+        console.error("Movie ratings could not be synced:", error);
+        return { ...legacyRatings, ...localRatings };
+    }
+}
+
+async function savePersonalRatingToServer(movieId, rating) {
+    const ratings = await requestPersonalRatings("POST", {
+        [String(movieId)]: rating
+    });
+
+    try {
+        localStorage.setItem(PERSONAL_RATING_KEY, JSON.stringify(ratings));
+    } catch (error) {
+        console.warn("Unable to cache your synced rating:", error);
     }
 }
 
@@ -533,7 +623,9 @@ function renderPersonalRating(movie) {
     const currentRating = Number(ratings[String(movie.id)] || 0);
 
     return `
-        <section class="modal-section personal-rating-section">
+        <section
+            class="modal-section personal-rating-section"
+            data-rating-movie-section="${escapeHTML(movie.id)}">
             <h3>Your Rating</h3>
 
             <div class="personal-rating-stars"
@@ -1061,14 +1153,34 @@ document.addEventListener("click", event => {
     savePersonalRating(movieId, rating);
 
     const movie = getMovie(movieId);
+    let updatedSection = null;
 
     if (movie) {
         const section = ratingButton.closest(".personal-rating-section");
 
         if (section) {
             section.outerHTML = renderPersonalRating(movie);
+            updatedSection = Array.from(
+                document.querySelectorAll(".personal-rating-section")
+            ).find(element => element.dataset.ratingMovieSection === String(movieId));
         }
     }
+
+    const label = updatedSection?.querySelector(".personal-rating-label");
+    if (label) {
+        label.textContent = "Saving your rating...";
+    }
+
+    savePersonalRatingToServer(movieId, rating).then(() => {
+        if (label?.isConnected) {
+            label.textContent = `Your rating: ${rating}/5`;
+        }
+    }).catch(error => {
+        console.error("Movie rating could not be saved:", error);
+        if (label?.isConnected) {
+            label.textContent = "Saved on this device only; rating sync failed.";
+        }
+    });
 });
 
 /* HOME DATA STATE */

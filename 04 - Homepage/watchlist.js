@@ -55,7 +55,7 @@ async function loadLocalCatalog() {
     if (catalogLoadPromise) return catalogLoadPromise;
 
     catalogLoadPromise = (async () => {
-        const response = await fetch("admin_movies_api.php", {
+        const response = await fetch("../06 - Admin/admin_movies_api.php", {
             credentials: "same-origin",
             cache: "no-store",
             headers: { Accept: "application/json" }

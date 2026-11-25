@@ -9,7 +9,10 @@ function render_profile_menu(): string
     ob_start();
     ?>
 
-    <div class="profile-menu">
+    <div
+        class="profile-menu"
+        data-profile-username="<?= e($name) ?>"
+        data-csrf-token="<?= e(admin_csrf_token()) ?>">
 
         <button
             class="profile-trigger"

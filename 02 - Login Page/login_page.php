@@ -76,7 +76,7 @@ foreach ($data["users"] as $user) {
                     $_SESSION["pending_billing_period"]
                 );
 
-                header("Location: ../04 - Homepage/admin_movies.php");
+                header("Location: ../06 - Admin/admin_movies.php");
                 exit;
             }
 

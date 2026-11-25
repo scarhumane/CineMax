@@ -1,6 +1,7 @@
 <?php
 
-require_once __DIR__ . "/functions.php";
+require_once __DIR__ . "/../04 - Homepage/functions.php";
+require_once __DIR__ . "/../04 - Homepage/movie_ratings_store.php";
 
 start_session();
 
@@ -161,6 +162,13 @@ $movies = array_values($data["movies"]);
 if ($method === "GET") {
     flock($handle, LOCK_UN);
     fclose($handle);
+    try {
+        $movies = cinemax_movies_with_average_ratings($movies);
+    } catch (RuntimeException $error) {
+        error_log("Unable to load average movie ratings: " . $error->getMessage());
+        admin_movies_respond(["error" => "Unable to load saved movie ratings."], 500);
+    }
+
     admin_movies_respond(["success" => true, "movies" => $movies]);
 }
 
@@ -349,6 +357,13 @@ fclose($handle);
 
 if ($written === false) {
     admin_movies_respond(["error" => "Unable to save the movie data."], 500);
+}
+
+try {
+    $movies = cinemax_movies_with_average_ratings($movies);
+} catch (RuntimeException $error) {
+    error_log("Unable to load average movie ratings: " . $error->getMessage());
+    admin_movies_respond(["error" => "Unable to load saved movie ratings."], 500);
 }
 
 admin_movies_respond(["success" => true, "movies" => $movies]);

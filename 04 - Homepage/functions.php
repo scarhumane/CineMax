@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . "/profile_menu.php";
+require_once __DIR__ . "/../06 - Admin/admin_auth.php";
 
 
 function start_session(): void
@@ -25,26 +26,6 @@ function current_user_name(): string
 
     return "User";
 }
-
-function current_user_is_admin(): bool
-{
-    start_session();
-
-    return ($_SESSION["role"] ?? "") === "admin";
-}
-
-
-function admin_csrf_token(): string
-{
-    start_session();
-
-    if (!isset($_SESSION["admin_csrf_token"])) {
-        $_SESSION["admin_csrf_token"] = bin2hex(random_bytes(32));
-    }
-
-    return $_SESSION["admin_csrf_token"];
-}
-
 
 function current_user_plan(): string
 {
@@ -105,8 +86,7 @@ function render_movie_navigation(): string
     if (current_user_is_admin()) {
         return '
             <nav class="homepage-nav">
-                <a href="movies.php" class="active">Movies</a>
-                <a href="admin_movies.php">Manage Movies</a>
+                <a href="../06 - Admin/admin_movies.php">Manage Movies</a>
             </nav>
         ';
     }
@@ -129,13 +109,15 @@ function render_page(string $filename): void
 
     if (
         current_user_is_admin()
-        && !in_array($filename, ["admin_movies.html", "movies.html"], true)
+        && $filename !== "admin_movies.html"
     ) {
-        header("Location: admin_movies.php");
+        header("Location: ../06 - Admin/admin_movies.php");
         exit;
     }
 
-    $file = __DIR__ . "/" . $filename;
+    $file = $filename === "admin_movies.html"
+        ? __DIR__ . "/../06 - Admin/admin_movies.html"
+        : __DIR__ . "/" . $filename;
 
     if (!is_file($file) || !is_readable($file)) {
         http_response_code(404);
