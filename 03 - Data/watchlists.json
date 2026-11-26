@@ -1,60 +1,44 @@
 {
     "ultimate": [
         {
-            "id": "movie-5254612581ac",
-            "title": "TRY",
-            "youtube_url": "https://www.youtube-nocookie.com/embed/3x8Hmq27_g8",
-            "year": "2026",
-            "rating": 0,
-            "genres": [
-                "Gacha"
-            ],
-            "director": "Orston Welles",
-            "director_photo": "",
-            "cast": [],
-            "poster": "https://image.tmdb.org/t/p/w1280/V086R82gNgWrotaXZFO4JhdgB1.jpg",
-            "backdrop": "",
-            "backdropSmall": "https://image.tmdb.org/t/p/w1280/V086R82gNgWrotaXZFO4JhdgB1.jpg",
-            "description": "TRY"
-        },
-        {
-            "id": "movie-99ef90b01fd5",
-            "title": "TRY",
-            "youtube_url": "https://www.youtube-nocookie.com/embed/ljSBkknfOjA",
-            "year": "2026",
-            "rating": 0,
-            "genres": [
-                "Gacha"
-            ],
-            "director": "Orston Welles",
-            "director_photo": "",
-            "cast": [],
-            "poster": "https://image.tmdb.org/t/p/w1280/V086R82gNgWrotaXZFO4JhdgB1.jpg",
-            "backdrop": "https://image.tmdb.org/t/p/w1280/fNqlsmu2tiI1bXcpU31yjHPkiJz.jpg",
-            "backdropSmall": "https://image.tmdb.org/t/p/w1280/fNqlsmu2tiI1bXcpU31yjHPkiJz.jpg",
-            "description": "No description available."
-        },
-        {
-            "id": "movie-1b7a5ebeb3b4",
-            "title": "Solarbeast",
+            "id": "tmdb-1003596",
+            "title": "Avengers: Doomsday",
             "youtube_url": "",
-            "year": "1893",
+            "year": "2026",
             "rating": 0,
             "genres": [
-                "Trial"
+                "Science Fiction",
+                "Action",
+                "Adventure"
             ],
-            "director": "blabla",
-            "director_photo": "",
+            "director": "Joe Russo",
+            "director_photo": "https://image.tmdb.org/t/p/w185/o0OXjFzL10jCy89iAs7UzzSbyoK.jpg",
             "cast": [
                 {
-                    "name": "Hello",
-                    "photo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQfTT8q0HKSgo8U3M6UsRJTLzC760CTsYciAwERrtsSlg&s=10"
+                    "name": "Robert Downey Jr.",
+                    "photo": ""
+                },
+                {
+                    "name": "Chris Evans",
+                    "photo": ""
+                },
+                {
+                    "name": "Chris Hemsworth",
+                    "photo": ""
+                },
+                {
+                    "name": "Pedro Pascal",
+                    "photo": ""
+                },
+                {
+                    "name": "Paul Rudd",
+                    "photo": ""
                 }
             ],
-            "poster": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQfTT8q0HKSgo8U3M6UsRJTLzC760CTsYciAwERrtsSlg&s=10",
-            "backdrop": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQfTT8q0HKSgo8U3M6UsRJTLzC760CTsYciAwERrtsSlg&s=10",
-            "backdropSmall": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQfTT8q0HKSgo8U3M6UsRJTLzC760CTsYciAwERrtsSlg&s=10",
-            "description": "trying"
+            "poster": "https://image.tmdb.org/t/p/w500/1zqWkLwC1zLBBBtIWzmkmWeMWnT.jpg",
+            "backdrop": "https://image.tmdb.org/t/p/w1280/rObL4of4eFA8yWaN9pRFo9aOVNi.jpg",
+            "backdropSmall": "https://image.tmdb.org/t/p/w500/1zqWkLwC1zLBBBtIWzmkmWeMWnT.jpg",
+            "description": "Beloved heroes from three distinct universes are set on a deadly collision course and face an existential threat unlike anything they've ever encountered."
         }
     ]
 }

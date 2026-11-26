@@ -2,7 +2,7 @@
 
 function tmdb_admin_api_key(): string
 {
-    $apiKey = getenv("TMDB_API_KEY");
+    $apiKey = getenv("c001baa8cde60365287ae769c5fd55d6");
     if (!is_string($apiKey) || trim($apiKey) === "") {
         $apiKey = $_ENV["TMDB_API_KEY"] ?? $_SERVER["TMDB_API_KEY"] ?? null;
     }

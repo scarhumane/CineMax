@@ -2212,6 +2212,106 @@ main {
     overscroll-behavior: contain;
 }
 
+.modal.person-details-modal .modal-panel {
+    grid-template-columns: 140px minmax(0, 1fr);
+    align-items: start;
+    gap: 26px 22px;
+}
+
+.modal.person-details-modal .modal-media {
+    grid-column: 1;
+    grid-row: 1;
+    width: 100%;
+    max-width: 140px;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: linear-gradient(145deg, rgba(92, 195, 220, 0.16), rgba(7, 16, 29, 0.9));
+}
+
+.modal.person-details-modal .modal-media img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.modal.person-details-modal .person-initials {
+    display: grid;
+    width: 100%;
+    height: 100%;
+    place-items: center;
+    color: var(--frost);
+    font-family: var(--display);
+    font-size: 42px;
+}
+
+.modal.person-details-modal .person-known-for-section {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    margin-top: 10px;
+}
+
+.modal.person-details-modal .person-known-for-section > h3 {
+    margin: 0 0 16px;
+    color: var(--frost);
+    font-family: var(--display);
+    font-size: 25px;
+}
+
+.modal.person-details-modal .person-catalog-movies {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    align-items: start;
+}
+
+.modal.person-details-modal .person-catalog-movies > .person-movie-card {
+    width: 100%;
+    max-width: 180px;
+}
+
+.modal.person-details-modal .person-movie-poster {
+    aspect-ratio: 2 / 3;
+}
+
+.modal.person-details-modal .person-movie-info {
+    min-width: 0;
+    padding: 9px;
+}
+
+.modal.person-details-modal .person-summary {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    min-width: 0;
+    padding: 8px 0 0;
+}
+
+.modal.person-details-modal .person-biography {
+    margin: 16px 0 0;
+    color: var(--mist);
+    font-size: 14px;
+    line-height: 1.75;
+}
+
+@media (max-width: 600px) {
+    .modal.person-details-modal .modal-panel {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+        gap: 18px 16px;
+        padding: 42px 18px 24px;
+    }
+
+    .modal.person-details-modal .modal-media {
+        width: 100%;
+        max-width: 120px;
+    }
+
+    .modal.person-details-modal .person-catalog-movies {
+        grid-template-columns: repeat(auto-fill, minmax(125px, 1fr));
+    }
+}
+
 .modal-close {
     position: absolute;
     top: 14px;

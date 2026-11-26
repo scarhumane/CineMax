@@ -91,12 +91,19 @@ function render_movie_navigation(): string
         ';
     }
 
+    $hasCollection = false;
+    $collectionFile = dirname(__DIR__) . DIRECTORY_SEPARATOR . "03 - Data" . DIRECTORY_SEPARATOR . "admin_movies.json";
+    if (is_readable($collectionFile)) {
+        $collection = json_decode((string) file_get_contents($collectionFile), true);
+        $hasCollection = is_array($collection["movies"] ?? null) && count($collection["movies"]) > 0;
+    }
+
     return '
         <nav class="homepage-nav">
             <a href="homepage.php">Home</a>
-            <a href="movies.php" class="active">Movies</a>
-            <a href="genres.php">Genres</a>
-            <a href="people.php">People</a>
+            ' . ($hasCollection ? '<a href="movies.php" class="active">Movies</a>' : '') . '
+            ' . ($hasCollection ? '<a href="genres.php">Genres</a>' : '') . '
+            ' . ($hasCollection ? '<a href="people.php">Actors</a>' : '') . '
             <a href="watchlist.php">Watchlist</a>
         </nav>
     ';

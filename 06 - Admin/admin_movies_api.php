@@ -292,7 +292,7 @@ if ($method === "POST") {
         if ((string) ($movie["id"] ?? "") === $id) {
             flock($handle, LOCK_UN);
             fclose($handle);
-            admin_movies_respond(["error" => "That movie is already in the CineMax Collection."], 409);
+            admin_movies_respond(["error" => "That movie is already in the CineMax catalog."], 409);
         }
     }
 
@@ -330,7 +330,7 @@ if ($method === "POST") {
     if (count($movies) === $initialCount) {
         flock($handle, LOCK_UN);
         fclose($handle);
-        admin_movies_respond(["error" => "That movie is not in the CineMax Collection."], 404);
+        admin_movies_respond(["error" => "That movie is not in the CineMax catalog."], 404);
     }
 }
 

@@ -118,6 +118,58 @@ async function toggleWatchlist(movie) {
 const movieIndex = new Map();
 let localCatalogMovies = [];
 
+async function loadAdminMovies() {
+    const section = $("admin-movies-section");
+    const grid = $("admin-movies-grid");
+    if (grid) grid.innerHTML = loadingHTML("Loading CineMax Collection...");
+
+    try {
+        const response = await fetch("../06 - Admin/admin_movies_api.php", {
+            credentials: "same-origin",
+            cache: "no-store"
+        });
+        const data = await response.json();
+        if (!response.ok || !Array.isArray(data.movies)) {
+            throw new Error(data.error || "Unable to load CineMax Collection.");
+        }
+
+        localCatalogMovies = register(data.movies.map(movie => ({
+            ...movie,
+            id: String(movie.id),
+            rating: Number(movie.rating || 0),
+            genres: Array.isArray(movie.genres) ? movie.genres : [],
+            cast: Array.isArray(movie.cast) ? movie.cast : [],
+            poster: movie.poster || "",
+            backdrop: movie.backdrop || movie.poster || "",
+            backdropSmall: movie.backdropSmall || movie.poster || "",
+            description: movie.description || "No description available.",
+            mediaType: "movie"
+        })));
+
+        if (section && grid) {
+            section.hidden = localCatalogMovies.length === 0;
+            grid.innerHTML = localCatalogMovies.map(movie => `
+                <article class="movie-card">
+                    <a href="#" class="movie-open" data-open-movie="${escapeHTML(movie.id)}">
+                        ${movie.poster ? `<img class="movie-poster" src="${escapeHTML(movie.poster)}" alt="${escapeHTML(movie.title)} poster" loading="lazy">` : `<div class="movie-poster poster-placeholder">${escapeHTML(movie.title)}</div>`}
+                        <div class="movie-info"><h3>${escapeHTML(movie.title)}</h3><p class="movie-meta">${escapeHTML(movie.year || "Year unknown")}</p><p class="movie-rating">${Number(movie.rating) > 0 ? `? ${formatRating(movie.rating)}` : "Not rated"}</p></div>
+                    </a>
+                </article>
+            `).join("");
+        }
+
+        setCatalogMovieRows();
+        if ($("cinemaShowcase")) {
+            setHero(localCatalogMovies.length ? localCatalogMovies : tmdbTrending);
+        }
+    } catch (error) {
+        console.error("Unable to load CineMax Collection:", error);
+        if (section && grid) {
+            section.hidden = false;
+            grid.innerHTML = '<p class="empty-state">CineMax Collection could not be loaded.</p>';
+        }
+    }
+}
 function register(movies) {
     movies.forEach(movie => {
         if (movie && movie.id) {
@@ -126,6 +178,19 @@ function register(movies) {
     });
 
     return movies;
+}
+
+function setCatalogMovieRows() {
+    if (!$("trending")) return;
+    const movies = localCatalogMovies;
+    localTrendingMovies = movies.slice(0, 12).map(movie => ({ ...movie, trending: true }));
+    localTopRatedMovies = [...movies]
+        .sort((first, second) => Number(second.rating) - Number(first.rating))
+        .slice(0, 10)
+        .map(movie => ({ ...movie, topRated: true }));
+    homeLoaded = true;
+    renderTrending();
+    renderTopRated();
 }
 
 function getMovie(id) {
@@ -517,7 +582,6 @@ function createMovieCard(movie, extraContent = "") {
 
 function createBackdropCard(movie) {
     const image = movie.backdropSmall || movie.backdrop || movie.poster;
-    const today = new Date().toISOString().slice(0, 10);
     const isUpcoming = Boolean(movie.releaseDate) && movie.releaseDate > today;
     const reminder = String(movie.id) !== "1003596" && isUpcoming
         ? `<button type="button" class="remind-button ${isReminderSaved(movie.id) ? "is-saved" : ""}" data-remind-movie="${escapeHTML(movie.id)}" aria-pressed="${isReminderSaved(movie.id)}">${isReminderSaved(movie.id) ? "Reminder saved" : "Remind me"}</button>`
@@ -1501,7 +1565,7 @@ function renderMovieDetails(movie, details) {
 
     const movieYear = details.release_date
         ? details.release_date.slice(0, 4)
-        : "N/A";
+        : String(movie.year || "N/A");
 
     const runtime = details.runtime
         ? `${Math.floor(details.runtime / 60)}h ${details.runtime % 60}m`
@@ -1512,10 +1576,10 @@ function renderMovieDetails(movie, details) {
         id: String(details.id),
         title: details.title || movie.title,
         year: movieYear,
-        rating: Number(details.vote_average || 0),
-        genres,
-        director: director?.name || "",
-        cast: cast.slice(0, 5).map(person => person.name),
+        rating: Number(details.vote_average ?? movie.rating ?? 0),
+        genres: genres.length ? genres : (movie.genres || []),
+        director: director?.name || movie.director || "",
+        cast: cast.length ? cast.slice(0, 5).map(person => person.name) : (movie.cast || []),
         poster,
         backdrop,
         description: details.overview || movie.description
@@ -1623,6 +1687,39 @@ async function openModal(movie) {
     destroyTrailerPlayer();
 
     modal.querySelector(".modal-panel")?.classList.remove("has-trailer");
+
+    const requestId = ++modalRequestNumber;
+
+    if (String(movie.id).startsWith("tmdb-") || String(movie.id).startsWith("movie-")) {
+        const panel = modal.querySelector(".modal-panel");
+        if (panel) {
+            panel.style.setProperty("--modal-backdrop", movie.backdrop ? `url("${movie.backdrop}")` : "none");
+        }
+        renderMovieDetails(movie, {
+            ...movie,
+            id: movie.id,
+            title: movie.title,
+            poster_path: movie.poster,
+            backdrop_path: movie.backdrop,
+            overview: movie.description,
+            release_date: movie.year,
+            vote_average: movie.rating,
+            runtime: null,
+            genres: (movie.genres || []).map(name => ({ name })),
+            credits: {
+                crew: movie.director ? [{ job: "Director", name: movie.director }] : [],
+                cast: (movie.cast || []).map(person => ({
+                    name: person.name,
+                    profile_path: person.photo || null
+                }))
+            },
+            videos: { results: [] },
+            recommendations: { results: [] },
+            watch_providers: null
+        });
+        showModal();
+        return;
+    }
 
     modal.hidden = true;
 
@@ -1750,12 +1847,12 @@ document.addEventListener("click", event => {
 
 /* HOME DATA STATE */
 
+let catalogLoadError = "";
 let localTrendingMovies = [];
 let localTopRatedMovies = [];
-let catalogLoadError = "";
+let homeLoaded = false;
 
 // Keep the rows in a loading state until the local catalog request finishes.
-let homeLoaded = false;
 
 /* HOME CACHE (makes reloads instant) */
 
@@ -1819,19 +1916,29 @@ function showHeroSkeleton() {
 }
 
 function fallbackHero() {
-    heroMovies = [
+    const featuredMovies = localCatalogMovies.length
+        ? localCatalogMovies
+        : [
         "truman-show",
         "dead-poets",
         "dark-knight",
         "inception",
         "titanic"
-    ].map(getMovie).filter(Boolean);
+        ].map(getMovie).filter(Boolean);
 
-    buildHero();
+    setHero(featuredMovies);
 }
 
 async function loadHeroTrailerData(movies) {
     const results = await Promise.allSettled(movies.map(async movie => {
+        if (movie.youtube_url) {
+            const match = movie.youtube_url.match(/\/embed\/([A-Za-z0-9_-]{11})/);
+            movie.heroTrailerCandidates = match
+                ? [{ key: match[1], site: "YouTube", type: "Trailer", official: true }]
+                : [];
+            return movie;
+        }
+
         // Sample fallback IDs are slugs, not TMDB IDs.
         if (!/^\d+$/.test(String(movie.id))) {
             movie.heroTrailerCandidates = [];
@@ -1881,9 +1988,13 @@ async function setHero(movies) {
         await preloadHeroImage(firstMovie.backdrop);
     }
 
-    // TMDB's trending list does not include video keys, so load the video
-    // metadata for each featured title before rendering the carousel.
-    await loadHeroTrailerData(picks);
+    if (picks.some(movie => /^\d+$/.test(String(movie.id)))) {
+        await loadHeroTrailerData(picks);
+    } else {
+        picks.forEach(movie => {
+            movie.heroTrailerCandidates ||= [];
+        });
+    }
 
     heroMovies = picks;
     buildHero();
@@ -2923,13 +3034,10 @@ async function loadTMDB() {
     renderTrending();
     renderTopRated();
 
-    // LOAD HERO CAROUSEL
-    if (tmdbTrending.length) {
-        setHero(tmdbTrending).then(heroReady => {
-            if (!heroReady && !heroMovies.length) {
-                fallbackHero();
-            }
-        });
+    // Use the Admin collection for featured slides when available.
+    const featuredMovies = localCatalogMovies.length ? localCatalogMovies : tmdbTrending;
+    if (featuredMovies.length) {
+        setHero(featuredMovies);
     } else if (!heroMovies.length) {
         fallbackHero();
     }
@@ -2964,134 +3072,56 @@ async function loadTMDB() {
 }
 
 async function loadMoviesCatalog() {
-    const today = new Date().toISOString().slice(0, 10);
-    const pastDate = new Date();
-    pastDate.setDate(pastDate.getDate() - 60);
-    const rows = [
-        ["popular-movies", "popular", "Popular movies are unavailable right now."],
-        ["new-releases", "new-releases", "New releases are unavailable right now."],
-        ["top-rated-movies", "top-rated", "Top rated movies are unavailable right now."],
-        ["action-adventure", "discover", "Action and adventure movies are unavailable right now.", "28,12"],
-        ["sci-fi-fantasy", "discover", "Sci-fi and fantasy movies are unavailable right now.", "878,14"],
-        ["romance-movies", "discover", "Romance movies are unavailable right now.", "10749"],
-        ["thriller-mystery", "discover", "Thriller and mystery movies are unavailable right now.", "53,9648"],
-        ["drama-movies", "discover", "Drama movies are unavailable right now.", "18"],
-        ["animation-family", "discover", "Animation and family movies are unavailable right now.", "16,10751"],
-        ["documentary-movies", "discover", "Documentaries are unavailable right now.", "99"],
-        ["crime-movies", "discover", "Crime movies are unavailable right now.", "80"],
-        ["horror-movies", "discover", "Horror movies are unavailable right now.", "27"],
-        ["comedy-movies", "discover", "Comedy movies are unavailable right now.", "35"]
-    ];
-    const awardWinners = register([
-        { id: "496243", title: "Parasite", year: 2019, rating: 8.5, genres: ["Thriller", "Drama"], poster: `${TMDB_IMAGE_BASE}w500/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg`, backdrop: "", backdropSmall: "", description: "Academy Award winner for Best Picture, among other honors." },
-        { id: "872585", title: "Oppenheimer", year: 2023, rating: 8.1, genres: ["Drama", "History"], poster: `${TMDB_IMAGE_BASE}w500/ptpr0kGAckfQkJeJIt8st5dglvd.jpg`, backdrop: "", backdropSmall: "", description: "Academy Award winner for Best Picture and multiple other awards." },
-        { id: "545611", title: "Everything Everywhere All at Once", year: 2022, rating: 7.7, genres: ["Sci-Fi", "Adventure"], poster: `${TMDB_IMAGE_BASE}w500/w3LxiVYdWWRvEVdn5RYq6jIqkb1.jpg`, backdrop: "", backdropSmall: "", description: "Academy Award winner for Best Picture and multiple other awards." },
-        { id: "399055", title: "The Shape of Water", year: 2017, rating: 7.2, genres: ["Drama", "Fantasy"], poster: `${TMDB_IMAGE_BASE}w500/k4FwHlMhuRR5BISY2Gm2QZHlH5Q.jpg`, backdrop: "", backdropSmall: "", description: "Academy Award winner for Best Picture and multiple other awards." }
-    ]);
-    const additional = $("additional-movie-rows");
-    if (additional) {
-        const additionalRows = rows
-            .slice(1)
-            .filter(([id]) => id !== "horror-movies" && id !== "comedy-movies");
-
-        additional.innerHTML = additionalRows.slice(0, 5).map(([id]) => createCatalogSection(id, catalogTitle(id))).join("")
-            + createCatalogSection("award-winners", catalogTitle("award-winners"))
-            + additionalRows.slice(5).map(([id]) => createCatalogSection(id, catalogTitle(id))).join("");
-    }
-    renderBackdropRow("award-winners", awardWinners, "Award winners are unavailable right now.");
-    const rowById = new Map(rows.map(row => [row[0], row]));
-
-    function rowSkeletonHTML() {
-        return Array.from({ length: 6 }, () => `
-            <article class="backdrop-card backdrop-skeleton" aria-hidden="true">
-                <div class="backdrop-image"></div>
-                <div class="backdrop-info">
-                    <div class="skeleton-line"></div>
-                    <div class="skeleton-line short"></div>
-                </div>
-            </article>
-        `).join("");
-    }
-
-    // Remember each row for a few minutes so coming back to the page is instant.
-    const ROW_CACHE_MS = 10 * 60 * 1000;
-
-    function rowCacheKey(type, genre) {
-        return `cinemax-row:${type}:${genre || ""}`;
-    }
-
-    function readRowCache(key) {
-        try {
-            const saved = JSON.parse(sessionStorage.getItem(key) || "null");
-            if (saved && Array.isArray(saved.results) && Date.now() - saved.time < ROW_CACHE_MS) {
-                return saved.results;
-            }
-        } catch {}
-        return null;
-    }
-
-    function writeRowCache(key, results) {
-        try {
-            sessionStorage.setItem(key, JSON.stringify({ time: Date.now(), results }));
-        } catch {}
-    }
-
-    function paintRow(id, rawResults, errorText) {
-        const movies = register((rawResults || []).map(normalizeTMDBMovie).filter(Boolean));
-        renderBackdropRow(id, movies, errorText);
-        refreshIcons();
-    }
-
-    // Each row loads and paints on its own, so one slow request never blocks the others.
-    async function loadRow([id, type, errorText, genre]) {
-        const key = rowCacheKey(type, genre);
-        const cached = readRowCache(key);
-        if (cached) {
-            paintRow(id, cached, errorText);
-            return;
-        }
-        try {
-            const data = type === "new-releases"
-                ? await fetchTMDB(type, { from: pastDate.toISOString().slice(0, 10), to: today })
-                : await fetchTMDB(type, genre ? { genre } : {});
-            const raw = data.results || [];
-            writeRowCache(key, raw);
-            paintRow(id, raw, errorText);
-        } catch (error) {
-            console.error(`Unable to load ${id}:`, error);
-            renderBackdropRow(id, [], errorText);
-            const status = $("movie-service-status");
-            if (status) {
-                status.textContent = "Some movie rows could not be loaded. Check your TMDB connection and try again.";
-                status.hidden = false;
-            }
-        }
-    }
-
-    rows.forEach(([id]) => {
+    const catalogIds = ["popular-movies", "horror-movies", "comedy-movies"];
+    catalogIds.forEach(id => {
         const container = $(id);
-        if (container) container.innerHTML = rowSkeletonHTML();
+        if (container) container.innerHTML = loadingHTML("Loading CineMax Collection...");
     });
 
-    // Only fetch a row when it is close to the screen instead of all 13 at once.
-    if ("IntersectionObserver" in window) {
-        const observer = new IntersectionObserver(entries => {
-            entries.forEach(entry => {
-                if (!entry.isIntersecting) return;
-                observer.unobserve(entry.target);
-                const row = rowById.get(entry.target.id);
-                if (row) loadRow(row);
-            });
-        }, { rootMargin: "500px 0px" });
-        rows.forEach(([id]) => {
-            const container = $(id);
-            if (container) observer.observe(container);
+    try {
+        const response = await fetch("../06 - Admin/admin_movies_api.php", {
+            credentials: "same-origin",
+            cache: "no-store"
         });
-    } else {
-        rows.forEach(loadRow);
+        const data = await response.json();
+        if (!response.ok || !Array.isArray(data.movies)) {
+            throw new Error(data.error || "Unable to load CineMax Collection.");
+        }
+
+        const movies = register(data.movies.map(movie => ({
+            ...movie,
+            id: String(movie.id),
+            rating: Number(movie.rating || 0),
+            genres: Array.isArray(movie.genres) ? movie.genres : [],
+            cast: Array.isArray(movie.cast) ? movie.cast : [],
+            poster: movie.poster || "",
+            backdrop: movie.backdrop || movie.poster || "",
+            backdropSmall: movie.backdropSmall || movie.poster || "",
+            description: movie.description || "No description available.",
+            mediaType: "movie"
+        })));
+
+        const popular = movies.filter(movie => Number(movie.rating) > 0)
+            .sort((first, second) => Number(second.rating) - Number(first.rating));
+        renderBackdropRow("popular-movies", popular,
+            "No rated movies have been added to the CineMax Collection yet.");
+        renderBackdropRow("horror-movies",
+            movies.filter(movie => movie.genres.some(genre => String(genre).toLowerCase() === "horror")),
+            "No horror movies have been added to the CineMax Collection yet.");
+        renderBackdropRow("comedy-movies",
+            movies.filter(movie => movie.genres.some(genre => String(genre).toLowerCase() === "comedy")),
+            "No comedy movies have been added to the CineMax Collection yet.");
+        refreshIcons();
+    } catch (error) {
+        console.error("Unable to load movie collection rows:", error);
+        catalogIds.forEach(id => renderBackdropRow(
+            id,
+            [],
+            "CineMax Collection could not be loaded."
+        ));
     }
-    refreshIcons();
 }
+
 const catalogTitles = {
     "new-releases": "New Releases",
     "top-rated-movies": "Top Rated / Critically Acclaimed Movies",
@@ -3142,30 +3172,30 @@ if (!adminMode) {
     });
 }
 watchSections();
-
 showHeroSkeleton();
 
 const hasHomeMovieRows = $("trending") && $("rank");
-
 if (hasHomeMovieRows) {
     const cachedHome = readHomeCache();
-
     if (cachedHome) {
-        // Show the last known real data immediately, then refresh in the background.
         tmdbTrending = register(cachedHome.trending);
         tmdbTopRated = register(cachedHome.topRated);
-
         setHero(tmdbTrending);
     }
-
     renderTrending();
     renderTopRated();
-}
-
-refreshIcons();
-
-if (hasHomeMovieRows) {
     loadTMDB();
 } else if ($("popular-movies")) {
     loadMoviesCatalog();
 }
+
+refreshIcons();
+
+
+
+
+
+
+
+
+loadAdminMovies();

@@ -46,7 +46,7 @@ async function requestAdminMovies(method = "GET", payload = null) {
     }
 
     if (!response.ok || !data.success) {
-        throw new Error(data.error || "Unable to update the movie collection.");
+        throw new Error(data.error || "Unable to update the movie catalog.");
     }
 
     return data;
@@ -171,7 +171,7 @@ function setAddMoviePanelOpen(isOpen) {
     adminCatalogPanel.hidden = isOpen;
     showAddMovieIcon.hidden = isOpen;
     showAddMovieButton.setAttribute("aria-expanded", String(isOpen));
-    showAddMovieLabel.textContent = isOpen ? "Movie Collection" : "Add Movie";
+        showAddMovieLabel.textContent = isOpen ? "Movie Catalog" : "Add Movie";
 
     if (isOpen) {
         adminStatus.textContent = "";
@@ -204,7 +204,7 @@ adminMovieForm.addEventListener("submit", async event => {
         adminMovieForm.reset();
         await loadAdminMovies();
         setAddMoviePanelOpen(false);
-        adminStatus.textContent = "Movie added to the CineMax Collection.";
+        adminStatus.textContent = "Movie added to the CineMax catalog.";
     } catch (error) {
         adminStatus.textContent = error.message;
     }
@@ -222,7 +222,7 @@ adminMovieList.addEventListener("click", async event => {
             id: button.dataset.removeAdminMovie
         });
         await loadAdminMovies();
-        adminStatus.textContent = "Movie removed from the CineMax Collection.";
+        adminStatus.textContent = "Movie removed from the CineMax catalog.";
     } catch (error) {
         adminStatus.textContent = error.message;
         button.disabled = false;
@@ -299,7 +299,7 @@ tmdbSearchResults.addEventListener("click", async event => {
             .join("\n");
         adminMovieForm.elements.description.value = movie.description;
 
-        adminStatus.textContent = "TMDB details loaded. Add a YouTube link if available, then add to the collection.";
+        adminStatus.textContent = "TMDB details loaded. Add a YouTube trailer link if available, then add the movie to the catalog.";
         tmdbSearchStatus.textContent = "Details loaded into the movie form.";
         adminMovieForm.elements.youtube_url.focus();
     } catch (error) {
