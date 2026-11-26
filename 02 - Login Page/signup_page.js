@@ -1,4 +1,3 @@
-
 document.addEventListener("DOMContentLoaded", () => {
     const signupForm = document.getElementById("signup-form");
 
@@ -198,4 +197,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Initial state
     updatePasswordStrength();
+
+    // Errors sent back by signup.php (?error=...)
+    const serverErrors = {
+        missing: "Please complete all fields.",
+        invalid_email: "Please enter a valid email address.",
+        weak_password: "Your password must meet all five requirements.",
+        mismatch: "Passwords do not match.",
+        username_taken: "That username is already taken. Please choose another.",
+        email_taken: "That email is already registered. Try logging in instead.",
+        server: "Something went wrong on our side. Please try again."
+    };
+
+    const errorCode = new URLSearchParams(window.location.search).get("error");
+
+    if (errorCode && serverErrors[errorCode]) {
+        signupError.textContent = serverErrors[errorCode];
+
+        const focusTarget = {
+            username_taken: "username",
+            email_taken: "email",
+            invalid_email: "email"
+        }[errorCode];
+
+        if (focusTarget) {
+            document.getElementById(focusTarget)?.focus();
+        }
+    }
 });

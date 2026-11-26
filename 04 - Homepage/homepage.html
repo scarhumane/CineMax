@@ -8,9 +8,22 @@
 
     <title>CineMax — Home</title>
 
+    <script>
+    try {
+        var c = JSON.parse(localStorage.getItem("cinemax-home-cache-v2"));
+        var url = c && c.trending && c.trending[0] && c.trending[0].backdrop;
+        if (url) {
+            var l = document.createElement("link");
+            l.rel = "preload"; l.as = "image"; l.href = url;
+            l.setAttribute("fetchpriority", "high");
+            document.head.appendChild(l);
+        }
+    } catch (e) {}
+    </script>
+
     <link rel="stylesheet" href="homepage.css">
 
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@latest" defer></script>
     <script src="homepage.js" defer></script>
     <script src="profile_menu.js" defer></script>
 </head>

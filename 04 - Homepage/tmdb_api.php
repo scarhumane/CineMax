@@ -18,24 +18,7 @@ function tmdbCacheDuration(string $endpoint): int
         return 300; // 5 minutes
     }
 
-    if (str_starts_with($endpoint, "/movie/") ||
-        str_starts_with($endpoint, "/person/")) {
-        return 21600; // 6 hours
-    }
-
-    if ($endpoint === "/trending/movie/week") {
-        return 900; // 15 minutes
-    }
-
-    if (
-        $endpoint === "/movie/popular" ||
-        $endpoint === "/movie/top_rated" ||
-        $endpoint === "/discover/movie"
-    ) {
-        return 1800; // 30 minutes
-    }
-
-    return 900;
+    return 21600;
 }
 
 function tmdbReadCache(string $cacheFile, int $duration): ?array
@@ -166,7 +149,9 @@ function tmdbRequest(string $endpoint, array $parameters = []): array
         curl_setopt_array($handle, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_CONNECTTIMEOUT => 5,
-            CURLOPT_TIMEOUT => 15,
+            CURLOPT_TIMEOUT => 10,
+            // Avoids slow IPv6 lookups on some Windows/XAMPP setups.
+            CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
             CURLOPT_ENCODING => "",
             CURLOPT_HTTPHEADER => [
                 "Accept: application/json"
@@ -193,7 +178,7 @@ function tmdbRequest(string $endpoint, array $parameters = []): array
         $context = stream_context_create([
             "http" => [
                 "method" => "GET",
-                "timeout" => 15,
+                "timeout" => 10,
                 "ignore_errors" => true,
                 "follow_location" => 0,
                 "header" => "Accept: application/json"

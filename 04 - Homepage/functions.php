@@ -1,4 +1,3 @@
-
 <?php
 
 require_once __DIR__ . "/profile_menu.php";
@@ -77,6 +76,25 @@ function first_letter(string $name): string
 }
 
 
+/* the visitor must be logged in AND have chosen a plan.*/
+function require_subscription(): void
+{
+    start_session();
+
+    if (($_SESSION["logged_in"] ?? false) !== true) {
+        header("Location: ../02 - Login Page/login_page.html");
+        exit;
+    }
+
+    $plan = $_SESSION["subscription_plan"] ?? "";
+
+    if (!is_string($plan) || trim($plan) === "") {
+        header("Location: ../02 - Login Page/subscription_page.html");
+        exit;
+    }
+}
+
+
 function render_homepage(): void
 {
     render_page("homepage.html");
@@ -123,4 +141,3 @@ function render_page(string $filename): void
 
     echo $html;
 }
-

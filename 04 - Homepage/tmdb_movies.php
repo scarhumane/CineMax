@@ -2,12 +2,23 @@
 
 require_once __DIR__ . "/tmdb_api.php";
 
+if (session_status() === PHP_SESSION_ACTIVE) {
+    session_write_close();
+}
+
 header("Content-Type: application/json; charset=utf-8");
-header("Cache-Control: no-store");
 
 function sendJson(array $payload, int $status = 200): void
 {
     http_response_code($status);
+
+    // TMDB data is not personal, so the browser may reuse successful
+    // responses for a few minutes. Errors are never cached.
+    header(
+        "Cache-Control: " . (
+            $status === 200 ? "private, max-age=600" : "no-store"
+        )
+    );
 
     try {
         echo json_encode(
@@ -22,6 +33,7 @@ function sendJson(array $payload, int $status = 200): void
             "Unable to encode TMDB response: " . $error->getMessage()
         );
 
+        header("Cache-Control: no-store");
         http_response_code(500);
         echo '{"error":"Unable to encode the movie service response."}';
     }
@@ -190,6 +202,28 @@ switch ($type) {
                 ? ($providerData["results"]["PH"] ?? null)
                 : null;
         }
+
+        break;
+
+    case "videos":
+        if ($movieId === false || $movieId <= 0) {
+            sendJson(
+                ["error" => "A valid movie ID is required."],
+                400
+            );
+            exit;
+        }
+
+        $details = getMovieDetails($movieId);
+
+        $result = isset($details["error"])
+            ? $details
+            : [
+                "id" => $details["id"] ?? $movieId,
+                "videos" => [
+                    "results" => $details["videos"]["results"] ?? []
+                ]
+            ];
 
         break;
 

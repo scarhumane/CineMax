@@ -1,5 +1,18 @@
-
 <?php
+
+// Start session before using $_SESSION
+session_start();
+
+// Send the visitor back to the form with an error code
+function signupFail(string $code, string $logMessage = ""): void
+{
+    if ($logMessage !== "") {
+        error_log("CineMax signup: " . $logMessage);
+    }
+
+    header("Location: signup_page.html?error=" . urlencode($code));
+    exit;
+}
 
 $usersFile = __DIR__ . '/../03 - Data/users.json';
 
@@ -22,12 +35,12 @@ if (
     $password === "" ||
     $confirmPassword === ""
 ) {
-    exit("Please complete all fields.");
+    signupFail("missing");
 }
 
 // Validate email
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    exit("Please enter a valid email address.");
+    signupFail("invalid_email");
 }
 
 // Validate all five password requirements
@@ -39,21 +52,25 @@ $passwordValid =
     preg_match('/[!@#$%]/', $password);
 
 if (!$passwordValid) {
-    exit("Password must meet all five requirements: at least 8 characters, one lowercase letter, one uppercase letter, one number, and one special character (! @ # $ %).");
+    signupFail("weak_password");
 }
 
 // Confirm passwords match
 if ($password !== $confirmPassword) {
-    exit("Passwords do not match.");
+    signupFail("mismatch");
 }
 
 // Check if JSON file exists
 if (!file_exists($usersFile)) {
-    exit("User data file not found.");
+    signupFail("server", "users.json not found");
 }
 
 // Read JSON data
 $jsonData = file_get_contents($usersFile);
+
+if ($jsonData === false) {
+    signupFail("server", "unable to read users.json");
+}
 
 $data = json_decode($jsonData, true);
 
@@ -63,7 +80,7 @@ if (
     !isset($data["users"]) ||
     !is_array($data["users"])
 ) {
-    exit("Unable to read user data.");
+    signupFail("server", "users.json has an invalid structure");
 }
 
 // Check for existing username and email
@@ -73,11 +90,11 @@ foreach ($data["users"] as $user) {
     $existingEmail = $user["email"] ?? "";
 
     if (strtolower($existingUsername) === strtolower($username)) {
-        exit("Username already exists.");
+        signupFail("username_taken");
     }
 
     if (strtolower($existingEmail) === strtolower($email)) {
-        exit("Email is already registered.");
+        signupFail("email_taken");
     }
 }
 
@@ -101,16 +118,20 @@ $data["users"][] = $newUser;
 $updatedData = json_encode($data, JSON_PRETTY_PRINT);
 
 if ($updatedData === false) {
-    exit("Unable to process user data.");
+    signupFail("server", "json_encode failed");
 }
 
 // Save updated JSON data
 if (file_put_contents($usersFile, $updatedData, LOCK_EX) === false) {
-    exit("Unable to save your account.");
+    signupFail("server", "unable to write users.json");
 }
 
-// Redirect after successful registration
-header("Location: login_page.html?registered=success");
+// Store pending signup information in session
+$_SESSION["pending_signup_email"] = $email;
+$_SESSION["pending_signup_username"] = $username;
+
+// Redirect to subscription selection
+header("Location: subscription_page.html?registered=success");
 exit;
 
 ?>

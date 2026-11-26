@@ -1,82 +1,177 @@
-
 <?php
 
 session_start();
 
-// 1. CHECK LOGIN
-if (
-    !isset($_SESSION["logged_in"]) ||
-    $_SESSION["logged_in"] !== true ||
-    empty($_SESSION["email"])
-) {
-    header("Location: login_page.html");
-    exit;
+// FILE LOCATION
+
+$usersFile = __DIR__ . '/../03 - Data/users.json';
+
+// GET SESSION DETAILS
+
+$email = $_SESSION["pending_signup_email"] ?? "";
+
+if ($email === "" && !empty($_SESSION["email"])) {
+    $email = $_SESSION["email"];
 }
 
-// 2. ONLY ACCEPT POST REQUESTS
-if ($_SERVER["REQUEST_METHOD"] !== "POST") {
-    header("Location: subscription_page.html");
-    exit;
-}
-
-// 3. GET SELECTED PLAN AND BILLING PERIOD
 $plan = $_SESSION["pending_plan"] ?? "";
 $billingPeriod = $_SESSION["pending_billing_period"] ?? "";
 
-$allowedPlans = [
-    "CineMax Basic",
-    "CineMax Plus",
-    "CineMax Ultimate"
-];
+$wasLoggedIn = isset($_SESSION["logged_in"]) &&
+               $_SESSION["logged_in"] === true;
 
-$isFreePlan = ($plan === "CineMax Basic");
+$errorMessage = "";
 
-// Validate plan
-if (!in_array($plan, $allowedPlans, true)) {
+// ERROR DISPLAY
+
+function showError($message)
+{
+    $safeMessage = htmlspecialchars($message, ENT_QUOTES, 'UTF-8');
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscription Error | CineMax</title>
+    <link rel="stylesheet" href="login_page.css">
+</head>
+
+<body class="cinema-login-page payment-error-page">
+
+    <div class="cinema-login-background"></div>
+    <div class="cinema-login-overlay"></div>
+    <div class="cinema-login-light"></div>
+    <div class="cinema-login-grain"></div>
+
+    <div class="cinema-login-container">
+
+        <header class="cinema-login-header">
+            <a href="landing_page.html" class="cinema-login-logo">CINEMAX</a>
+
+            <nav class="cinema-login-nav">
+                <a href="landing_page.html">Home</a>
+                <a href="signup_page.html">Sign Up</a>
+                <a href="subscription_page.html" class="cinema-login-subscribe">Subscribe &#8599;</a>
+            </nav>
+        </header>
+
+        <main class="cinema-login-main">
+            <section class="cinema-login-card">
+
+                <div class="cinema-login-ticket-line"></div>
+
+                <div class="cinema-login-admit">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4z"></path><path d="M13 6v12" stroke-dasharray="2 3"></path></svg>
+                    SUBSCRIPTION
+                </div>
+
+                <div class="cinema-login-heading">
+                    <h1>Subscription<br><em>error.</em></h1>
+                    <p>We couldn't finish setting up your membership.</p>
+                </div>
+
+                <p class="login-error"><?php echo $safeMessage; ?></p>
+
+                <a href="subscription_page.html" class="cinema-login-button">Return to Subscription Plans</a>
+
+                <div class="cinema-login-divider">
+                    <span></span>
+                    <p>YOUR NEXT FILM AWAITS</p>
+                    <span></span>
+                </div>
+
+                <p class="cinema-login-signup">Need to sign in again?<a href="login_page.html">Log In</a></p>
+
+            </section>
+        </main>
+
+        <footer class="cinema-login-footer">
+            <p>&copy; 2026 CineMax. All rights reserved.</p>
+        </footer>
+
+    </div>
+
+</body>
+</html>
+<?php
+    exit;
+}
+
+// VALIDATE SUBSCRIPTION DETAILS
+
+if ($email === "" || $plan === "" || $billingPeriod === "") {
+    showError(
+        "Your subscription information could not be retrieved. " .
+        "Please return to the subscription page and select your plan again. " .
+        "Make sure you use the same browser address throughout the checkout process."
+    );
+}
+
+// ACCEPT POST REQUESTS ONLY
+
+if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+    showError("Invalid payment request.");
+}
+
+// VALIDATE PLAN
+
+// select_plan.php and billing_page.php store the full "CineMax ..." names.
+// Older short names are accepted and converted so both always work.
+if (in_array($plan, ["Basic", "Plus", "Ultimate"], true)) {
+    $plan = "CineMax " . $plan;
+}
+
+$validPlans = ["CineMax Basic", "CineMax Plus", "CineMax Ultimate"];
+
+if (!in_array($plan, $validPlans, true)) {
     showError("Invalid subscription plan.");
 }
 
-// Validate billing period
-if (
-    ($isFreePlan && $billingPeriod !== "forever") ||
-    (!$isFreePlan && !in_array($billingPeriod, ["monthly", "yearly"], true))
-) {
+// VALIDATE BILLING PERIOD
+
+$validBillingPeriods = ["monthly", "yearly", "forever"];
+
+if (!in_array($billingPeriod, $validBillingPeriods, true)) {
     showError("Invalid billing period.");
 }
 
-// 4. VALIDATE PAYMENT DETAILS
-if ($isFreePlan) {
+// Basic plan is always free
+if ($plan === "CineMax Basic") {
+    $billingPeriod = "forever";
+}
 
-    // Basic is free
-    $paymentMethod = "Free";
-    $customerName = "";
-    $paymentReference = "";
+// Paid plans must be billed monthly or yearly
+if ($plan !== "CineMax Basic" && $billingPeriod === "forever") {
+    showError("Invalid billing period for this plan.");
+}
 
-} else {
+// GET PAYMENT DETAILS
 
-    $paymentMethod = $_POST["payment_method"] ?? "";
-    $customerName = trim($_POST["customer_name"] ?? "");
-    $paymentReference = trim($_POST["payment_reference"] ?? "");
+$paymentMethod = trim($_POST["payment_method"] ?? "");
+$customerName = trim($_POST["customer_name"] ?? "");
+$paymentReference = trim($_POST["payment_reference"] ?? "");
 
-    $allowedMethods = [
-        "Card",
-        "GCash",
-        "Maya"
-    ];
+// VALIDATE PAYMENT DETAILS
 
-    if (
-        !in_array($paymentMethod, $allowedMethods, true) ||
-        $customerName === "" ||
-        $paymentReference === "" ||
-        strlen($customerName) > 100 ||
-        strlen($paymentReference) > 50
-    ) {
-        showError("Please provide valid payment details.");
+if ($plan !== "CineMax Basic") {
+
+    $validPaymentMethods = ["Card", "GCash", "Maya"];
+
+    if (!in_array($paymentMethod, $validPaymentMethods, true)) {
+        showError("Please select a valid payment method.");
+    }
+
+    if ($customerName === "") {
+        showError("Please enter the account holder's name.");
+    }
+
+    if ($paymentReference === "") {
+        showError("Please enter your payment reference.");
     }
 }
 
-// 5. LOAD USERS JSON
-$usersFile = __DIR__ . '/../03 - Data/users.json';
+// READ USERS JSON
 
 if (!file_exists($usersFile)) {
     showError("The user data file could not be found.");
@@ -90,125 +185,92 @@ if ($jsonData === false) {
 
 $data = json_decode($jsonData, true);
 
-if (
-    !is_array($data) ||
-    !isset($data["users"]) ||
-    !is_array($data["users"])
-) {
+if (!is_array($data) || !isset($data["users"]) || !is_array($data["users"])) {
     showError("The user data file contains invalid information.");
 }
 
-// 6. FIND THE LOGGED-IN USER
-$loggedInEmail = strtolower(trim($_SESSION["email"]));
-$userFound = false;
+// FIND USER ACCOUNT
 
-foreach ($data["users"] as &$user) {
+$userIndex = null;
+
+foreach ($data["users"] as $index => $user) {
 
     if (
         isset($user["email"]) &&
-        strtolower(trim($user["email"])) === $loggedInEmail
+        strtolower(trim($user["email"])) === strtolower(trim($email))
     ) {
-
-        // 7. SAVE SUBSCRIPTION INFORMATION
-        $user["subscription_plan"] = $plan;
-        $user["billing_period"] = $billingPeriod;
-        $user["subscription_status"] = "active";
-
-        // Save payment information for paid plans only
-        if (!$isFreePlan) {
-
-            $user["payment_method"] = $paymentMethod;
-            $user["payment_reference"] = $paymentReference;
-
-            $user["customer_name"] = $customerName;
-
-        } else {
-
-            unset(
-                $user["payment_method"],
-                $user["payment_reference"],
-                $user["customer_name"]
-            );
-
-        }
-
-        $userFound = true;
+        $userIndex = $index;
         break;
     }
 }
 
-unset($user);
-
-if (!$userFound) {
-    showError("Your account could not be found.");
+if ($userIndex === null) {
+    showError("Your account could not be found. Please log in and try again.");
 }
 
-// 8. SAVE UPDATED JSON
+// SAVE SUBSCRIPTION DETAILS
+
+$data["users"][$userIndex]["subscription_plan"] = $plan;
+$data["users"][$userIndex]["billing_period"] = $billingPeriod;
+$data["users"][$userIndex]["subscription_status"] = "active";
+
+// Save payment information for paid plans
+if ($plan !== "CineMax Basic") {
+
+    $data["users"][$userIndex]["payment_method"] = $paymentMethod;
+    $data["users"][$userIndex]["customer_name"] = $customerName;
+    $data["users"][$userIndex]["payment_reference"] = $paymentReference;
+
+} else {
+
+    unset($data["users"][$userIndex]["payment_method"]);
+    unset($data["users"][$userIndex]["customer_name"]);
+    unset($data["users"][$userIndex]["payment_reference"]);
+}
+
+// WRITE UPDATED USER DATA
+
 $updatedJson = json_encode(
     $data,
-    JSON_PRETTY_PRINT |
-    JSON_UNESCAPED_SLASHES |
-    JSON_UNESCAPED_UNICODE
+    JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES
 );
 
 if ($updatedJson === false) {
-    showError("Unable to prepare subscription data.");
+    showError("Unable to process your subscription information.");
 }
 
-if (
-    file_put_contents(
-        $usersFile,
-        $updatedJson,
-        LOCK_EX
-    ) === false
-) {
-    showError("Unable to save your subscription.");
+if (file_put_contents($usersFile, $updatedJson, LOCK_EX) === false) {
+    showError("Unable to save your subscription. Please try again.");
 }
 
-// 9. UPDATE PHP SESSION
+// UPDATE SESSION
+
+$_SESSION["has_subscription"] = true;
 $_SESSION["subscription_plan"] = $plan;
 $_SESSION["billing_period"] = $billingPeriod;
 $_SESSION["subscription_status"] = "active";
-$_SESSION["has_subscription"] = true;
 
-// Clear pending checkout information
+// Keep the user's email available for login/session checks
+$_SESSION["email"] = $email;
+
+// CLEAR TEMPORARY SUBSCRIPTION DATA
+
 unset($_SESSION["pending_plan"]);
 unset($_SESSION["pending_billing_period"]);
+unset($_SESSION["pending_signup_email"]);
+unset($_SESSION["pending_signup_username"]);
 
-// 10. REDIRECT TO HOMEPAGE
-header("Location: ../04 - Homepage/homepage.php");
-exit;
+// REDIRECT AFTER SUCCESSFUL ACTIVATION
 
+if ($wasLoggedIn) {
 
-// ERROR DISPLAY
-function showError($message) {
+    // Existing logged-in account
+    header("Location: ../04 - Homepage/homepage.php");
+    exit;
 
-    http_response_code(400);
+} else {
 
-    $safeMessage = htmlspecialchars(
-        $message,
-        ENT_QUOTES,
-        "UTF-8"
-    );
-
-    echo "<!DOCTYPE html>";
-    echo "<html lang='en'>";
-    echo "<head>";
-    echo "<meta charset='UTF-8'>";
-    echo "<meta name='viewport' content='width=device-width, initial-scale=1.0'>";
-    echo "<title>Checkout Error | CineMax</title>";
-    echo "</head>";
-
-    echo "<body style='background:#050a14;color:#d6e9f5;font-family:Arial,sans-serif;padding:60px 20px;text-align:center;'>";
-
-    echo "<h1>Something went wrong</h1>";
-    echo "<p>" . $safeMessage . "</p>";
-    echo "<a href='billing_page.php' style='color:#5cc3dc;'>Return to Checkout</a>";
-
-    echo "</body>";
-    echo "</html>";
-
+    // Newly registered account
+    header("Location: login_page.html?subscription=success");
     exit;
 }
-
-?>

@@ -25,7 +25,7 @@ function escapeHTML(value) {
 const formatRating = rating => {
     const value = Number(rating || 0);
     return Number.isFinite(value) ? value.toFixed(1) : "N/A";
-};;
+};
 
 
 /* ACCOUNT WATCHLIST - PHP JSON STORAGE */
@@ -330,10 +330,9 @@ async function fetchTMDB(type, {
     if (from) parameters.set("from", from);
     if (to) parameters.set("to", to);
 
-    const response = await fetch(
-        `tmdb_movies.php?${parameters.toString()}`,
-        { cache: "no-store" }
-    );
+    // tmdb_movies.php sends its own Cache-Control header, so the browser can
+    // reuse successful responses for a few minutes.
+    const response = await fetch(`tmdb_movies.php?${parameters.toString()}`);
 
     let data;
 
@@ -1743,63 +1742,150 @@ function fallbackHero() {
     buildHero();
 }
 
-async function loadHeroTrailerData(movies) {
-    const results = await Promise.allSettled(movies.map(async movie => {
-        // Sample fallback IDs are slugs, not TMDB IDs.
-        if (!/^\d+$/.test(String(movie.id))) {
-            movie.heroTrailerCandidates = [];
-            return movie;
+/* HERO TRAILER KEYS
+   Kept in memory and in localStorage so repeat visits need no requests. */
+
+const heroTrailerStore = new Map();   // movie id -> trailer candidates
+const HERO_TRAILER_CACHE_KEY = "cinemax-hero-trailers-v1";
+const HERO_TRAILER_CACHE_MAX_AGE = 3 * 24 * 60 * 60 * 1000; // 3 days
+let heroBuildKey = "";
+
+function heroTrailers(movie) {
+    return heroTrailerStore.get(String(movie?.id)) || [];
+}
+
+function readHeroTrailerCache() {
+    try {
+        const cache = JSON.parse(localStorage.getItem(HERO_TRAILER_CACHE_KEY));
+
+        if (!cache || Date.now() - cache.time > HERO_TRAILER_CACHE_MAX_AGE) {
+            return {};
         }
 
-        try {
-            const details = await fetchTMDB(
-                movie.mediaType === "tv" ? "tv" : "movie",
-                { id: movie.id }
-            );
+        return cache.items || {};
+    } catch {
+        return {};
+    }
+}
 
-            movie.heroTrailerCandidates = getTrailerCandidates(
-                details.videos?.results
-            );
-        } catch (error) {
-            console.warn(`Unable to load trailer for ${movie.title}:`, error);
-            movie.heroTrailerCandidates = [];
+function writeHeroTrailerCache(movies) {
+    const items = {};
+
+    movies.forEach(movie => {
+        const candidates = heroTrailerStore.get(String(movie.id));
+
+        if (Array.isArray(candidates)) {
+            items[String(movie.id)] = candidates;
         }
+    });
 
-        return movie;
-    }));
+    try {
+        localStorage.setItem(
+            HERO_TRAILER_CACHE_KEY,
+            JSON.stringify({ time: Date.now(), items })
+        );
+    } catch {}
+}
 
-    return results.map((result, index) => {
-        if (result.status === "fulfilled") return result.value;
-        movies[index].heroTrailerCandidates = [];
-        return movies[index];
+// Instant (no network) when the keys are already cached.
+function hydrateHeroTrailers(movies) {
+    const cached = readHeroTrailerCache();
+
+    movies.forEach(movie => {
+        const id = String(movie.id);
+
+        if (!heroTrailerStore.has(id) && Array.isArray(cached[id])) {
+            heroTrailerStore.set(id, cached[id]);
+        }
     });
 }
 
-// Only rebuilds the hero carousel when the featured movies actually changed.
+async function loadHeroTrailerData(movies, onLoaded = () => {}) {
+    const load = async movie => {
+        const id = String(movie.id);
+
+        if (heroTrailerStore.has(id)) return;
+
+        // Sample fallback IDs are slugs, not TMDB IDs.
+        if (!/^\d+$/.test(id)) {
+            heroTrailerStore.set(id, []);
+            return;
+        }
+
+        try {
+            // "videos" is the lightweight endpoint: trailers only.
+            const details = await fetchTMDB(
+                movie.mediaType === "tv" ? "tv" : "videos",
+                { id: movie.id }
+            );
+
+            heroTrailerStore.set(
+                id,
+                getTrailerCandidates(details.videos?.results)
+            );
+
+            writeHeroTrailerCache(movies);
+            onLoaded();
+        } catch (error) {
+            console.warn(`Unable to load trailer for ${movie.title}:`, error);
+        }
+    };
+
+    // The first slide gets the bandwidth first.
+    await load(movies[0]);
+    await Promise.allSettled(movies.slice(1).map(load));
+}
+
+// Enables Play buttons and starts the on-screen slide's video once keys arrive.
+function applyHeroTrailers(picks) {
+    if (heroMovies !== picks) return;   // the hero was rebuilt in the meantime
+
+    const hero = $("cinemaShowcase");
+    if (!hero) return;
+
+    const slides = hero.querySelectorAll(".hero-slide");
+
+    picks.forEach((movie, index) => {
+        const button = slides[index]?.querySelector(".hero-play-button");
+
+        if (button && heroTrailers(movie).length) {
+            button.disabled = false;
+            button.removeAttribute("title");
+        }
+    });
+
+    if (
+        heroTrailers(picks[heroIndex]).length &&
+        !heroBackgroundPlayers.has(heroIndex)
+    ) {
+        mountHeroBackgroundVideo(heroIndex);
+    }
+}
+
+// Draws the hero right after the first backdrop is ready. Trailer data loads
+// in the background and is applied to the slides when it arrives.
 async function setHero(movies) {
     const picks = movies.slice(0, 5);
 
     if (!picks.length) return false;
 
-    const same =
-        picks.length === heroMovies.length &&
-        picks.every((movie, index) => movie.id === heroMovies[index].id);
+    const key = picks.map(movie => movie.id).join(",");
 
-    if (same && heroMovies.every(movie => Array.isArray(movie.heroTrailerCandidates))) {
-        return true;
+    if (key === heroBuildKey) return true;
+    heroBuildKey = key;
+
+    if (picks[0].backdrop) {
+        await preloadHeroImage(picks[0].backdrop);
     }
 
-    const firstMovie = picks[0];
-    if (firstMovie.backdrop) {
-        await preloadHeroImage(firstMovie.backdrop);
-    }
+    // A newer setHero() call took over while the image was loading.
+    if (key !== heroBuildKey) return true;
 
-    // TMDB's trending list does not include video keys, so load the video
-    // metadata for each featured title before rendering the carousel.
-    await loadHeroTrailerData(picks);
-
+    hydrateHeroTrailers(picks);
     heroMovies = picks;
     buildHero();
+
+    loadHeroTrailerData(picks, () => applyHeroTrailers(picks));
 
     return true;
 }
@@ -1869,7 +1955,7 @@ async function mountHeroBackgroundVideo(index) {
     const slide = hero?.querySelectorAll(".hero-slide")[index];
     const movie = heroMovies[index];
     const videoContainer = slide?.querySelector(".hero-video-background");
-    const candidate = movie?.heroTrailerCandidates?.[0];
+    const candidate = heroTrailers(movie)[0];
 
     if (!slide || !videoContainer) return;
 
@@ -1988,7 +2074,7 @@ async function mountHeroBackgroundVideo(index) {
 }
 
 function openHeroTrailer(movie) {
-    const candidate = movie?.heroTrailerCandidates?.[0];
+    const candidate = heroTrailers(movie)[0];
 
     if (!candidate?.key) {
         return;
@@ -2061,7 +2147,7 @@ function buildHero() {
     heroSlideRequest++;
 
     hero.innerHTML = heroMovies.map((movie, index) => {
-        const hasTrailer = Boolean(movie.heroTrailerCandidates?.length);
+        const hasTrailer = Boolean(heroTrailers(movie).length);
         return `
             <div class="hero-slide ${index === 0 ? "active" : ""}"
                  ${movie.backdrop
@@ -2611,7 +2697,7 @@ document.addEventListener("click", event => {
     const playHeroButton = target.closest("[data-play-hero-trailer]");
     if (playHeroButton) {
         const movie = getMovie(playHeroButton.dataset.playHeroTrailer);
-        if (movie?.heroTrailerCandidates?.length) {
+        if (heroTrailers(movie).length) {
             event.preventDefault();
             openHeroTrailer(movie);
         }
@@ -2776,9 +2862,25 @@ function watchSections() {
 async function loadTMDB() {
     console.log("Starting TMDB homepage data load...");
 
+    const trendingRequest = fetchTMDB("trending");
+    const topRatedRequest = fetchTMDB("top-rated");
+
+    // Start the hero as soon as trending arrives, not after top rated too.
+    trendingRequest
+        .then(data => {
+            const results = data?.results;
+
+            if (!Array.isArray(results) || heroMovies.length) return;
+
+            return setHero(
+                register(results.map(normalizeTMDBMovie).filter(Boolean))
+            );
+        })
+        .catch(() => {});
+
     const [trendingResult, topRatedResult] = await Promise.allSettled([
-        fetchTMDB("trending"),
-        fetchTMDB("top-rated")
+        trendingRequest,
+        topRatedRequest
     ]);
 
     // TRENDING MOVIES

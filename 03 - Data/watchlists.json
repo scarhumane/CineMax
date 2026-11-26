@@ -1,3 +1,166 @@
 {
-    "ultimate": []
+    "ultimate": [],
+    "basic": [
+        {
+            "id": "1300968",
+            "title": "The Hunger Games: Sunrise on the Reaping",
+            "year": "2026",
+            "rating": 7.796,
+            "genres": [
+                "Science Fiction",
+                "Action",
+                "Adventure"
+            ],
+            "director": "Francis Lawrence",
+            "cast": [
+                "Joseph Zada",
+                "Jesse Plemons",
+                "Ralph Fiennes",
+                "Glenn Close",
+                "Mckenna Grace"
+            ],
+            "poster": "https://image.tmdb.org/t/p/w500/5ffVOGY3x3Sn3jovzvycJeizpks.jpg",
+            "backdrop": "https://image.tmdb.org/t/p/original/aqFZcr2dxSZ2UwWSo1WC6C0rwDf.jpg",
+            "backdropSmall": "https://image.tmdb.org/t/p/w780/aqFZcr2dxSZ2UwWSo1WC6C0rwDf.jpg",
+            "description": "Return to the world of Panem 24 years before Katniss Everdeen volunteers in her sister's place, commencing on the morning of the reaping of the 50th Hunger Games, also known as the Second Quarter Quell."
+        },
+        {
+            "id": "969681",
+            "title": "Spider-Man: Brand New Day",
+            "year": "2026",
+            "rating": 8.5,
+            "genres": [
+                "Science Fiction",
+                "Action",
+                "Adventure"
+            ],
+            "director": "Destin Daniel Cretton",
+            "cast": [
+                "Tom Holland",
+                "Sadie Sink",
+                "Tramell Tillman",
+                "Zendaya",
+                "Jacob Batalon"
+            ],
+            "poster": "https://image.tmdb.org/t/p/w500/bjiS5ipwxb9JFy3XRRN4OAilSeX.jpg",
+            "backdrop": "https://image.tmdb.org/t/p/original/r08LxMJCbf1SiJIWeyH9aJmdqwC.jpg",
+            "backdropSmall": "https://image.tmdb.org/t/p/w780/r08LxMJCbf1SiJIWeyH9aJmdqwC.jpg",
+            "description": "Fighting crime full-time as Spider-Man in a world that doesn't remember him—and the pressure of seeing his old friends move on without him—sparks a change in Peter Parker he may not have the power to control. But that transformation might also be the only thing that can stop a shocking new threat to the city and those he loves - a powerful villain no one can even see."
+        },
+        {
+            "id": "10096",
+            "title": "13 Going on 30",
+            "year": "2004",
+            "rating": 6.774,
+            "genres": [
+                "Comedy",
+                "Fantasy",
+                "Romance"
+            ],
+            "director": "Gary Winick",
+            "cast": [
+                "Jennifer Garner",
+                "Mark Ruffalo",
+                "Judy Greer",
+                "Andy Serkis",
+                "Kathy Baker"
+            ],
+            "poster": "https://image.tmdb.org/t/p/w500/iNZdSIfhSCMtRILDNyhLn8UKeSG.jpg",
+            "backdrop": "https://image.tmdb.org/t/p/original/ld7UTOGzZSxIMbuYsb6eQ6QdN4h.jpg",
+            "backdropSmall": "https://image.tmdb.org/t/p/w780/ld7UTOGzZSxIMbuYsb6eQ6QdN4h.jpg",
+            "description": "After total humiliation at her thirteenth birthday party, Jenna Rink wants to just hide until she's thirty. Thanks to some magic wishing dust, Jenna's prayer has been answered. With a knockout body, a fabulous wardrobe, an athlete boyfriend, a dream job, and superstar friends, this can't be a better life. But soon Jenna realizes that adult life isn’t as easy as she hoped for."
+        },
+        {
+            "id": "105",
+            "title": "Back to the Future",
+            "year": "1985",
+            "rating": 8.332,
+            "genres": [
+                "Adventure",
+                "Comedy",
+                "Science Fiction"
+            ],
+            "director": "Robert Zemeckis",
+            "cast": [
+                "Michael J. Fox",
+                "Christopher Lloyd",
+                "Crispin Glover",
+                "Lea Thompson",
+                "Claudia Wells"
+            ],
+            "poster": "https://image.tmdb.org/t/p/w500/vN5B5WgYscRGcQpVhHl6p9DDTP0.jpg",
+            "backdrop": "https://image.tmdb.org/t/p/original/5bzPWQ2dFUl2aZKkp7ILJVVkRed.jpg",
+            "backdropSmall": "https://image.tmdb.org/t/p/w780/5bzPWQ2dFUl2aZKkp7ILJVVkRed.jpg",
+            "description": "Eighties teenager Marty McFly is accidentally sent back in time to 1955, inadvertently disrupting his parents' first meeting and attracting his mother's romantic interest. Marty must repair the damage to history by rekindling his parents' romance and - with the help of his eccentric inventor friend Doc Brown - return to 1985."
+        },
+        {
+            "id": "303857",
+            "title": "Dragon Ball Z: Resurrection 'F'",
+            "year": "2015",
+            "rating": 6.91,
+            "genres": [
+                "Action",
+                "Animation",
+                "Science Fiction"
+            ],
+            "director": "Tadayoshi Yamamuro",
+            "cast": [
+                "Masako Nozawa",
+                "Ryo Horikawa",
+                "Ryusei Nakao",
+                "Koichi Yamadera",
+                "Masakazu Morita"
+            ],
+            "poster": "https://image.tmdb.org/t/p/w500/soq3AxjALdBfdPAm8H7yuMmNL5Y.jpg",
+            "backdrop": "https://image.tmdb.org/t/p/original/usrUizny0dLNJTrrJSxsvu5V0z0.jpg",
+            "backdropSmall": "https://image.tmdb.org/t/p/w780/usrUizny0dLNJTrrJSxsvu5V0z0.jpg",
+            "description": "One peaceful day on Earth, two remnants of Frieza's army named Sorbet and Tagoma arrive searching for the Dragon Balls with the aim of reviving Frieza. They succeed, and Frieza subsequently seeks revenge on the Saiyans."
+        },
+        {
+            "id": "1465063",
+            "title": "Forgotten Island",
+            "year": "2026",
+            "rating": 8,
+            "genres": [
+                "Animation",
+                "Adventure",
+                "Fantasy",
+                "Comedy",
+                "Family"
+            ],
+            "director": "Januel Mercado",
+            "cast": [
+                "H.E.R.",
+                "Liza Soberano",
+                "Dave Franco",
+                "Jenny Slate",
+                "Manny Jacinto"
+            ],
+            "poster": "https://image.tmdb.org/t/p/w500/myd1K3gefdNAWFsGNRDdMeiK9Qg.jpg",
+            "backdrop": "https://image.tmdb.org/t/p/original/2o9FzuBzCqrDTdlHRuEVnGD2d5h.jpg",
+            "backdropSmall": "https://image.tmdb.org/t/p/w780/2o9FzuBzCqrDTdlHRuEVnGD2d5h.jpg",
+            "description": "While celebrating their last night together, high school graduates and best friends Jo and Raissa stumble upon a mysterious portal that transports them to the fantastical island of Nakali. When they discover that the memories of their entire friendship are the price for returning home, Jo and Raissa must race to find a way to leave the island before they forget each other forever."
+        },
+        {
+            "id": "259693",
+            "title": "The Conjuring 2",
+            "year": "2016",
+            "rating": 7.299,
+            "genres": [
+                "Horror"
+            ],
+            "director": "James Wan",
+            "cast": [
+                "Vera Farmiga",
+                "Patrick Wilson",
+                "Madison Wolfe",
+                "Frances O'Connor",
+                "Lauren Esposito"
+            ],
+            "poster": "https://image.tmdb.org/t/p/w500/zEqyD0SBt6HL7W9JQoWwtd5Do1T.jpg",
+            "backdrop": "https://image.tmdb.org/t/p/original/mFCS5OuhPYT79KXu5jl7RqznPR1.jpg",
+            "backdropSmall": "https://image.tmdb.org/t/p/w780/mFCS5OuhPYT79KXu5jl7RqznPR1.jpg",
+            "description": "Lorraine and Ed Warren travel to north London to help a single mother raising four children alone in a house plagued by malicious spirits."
+        }
+    ]
 }
