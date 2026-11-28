@@ -81,14 +81,10 @@ function render_homepage(): void
     render_page("homepage.html");
 }
 
-function render_movie_navigation(): string
+function render_movie_navigation(string $currentPage = "movies"): string
 {
     if (current_user_is_admin()) {
-        return '
-            <nav class="homepage-nav">
-                <a href="../06 - Admin/admin_movies.php">Manage Movies</a>
-            </nav>
-        ';
+        return '<a href="../06 - Admin/admin_movies.php">Manage Movies</a>';
     }
 
     $hasCollection = false;
@@ -98,15 +94,9 @@ function render_movie_navigation(): string
         $hasCollection = is_array($collection["movies"] ?? null) && count($collection["movies"]) > 0;
     }
 
-    return '
-        <nav class="homepage-nav">
-            <a href="homepage.php">Home</a>
-            ' . ($hasCollection ? '<a href="movies.php" class="active">Movies</a>' : '') . '
-            ' . ($hasCollection ? '<a href="genres.php">Genres</a>' : '') . '
-            ' . ($hasCollection ? '<a href="people.php">Actors</a>' : '') . '
-            <a href="watchlist.php">Watchlist</a>
-        </nav>
-    ';
+    return ($hasCollection ? '<a href="movies.php"' . ($currentPage === "movies" ? ' class="active"' : '') . '>Movies</a>' : '')
+        . ($hasCollection ? '<a href="genres.php"' . ($currentPage === "genres" ? ' class="active"' : '') . '>Genres</a>' : '')
+        . ($hasCollection ? '<a href="people.php"' . ($currentPage === "people" ? ' class="active"' : '') . '>People</a>' : '');
 }
 
 
@@ -158,7 +148,7 @@ function render_page(string $filename): void
             render_profile_menu(),
             e(admin_csrf_token()),
             current_user_is_admin() ? "true" : "false",
-            render_movie_navigation(),
+            render_movie_navigation($filename === "people.html" ? "people" : "movies"),
             date("Y")
         ],
         $html

@@ -968,6 +968,21 @@ async function openModal(movie) {
     media.innerHTML = createPoster(movie);
     body.innerHTML = modalBodyHTML(movie, null);
 
+    const savedTrailerUrl = getYouTubeEmbedURL(movie.youtube_url);
+    if (savedTrailerUrl) {
+        panel.classList.add("has-trailer");
+        media.innerHTML = `
+            <div class="modal-trailer-player">
+                <iframe
+                    src="${escapeHTML(savedTrailerUrl)}?rel=0&modestbranding=1&playsinline=1"
+                    title="${escapeHTML(movie.title)} trailer"
+                    allow="accelerometer; encrypted-media; picture-in-picture; fullscreen"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    allowfullscreen>
+                </iframe>
+            </div>
+        `;
+    }
 
     body.querySelector("[data-play-movie]")?.addEventListener("click", () => {
         const embedURL = getYouTubeEmbedURL(movie.youtube_url);
@@ -1026,7 +1041,9 @@ async function openModal(movie) {
             );
         }
 
-        const trailerKey = getTrailerKey(details.videos?.results);
+        const savedTrailer = getYouTubeEmbedURL(movie.youtube_url);
+        const savedTrailerKey = savedTrailer.match(/\/embed\/([A-Za-z0-9_-]{11})$/)?.[1];
+        const trailerKey = savedTrailerKey || getTrailerKey(details.videos?.results);
 
         if (trailerKey) {
             panel.classList.add("has-trailer");

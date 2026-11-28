@@ -1399,6 +1399,24 @@ function getTrailerCandidates(videos) {
         .slice(0, 4);
 }
 
+function getSavedTrailerCandidate(movie) {
+    if (typeof movie?.youtube_url !== "string") return null;
+
+    try {
+        const url = new URL(movie.youtube_url);
+        const match = url.protocol === "https:"
+            && url.hostname === "www.youtube-nocookie.com"
+            ? url.pathname.match(/^\/embed\/([A-Za-z0-9_-]{11})$/)
+            : null;
+
+        return match
+            ? { key: match[1], site: "YouTube", type: "Trailer", official: true }
+            : null;
+    } catch {
+        return null;
+    }
+}
+
 function destroyTrailerPlayer() {
     // Invalidates any trailer that is still being mounted.
     trailerMountId++;
@@ -1539,7 +1557,10 @@ function renderMovieDetails(movie, details) {
         </div>`;
 
     // The embedded trailer replaces the poster; the poster is the fallback.
-    const trailerCandidates = getTrailerCandidates(details.videos?.results);
+    const savedTrailer = getSavedTrailerCandidate(movie);
+    const trailerCandidates = savedTrailer
+        ? [savedTrailer]
+        : getTrailerCandidates(details.videos?.results);
 
     mountTrailer({
         media,
