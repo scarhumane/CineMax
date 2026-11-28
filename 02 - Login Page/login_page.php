@@ -78,12 +78,8 @@ foreach ($data["users"] as $user) {
             $_SESSION["logged_in"] = true;
             $_SESSION["username"] = $existingUsername;
             $_SESSION["email"] = $existingEmail;
-            $_SESSION["role"] = $user["role"] ?? "user";
 
-            // GET SUBSCRIPTION INFORMATION
             $subscriptionPlan = $user["subscription_plan"] ?? null;
-            $billingPeriod = $user["billing_period"] ?? null;
-            $subscriptionStatus = $user["subscription_status"] ?? null;
 
             // CHECK IF USER HAS SELECTED A PLAN
             if (empty($subscriptionPlan)) {

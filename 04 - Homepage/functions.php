@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . "/profile_menu.php";
+require_once __DIR__ . "/../06 - Admin/admin_auth.php";
 
 
 function start_session(): void
@@ -25,7 +26,6 @@ function current_user_name(): string
 
     return "User";
 }
-
 
 function current_user_plan(): string
 {
@@ -100,12 +100,40 @@ function render_homepage(): void
     render_page("homepage.html");
 }
 
+function render_movie_navigation(string $currentPage = "movies"): string
+{
+    if (current_user_is_admin()) {
+        return '<a href="../06 - Admin/admin_movies.php">Manage Movies</a>';
+    }
+
+    $hasCollection = false;
+    $collectionFile = dirname(__DIR__) . DIRECTORY_SEPARATOR . "03 - Data" . DIRECTORY_SEPARATOR . "admin_movies.json";
+    if (is_readable($collectionFile)) {
+        $collection = json_decode((string) file_get_contents($collectionFile), true);
+        $hasCollection = is_array($collection["movies"] ?? null) && count($collection["movies"]) > 0;
+    }
+
+    return ($hasCollection ? '<a href="movies.php"' . ($currentPage === "movies" ? ' class="active"' : '') . '>Movies</a>' : '')
+        . ($hasCollection ? '<a href="genres.php"' . ($currentPage === "genres" ? ' class="active"' : '') . '>Genres</a>' : '')
+        . ($hasCollection ? '<a href="people.php"' . ($currentPage === "people" ? ' class="active"' : '') . '>People</a>' : '');
+}
+
 
 function render_page(string $filename): void
 {
     start_session();
 
-    $file = __DIR__ . "/" . $filename;
+    if (
+        current_user_is_admin()
+        && $filename !== "admin_movies.html"
+    ) {
+        header("Location: ../06 - Admin/admin_movies.php");
+        exit;
+    }
+
+    $file = $filename === "admin_movies.html"
+        ? __DIR__ . "/../06 - Admin/admin_movies.html"
+        : __DIR__ . "/" . $filename;
 
     if (!is_file($file) || !is_readable($file)) {
         http_response_code(404);
@@ -127,6 +155,9 @@ function render_page(string $filename): void
             "{{profile_initial}}",
             "{{profile_plan}}",
             "{{profile_menu}}",
+            "{{admin_csrf_token}}",
+            "{{admin_mode}}",
+            "{{movie_navigation}}",
             "{{current_year}}"
         ],
         [
@@ -134,6 +165,9 @@ function render_page(string $filename): void
             e(first_letter($name)),
             e(current_user_plan()),
             render_profile_menu(),
+            e(admin_csrf_token()),
+            current_user_is_admin() ? "true" : "false",
+            render_movie_navigation($filename === "people.html" ? "people" : "movies"),
             date("Y")
         ],
         $html
@@ -141,3 +175,4 @@ function render_page(string $filename): void
 
     echo $html;
 }
+

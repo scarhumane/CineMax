@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1060" viewBox="0 0 900 1060" role="img" aria-labelledby="title description">
+  <title id="title">CineMax Admin Catalog Process Flow</title>
+  <desc id="description">A BPMN-style process diagram showing how an Admin signs in, adds a movie, searches TMDB or enters movie details manually, and how the CineMax System validates and saves the movie to the catalog. It also shows viewing and removing catalog entries.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,5 L0,10 z" fill="#34495e"/>
+    </marker>
+    <style>
+      text { font-family: Arial, Helvetica, sans-serif; fill: #172334; }
+      .lane { fill: #ffffff; stroke: #8294c2; stroke-width: 1.3; }
+      .lane-head-admin { fill: #bce2f5; stroke: #8294c2; stroke-width: 1.1; }
+      .lane-head-system { fill: #d6d1e8; stroke: #8294c2; stroke-width: 1.1; }
+      .activity { fill: #dce9fb; stroke: #7198d4; stroke-width: 1.3; }
+      .gateway { fill: #eadcf0; stroke: #a78db6; stroke-width: 1.3; }
+      .flow { fill: none; stroke: #34495e; stroke-width: 1.5; marker-end: url(#arrow); }
+      .association { fill: none; stroke: #64748b; stroke-width: 1.1; stroke-dasharray: 5 4; }
+      .caption { font-size: 13px; font-style: italic; }
+      .label { font-size: 14px; font-weight: 700; }
+      .task { font-size: 14px; text-anchor: middle; }
+      .small { font-size: 12px; text-anchor: middle; }
+      .lane-title { font-size: 17px; font-weight: 700; text-anchor: middle; }
+      .title { font-size: 19px; font-weight: 700; text-anchor: middle; letter-spacing: .5px; }
+      .start { fill: #d9f0d0; stroke: #8bb77d; stroke-width: 1.5; }
+      .end { fill: #f4d7d4; stroke: #c8756d; stroke-width: 2.2; }
+    </style>
+  </defs>
+
+  <rect x="36" y="38" width="828" height="986" fill="#fff" stroke="#5687d1" stroke-width="1.4"/>
+  <text class="title" x="450" y="28">ADMIN CATALOG PROCESS FLOW</text>
+
+  <rect class="lane" x="36" y="64" width="492" height="960"/>
+  <rect class="lane" x="528" y="64" width="336" height="960"/>
+  <rect class="lane-head-admin" x="36" y="38" width="492" height="26"/>
+  <rect class="lane-head-system" x="528" y="38" width="336" height="26"/>
+  <text class="lane-title" x="282" y="57">ADMIN</text>
+  <text class="lane-title" x="696" y="57">CINEMAX SYSTEM</text>
+
+  <!-- Add movie flow -->
+  <text class="small" x="78" y="102">START</text>
+  <circle class="start" cx="78" cy="124" r="12"/>
+  <path class="flow" d="M90 124 H127"/>
+
+  <rect class="activity" x="128" y="100" rx="10" width="210" height="52"/>
+  <text class="task" x="233" y="122"><tspan x="233">Admin signs in to</tspan><tspan x="233" dy="18">CineMax</tspan></text>
+  <path class="flow" d="M233 152 V188"/>
+  <text class="caption" x="354" y="174">Admin opens catalog page</text>
+
+  <rect class="activity" x="128" y="188" rx="10" width="210" height="58"/>
+  <text class="task" x="233" y="212"><tspan x="233">Admin selects</tspan><tspan x="233" dy="18">Add Movie</tspan></text>
+  <path class="flow" d="M338 217 H385"/>
+
+  <polygon class="gateway" points="398,204 411,217 398,230 385,217"/>
+  <text class="small" x="437" y="204">Choose input</text>
+  <path class="flow" d="M411 217 H548 V151 H579"/>
+  <text class="label" x="480" y="205">TMDB</text>
+
+  <!-- TMDB route -->
+  <rect class="activity" x="580" y="124" rx="10" width="230" height="58"/>
+  <text class="task" x="695" y="148"><tspan x="695">System searches TMDB</tspan><tspan x="695" dy="18">for matching titles</tspan></text>
+  <path class="flow" d="M695 182 V211"/>
+  <rect class="activity" x="580" y="212" rx="10" width="230" height="58"/>
+  <text class="task" x="695" y="236"><tspan x="695">System returns movie</tspan><tspan x="695" dy="18">matches to Admin</tspan></text>
+  <path class="flow" d="M580 241 H540 V322 H338"/>
+
+  <!-- Manual route -->
+  <path class="flow" d="M398 230 V322 H338"/>
+  <text class="label" x="427" y="294">Manual</text>
+  <rect class="activity" x="128" y="294" rx="10" width="210" height="58"/>
+  <text class="task" x="233" y="318"><tspan x="233">Admin enters movie</tspan><tspan x="233" dy="18">details and credits</tspan></text>
+  <path class="flow" d="M233 352 V390"/>
+
+  <rect class="activity" x="128" y="390" rx="10" width="210" height="58"/>
+  <text class="task" x="233" y="414"><tspan x="233">Admin reviews details</tspan><tspan x="233" dy="18">and selects Add to Catalog</tspan></text>
+  <path class="flow" d="M338 419 H579"/>
+
+  <rect class="activity" x="580" y="390" rx="10" width="230" height="58"/>
+  <text class="task" x="695" y="414"><tspan x="695">System validates required</tspan><tspan x="695" dy="18">fields and movie ID</tspan></text>
+  <path class="flow" d="M695 448 V479"/>
+  <polygon class="gateway" points="695,480 710,495 695,510 680,495"/>
+  <text class="small" x="754" y="483">Valid?</text>
+
+  <!-- Invalid path loops to entry -->
+  <path class="flow" d="M680 495 H550 V322 H338"/>
+  <text class="label" x="604" y="485">NO</text>
+
+  <!-- Valid path -->
+  <path class="flow" d="M695 510 V548"/>
+  <text class="label" x="712" y="534">YES</text>
+  <rect class="activity" x="580" y="548" rx="10" width="230" height="58"/>
+  <text class="task" x="695" y="572"><tspan x="695">System saves movie to</tspan><tspan x="695" dy="18">CineMax catalog</tspan></text>
+  <path class="flow" d="M580 577 H338"/>
+  <rect class="activity" x="128" y="548" rx="10" width="210" height="58"/>
+  <text class="task" x="233" y="572"><tspan x="233">Admin sees catalog</tspan><tspan x="233" dy="18">updated confirmation</tspan></text>
+
+  <!-- View and remove flow -->
+  <path class="flow" d="M233 606 V662"/>
+  <rect class="activity" x="128" y="662" rx="10" width="210" height="58"/>
+  <text class="task" x="233" y="686"><tspan x="233">Admin views the</tspan><tspan x="233" dy="18">movie catalog</tspan></text>
+  <path class="flow" d="M338 691 H579"/>
+  <rect class="activity" x="580" y="662" rx="10" width="230" height="58"/>
+  <text class="task" x="695" y="686"><tspan x="695">System loads and displays</tspan><tspan x="695" dy="18">saved catalog movies</tspan></text>
+  <path class="flow" d="M233 720 V770"/>
+  <polygon class="gateway" points="233,770 248,785 233,800 218,785"/>
+  <text class="small" x="290" y="775">Remove a movie?</text>
+
+  <path class="flow" d="M248 785 H579"/>
+  <text class="label" x="411" y="774">YES</text>
+  <rect class="activity" x="580" y="756" rx="10" width="230" height="58"/>
+  <text class="task" x="695" y="780"><tspan x="695">System removes selected</tspan><tspan x="695" dy="18">movie from the catalog</tspan></text>
+  <path class="flow" d="M580 785 H338"/>
+  <rect class="activity" x="128" y="756" rx="10" width="210" height="58"/>
+  <text class="task" x="233" y="780"><tspan x="233">Admin sees updated</tspan><tspan x="233" dy="18">catalog confirmation</tspan></text>
+
+  <!-- End -->
+  <path class="flow" d="M233 814 V902"/>
+  <text class="label" x="258" y="851">NO / DONE</text>
+  <circle class="end" cx="233" cy="922" r="13"/>
+  <text class="small" x="233" y="954">END</text>
+</svg>

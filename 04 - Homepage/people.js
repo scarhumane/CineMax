@@ -305,21 +305,43 @@ async function loadPopularPeople() {
     `;
 
     try {
-        const data = await fetchTMDB("people", {
-            page: 1
+        const response = await fetch("../06 - Admin/admin_movies_api.php", {
+            credentials: "same-origin",
+            cache: "no-store"
         });
+        const data = await response.json();
+        if (!response.ok || !Array.isArray(data.movies)) {
+            throw new Error(data.error || "Unable to load CineMax Collection.");
+        }
 
         if (requestNumber !== peopleRequestNumber) {
             return;
         }
 
-        const results = Array.isArray(data)
-            ? data
-            : data.results || [];
-
-        people = results
-            .map(normalizeTMDBPerson)
-            .filter(person => person.id && person.name);
+        const peopleByName = new Map();
+        data.movies.forEach(movie => {
+            const credits = [
+                ...(Array.isArray(movie.cast) ? movie.cast.map(person => ({ ...person, role: "actor" })) : []),
+                ...(movie.director ? [{ name: movie.director, photo: movie.director_photo, role: "director" }] : [])
+            ];
+            credits.forEach(person => {
+                const name = String(person.name || "").trim();
+                if (!name) return;
+                const key = name.toLocaleLowerCase();
+                const entry = peopleByName.get(key) || {
+                    id: key,
+                    name,
+                    role: person.role,
+                    department: person.role === "actor" ? "Actor" : "Director",
+                    profilePath: person.photo || null,
+                    knownFor: [],
+                    profilePath: person.photo || null
+                };
+                entry.knownFor.push({ title: movie.title || "Untitled", mediaType: "Movie" });
+                peopleByName.set(key, entry);
+            });
+        });
+        people = [...peopleByName.values()];
 
         renderPeople();
 
@@ -350,18 +372,39 @@ async function loadPeopleByRole(role) {
     const requestNumber = ++peopleRequestNumber;
     container.innerHTML = `<div class="loading-state"><p>Loading ${role === "actor" ? "actors" : "directors"}...</p></div>`;
     try {
-        const pages = role === "director" ? 10 : 3;
-        const pageResults = await Promise.allSettled(
-            Array.from({ length: pages }, (_, index) => fetchTMDB("people", { page: index + 1 }))
-        );
+        const response = await fetch("../06 - Admin/admin_movies_api.php", {
+            credentials: "same-origin",
+            cache: "no-store"
+        });
+        const data = await response.json();
+        if (!response.ok || !Array.isArray(data.movies)) {
+            throw new Error(data.error || "Unable to load CineMax Collection.");
+        }
         if (requestNumber !== peopleRequestNumber) return;
-        const results = pageResults
-            .filter(result => result.status === "fulfilled")
-            .flatMap(result => result.value.results || []);
-        people = results
-            .map(normalizeTMDBPerson)
-            .filter(person => person.id && person.name && person.role === role)
-            .slice(0, 30);
+        const entries = new Map();
+        data.movies.forEach(movie => {
+            const movieTitle = String(movie.title || "");
+            const movieYear = String(movie.year || "");
+            const cast = Array.isArray(movie.cast) ? movie.cast : [];
+            const crew = role === "director" && movie.director
+                ? [{ name: movie.director, photo: movie.director_photo }]
+                : [];
+            (role === "actor" ? cast : crew).forEach(person => {
+                const name = String(person.name || "").trim();
+                if (!name) return;
+                const key = name.toLocaleLowerCase();
+                const entry = entries.get(key) || {
+                    id: key,
+                    name,
+                    role,
+                    photo: person.photo || "",
+                    movies: []
+                };
+                entry.movies.push({ title: movieTitle, year: movieYear });
+                entries.set(key, entry);
+            });
+        });
+        people = [...entries.values()];
         renderPeople();
     } catch (error) {
         if (requestNumber !== peopleRequestNumber) return;
@@ -481,6 +524,7 @@ function closePersonModal() {
     }
 
     modal.classList.remove("active");
+    modal.classList.remove("person-details-modal");
     modal.setAttribute("aria-hidden", "true");
 
     document.body.classList.remove("modal-open");
@@ -808,15 +852,37 @@ async function openPersonDetails(personId) {
     }
 
     try {
-        const data = await fetchTMDB("person", {
-            id: personId
+        const response = await fetch("../06 - Admin/admin_movies_api.php", {
+            credentials: "same-origin",
+            cache: "no-store"
         });
-
+        const data = await response.json();
+        if (!response.ok || !Array.isArray(data.movies)) {
+            throw new Error(data.error || "Unable to load CineMax Collection.");
+        }
+        const matchedMovies = data.movies.filter(movie =>
+            (Array.isArray(movie.cast) ? movie.cast : []).some(person =>
+                String(person.name || "").trim().toLocaleLowerCase() === String(personId).toLocaleLowerCase()
+            ) || String(movie.director || "").trim().toLocaleLowerCase() === String(personId).toLocaleLowerCase()
+        );
+        const person = matchedMovies.flatMap(movie => [
+            ...(Array.isArray(movie.cast) ? movie.cast : []),
+            ...(movie.director ? [{ name: movie.director, photo: movie.director_photo }] : [])
+        ]).find(item => String(item.name || "").trim().toLocaleLowerCase() === String(personId).toLocaleLowerCase());
+        const personRole = matchedMovies.some(movie =>
+            String(movie.director || "").trim().toLocaleLowerCase() === String(personId).toLocaleLowerCase()
+        ) ? "director" : "actor";
+        const personMovies = matchedMovies.map(movie => ({
+            id: movie.id,
+            title: movie.title,
+            year: movie.year,
+            poster: movie.poster,
+            rating: movie.rating
+        }));
         if (requestNumber !== activePersonRequestNumber) {
             return;
         }
-
-        renderPersonDetails(data);
+        renderCatalogPersonDetails({ ...(person || { name: personId }), role: personRole }, personMovies);
 
     } catch (error) {
         console.error("Unable to load person details:", error);
@@ -834,6 +900,36 @@ async function openPersonDetails(personId) {
             </div>
         `;
     }
+}
+
+function renderCatalogPersonDetails(person, movies) {
+    const modal = $("movie-modal");
+    const media = modal?.querySelector(".modal-media");
+    const body = modal?.querySelector(".modal-body");
+    if (!modal || !media || !body) return;
+
+    modal.classList.add("person-details-modal");
+    media.innerHTML = person.photo
+        ? `<img src="${escapeHTML(person.photo)}" alt="${escapeHTML(person.name)}">`
+        : `<div class="person-initials">${escapeHTML(getInitials(person.name))}</div>`;
+    body.innerHTML = `
+        <div class="person-summary">
+            <h2>${escapeHTML(person.name)}</h2>
+            <p class="person-role">${escapeHTML(person.role === "director" ? "Director" : "Actor")}</p>
+            <p class="person-biography">${escapeHTML(person.biography || `Featured in ${movies.length} CineMax ${movies.length === 1 ? "movie" : "movies"}.`)}</p>
+        </div>`;
+    media.insertAdjacentHTML("afterend", `
+        <section class="person-known-for-section">
+            <h3>Movies</h3>
+            <div class="person-catalog-movies">
+                ${movies.length ? movies.map(movie => `
+                    <article class="person-movie-card">
+                        <div class="person-movie-poster">${movie.poster ? `<img src="${escapeHTML(movie.poster)}" alt="">` : ""}</div>
+                        <div class="person-movie-info"><h4>${escapeHTML(movie.title)}</h4><p>${escapeHTML(movie.year || "Year unknown")}${Number(movie.rating) ? ` · ★ ${Number(movie.rating).toFixed(1)}` : ""}</p></div>
+                    </article>
+                `).join("") : "<p>No movies found.</p>"}
+            </div>
+        </section>`);
 }
 
 function setupPeopleCardEvents() {

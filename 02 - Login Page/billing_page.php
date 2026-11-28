@@ -15,6 +15,11 @@ if (
     $email = $_SESSION["email"] ?? "";
 }
 
+if (($_SESSION["role"] ?? "") === "admin") {
+    http_response_code(403);
+    exit("Administrator accounts do not have subscriptions.");
+}
+
 // GET SELECTED PLAN AND BILLING PERIOD
 $plan = $_SESSION["pending_plan"] ?? "";
 $billingPeriod = $_SESSION["pending_billing_period"] ?? "";

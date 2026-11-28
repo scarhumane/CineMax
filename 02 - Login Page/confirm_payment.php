@@ -2,6 +2,11 @@
 
 session_start();
 
+if (($_SESSION["role"] ?? "") === "admin") {
+    http_response_code(403);
+    exit("Administrator accounts do not have subscriptions.");
+}
+
 // FILE LOCATION
 
 $usersFile = __DIR__ . '/../03 - Data/users.json';

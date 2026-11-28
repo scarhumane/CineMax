@@ -5,7 +5,16 @@ session_start();
 // USER DATA FILE
 $usersFile = __DIR__ . '/../03 - Data/users.json';
 
-// ONLY ACCEPT POST REQUESTS
+// Check login
+if (
+    !isset($_SESSION["logged_in"]) ||
+    $_SESSION["logged_in"] !== true
+) {
+    header("Location: login_page.html");
+    exit;
+}
+
+// Only accept POST requests
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     header("Location: subscription_page.html");
     exit;
@@ -96,3 +105,4 @@ $_SESSION["pending_signup_email"] = $email;
 // REDIRECT TO BILLING PAGE
 header("Location: billing_page.php");
 exit;
+
