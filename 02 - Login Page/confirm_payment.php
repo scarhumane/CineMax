@@ -1,7 +1,11 @@
-
 <?php
 
 session_start();
+
+if (($_SESSION["role"] ?? "") === "admin") {
+    http_response_code(403);
+    exit("Administrator accounts do not have subscriptions.");
+}
 
 // 1. CHECK LOGIN
 if (

@@ -27,6 +27,10 @@ function respond(array $payload, int $status = 200): never
     exit;
 }
 
+if (($_SESSION["role"] ?? "") === "admin") {
+    respond(["error" => "Administrator accounts cannot access reviews."], 403);
+}
+
 function requireReviewAccount(): array
 {
     if (($_SESSION["logged_in"] ?? false) !== true) {

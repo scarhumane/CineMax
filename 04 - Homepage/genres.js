@@ -6,8 +6,6 @@ const reducedMotion = window.matchMedia(
 
 ).matches;
 
-const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/";
-
 /* HELPERS */
 
 function escapeHTML(value) {
@@ -58,8 +56,6 @@ function refreshIcons() {
 
 /* GENRE LOOKUP */
 
-const GENRE_NAMES = {};
-
 let genres = [];
 
 let selectedGenre = null;
@@ -88,7 +84,7 @@ function getMovie(id) {
 
 }
 
-/* TMDB */
+/* LOCAL MOVIE CATALOG */
 
 async function fetchTMDB(type, {
 
@@ -134,6 +130,7 @@ async function fetchTMDB(type, {
 
     );
 
+
     let data;
 
     try {
@@ -162,11 +159,13 @@ async function fetchTMDB(type, {
 
     return data;
 
+
 }
 
-/* MOVIE NORMALIZATION */
+/* LOCAL MOVIE NORMALIZATION */
 
 function normalizeTMDBMovie(movie) {
+
 
     if (!movie || !movie.id) {
 
@@ -233,6 +232,7 @@ function normalizeTMDBMovie(movie) {
         description: movie.overview ||
 
             "No description available."
+
 
     };
 
@@ -386,6 +386,8 @@ const resultsContainer = $("genre-movies");
 
 const resultsTitle = $("genre-results-title");
 
+let adminCatalogMovies = [];
+
 const backButton = $("back-to-genres");
 
 function showGenreBrowser() {
@@ -457,7 +459,7 @@ function renderGenres() {
     if (!genres.length) {
         if (count) count.textContent = "";
         container.innerHTML = loadingHTML(
-            "No genres are available right now."
+            "No genres are available yet. Add genre details to movies in the CineMax catalog."
         );
         return;
     }
@@ -471,7 +473,8 @@ function renderGenres() {
             type="button"
             class="genre-card"
             style="--i: ${index}"
-            data-genre="${Number(genre.id)}"
+            data-genre="${escapeHTML(genre.id)}"
+
             aria-pressed="false"
         >
             <span class="genre-card-icon" aria-hidden="true">
@@ -502,22 +505,31 @@ async function loadGenres() {
 
     try {
 
-        const data = await fetchTMDB("genres");
-
-        genres = data.genres || [];
-
-        Object.keys(GENRE_NAMES).forEach(id => {
-
-            delete GENRE_NAMES[id];
-
+        const response = await fetch("../06 - Admin/admin_movies_api.php", {
+            credentials: "same-origin",
+            cache: "no-store"
         });
-
-        genres.forEach(genre => {
-
-            GENRE_NAMES[genre.id] = genre.name;
-
-        });
-
+        const data = await response.json();
+        if (!response.ok || !Array.isArray(data.movies)) {
+            throw new Error(data.error || "Unable to load CineMax Collection.");
+        }
+        adminCatalogMovies = data.movies.map(movie => ({
+            ...movie,
+            id: String(movie.id),
+            year: movie.year || "N/A",
+            rating: Number(movie.rating || 0),
+            genres: Array.isArray(movie.genres) ? movie.genres : [],
+            cast: Array.isArray(movie.cast) ? movie.cast : [],
+            backdrop: movie.backdrop || movie.poster || "",
+            backdropSmall: movie.backdropSmall || movie.poster || "",
+            description: movie.description || "No description available.",
+            mediaType: "movie"
+        }));
+        adminCatalogMovies.forEach(movie => movieIndex.set(String(movie.id), movie));
+        genres = Object.entries(GENRE_ICONS).map(([name], index) => ({
+            id: `genre-${index}`,
+            name
+        }));
         renderGenres();
 
     } catch (error) {
@@ -533,6 +545,7 @@ async function loadGenres() {
         genreList.innerHTML = loadingHTML(
 
             message
+
 
         );
 
@@ -552,11 +565,8 @@ let searchTimer = null;
 
 async function showGenre(genreId) {
 
-    const genre = genres.find(
+    const genre = genres.find(item => String(item.id) === String(genreId));
 
-        item => Number(item.id) === Number(genreId)
-
-    );
 
     if (!genre) return;
 
@@ -568,7 +578,7 @@ async function showGenre(genreId) {
 
     const current = movieRequestNumber;
 
-    selectedGenre = Number(genre.id);
+    selectedGenre = genre.id;
 
     if (genreSearch) {
 
@@ -606,51 +616,18 @@ async function showGenre(genreId) {
 
     }
 
-    try {
+    if (current !== movieRequestNumber) return;
+    const movies = register(adminCatalogMovies.filter(movie =>
+        movie.genres.some(name => name.toLocaleLowerCase() === genre.name.toLocaleLowerCase())
+    ));
 
-        const data = await fetchTMDB("discover", {
+    renderMovieResults(movies, {
 
-            genre: genre.id
+        countText: `in ${genre.name}`,
 
-        });
+        noResults: `No ${genre.name} movies have been added to the CineMax Collection yet.`
 
-        if (current !== movieRequestNumber) return;
-
-        const movies = register(
-
-            (data.results || [])
-
-                .map(normalizeTMDBMovie)
-
-                .filter(Boolean)
-
-        );
-
-        renderMovieResults(movies, {
-
-            countText: `in ${genre.name}`,
-
-            noResults: `No ${genre.name} movies were found.`
-
-        });
-
-    } catch (error) {
-
-        if (current !== movieRequestNumber) return;
-
-        console.error("Genre movie loading error:", error);
-
-        if (resultsContainer) {
-
-            resultsContainer.innerHTML = loadingHTML(
-
-                "Unable to load movies. Please try again."
-
-            );
-
-        }
-
-    }
+    });
 
 }
 
@@ -699,30 +676,21 @@ async function searchGenreMovies(query) {
     showMovieResults();
 
     try {
-
-        const data = await fetchTMDB("search", {
-
-            query: term
-
-        });
-
         if (current !== searchRequestNumber) return;
-
-        const movies = register(
-
-            (data.results || [])
-
-                .map(normalizeTMDBMovie)
-
-                .filter(Boolean)
-
-        );
+        const normalizedTerm = term.toLocaleLowerCase();
+        const movies = register(adminCatalogMovies.filter(movie => [
+            movie.title,
+            movie.description,
+            movie.director,
+            ...(movie.genres || []),
+            ...(movie.cast || []).map(person => person.name)
+        ].some(value => String(value || "").toLocaleLowerCase().includes(normalizedTerm))));
 
         renderMovieResults(movies, {
 
             countText: `for "${escapeHTML(term)}"`,
 
-            noResults: `No movies found for "${term}".`
+            noResults: `No CineMax movies found for "${term}".`
 
         });
 
@@ -881,9 +849,17 @@ function modalBodyHTML(movie, details) {
     const overview = d.overview || movie.description || "No synopsis available.";
 
     const director = (d.credits?.crew || [])
-        .find(person => person.job === "Director");
+        .find(person => person.job === "Director")
+        || (movie.director ? { name: movie.director } : null);
 
-    const cast = (d.credits?.cast || []).slice(0, 12);
+    const creditsCast = (d.credits?.cast || []).slice(0, 12);
+    const cast = creditsCast.length
+        ? creditsCast
+        : (Array.isArray(movie.cast) ? movie.cast : []).map(person => ({
+            name: person.name,
+            character: "",
+            profile_path: person.photo || ""
+        }));
 
     const recommendations = register(
         (d.recommendations?.results || [])
@@ -926,7 +902,7 @@ function modalBodyHTML(movie, details) {
                         <article class="modal-cast-item">
                             ${person.profile_path
                                 ? `<img
-                                    src="${TMDB_IMAGE_BASE}w185${escapeHTML(person.profile_path)}"
+                                    src="${person.profile_path.startsWith("http") ? escapeHTML(person.profile_path) : `${TMDB_IMAGE_BASE}w185${escapeHTML(person.profile_path)}`}"
                                     alt="${escapeHTML(person.name)}"
                                     loading="lazy">`
                                 : `<div class="cast-placeholder">
@@ -992,7 +968,66 @@ async function openModal(movie) {
     media.innerHTML = createPoster(movie);
     body.innerHTML = modalBodyHTML(movie, null);
 
+    const savedTrailerUrl = getYouTubeEmbedURL(movie.youtube_url);
+    if (savedTrailerUrl) {
+        panel.classList.add("has-trailer");
+        media.innerHTML = `
+            <div class="modal-trailer-player">
+                <iframe
+                    src="${escapeHTML(savedTrailerUrl)}?rel=0&modestbranding=1&playsinline=1"
+                    title="${escapeHTML(movie.title)} trailer"
+                    allow="accelerometer; encrypted-media; picture-in-picture; fullscreen"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    allowfullscreen>
+                </iframe>
+            </div>
+        `;
+    }
+
+    body.querySelector("[data-play-movie]")?.addEventListener("click", () => {
+        const embedURL = getYouTubeEmbedURL(movie.youtube_url);
+        if (!embedURL) return;
+        media.innerHTML = `
+            <iframe
+                class="modal-video"
+                src="${escapeHTML(embedURL)}?autoplay=1"
+                title="Play ${escapeHTML(movie.title)}"
+                allow="autoplay; encrypted-media; picture-in-picture"
+                referrerpolicy="strict-origin-when-cross-origin"
+                allowfullscreen>
+            </iframe>
+        `;
+    });
+
     showModal();
+
+    if (String(movie.id).startsWith("tmdb-") || String(movie.id).startsWith("movie-")) {
+        const details = {
+            ...movie,
+            id: movie.id,
+            title: movie.title,
+            poster_path: movie.poster,
+            backdrop_path: movie.backdrop,
+            overview: movie.description,
+            release_date: movie.year,
+            vote_average: movie.rating,
+            runtime: null,
+            genres: (movie.genres || []).map(name => ({ name })),
+            credits: {
+                crew: movie.director ? [{ job: "Director", name: movie.director }] : [],
+                cast: (movie.cast || []).map(person => ({
+                    name: person.name,
+                    profile_path: person.photo || null
+                }))
+            },
+            videos: { results: [] },
+            recommendations: { results: [] },
+            watch_providers: null
+        };
+        body.innerHTML = modalBodyHTML(movie, details);
+        refreshIcons();
+        return;
+    }
 
     try {
         const details = await fetchTMDB("movie", { id: movie.id });
@@ -1006,7 +1041,9 @@ async function openModal(movie) {
             );
         }
 
-        const trailerKey = getTrailerKey(details.videos?.results);
+        const savedTrailer = getYouTubeEmbedURL(movie.youtube_url);
+        const savedTrailerKey = savedTrailer.match(/\/embed\/([A-Za-z0-9_-]{11})$/)?.[1];
+        const trailerKey = savedTrailerKey || getTrailerKey(details.videos?.results);
 
         if (trailerKey) {
             panel.classList.add("has-trailer");
@@ -1033,6 +1070,21 @@ async function openModal(movie) {
     }
 }
 
+function getYouTubeEmbedURL(value) {
+    if (typeof value !== "string") return "";
+
+    try {
+        const url = new URL(value);
+        const match = url.protocol === "https:"
+            && url.hostname === "www.youtube-nocookie.com"
+            ? url.pathname.match(/^\/embed\/([A-Za-z0-9_-]{11})$/)
+            : null;
+        return match ? `https://www.youtube-nocookie.com/embed/${match[1]}` : "";
+    } catch {
+        return "";
+    }
+}
+
 function closeModal() {
     const modal = getModal();
 
@@ -1053,6 +1105,7 @@ function closeModal() {
     modal.hidden = true;
     modal.classList.remove("active");
     modal.setAttribute("aria-hidden", "true");
+    modal.querySelector(".modal-media").innerHTML = "";
 
     document.body.classList.remove("modal-open");
 
@@ -1087,15 +1140,8 @@ document.addEventListener("click", event => {
 
         const openId = movieButton.dataset.openMovie;
 
-        openModal(
-
-            getMovie(openId) ||
-
-            (/^\d+$/.test(String(openId))
-                ? { id: String(openId), title: "", year: "", rating: 0, genres: [], description: "" }
-                : null)
-
-        );
+        const movie = getMovie(openId) || adminCatalogMovies.find(item => String(item.id) === String(openId));
+        if (movie) openModal(movie);
 
         return;
 
@@ -1192,3 +1238,5 @@ showGenreBrowser();
 loadGenres();
 
 refreshIcons();
+
+

@@ -7,30 +7,6 @@ document.addEventListener("DOMContentLoaded", () => {
     loadFeaturesTopRated();
 });
 
-const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/";
-
-const GENRE_NAMES = {
-    28: "Action",
-    12: "Adventure",
-    16: "Animation",
-    35: "Comedy",
-    80: "Crime",
-    99: "Documentary",
-    18: "Drama",
-    10751: "Family",
-    14: "Fantasy",
-    36: "History",
-    27: "Horror",
-    10402: "Music",
-    9648: "Mystery",
-    10749: "Romance",
-    878: "Sci-Fi",
-    10770: "TV Movie",
-    53: "Thriller",
-    10752: "War",
-    37: "Western"
-};
-
 function escapeHTML(value) {
     return String(value ?? "").replace(/[&<>"']/g, character => ({
         "&": "&amp;",
@@ -46,40 +22,22 @@ function formatRating(rating) {
     return Number.isFinite(value) ? value.toFixed(1) : "N/A";
 }
 
-/* NORMALIZE TMDB MOVIES */
+/* NORMALIZE LOCAL MOVIES */
 
-function normalizeTMDBMovie(movie) {
+function normalizeLocalMovie(movie) {
     if (!movie || !movie.id) {
         return null;
     }
 
-    const genres = movie.genre_ids
-        ? movie.genre_ids.map(id => GENRE_NAMES[id]).filter(Boolean)
-        : (movie.genres || [])
-            .map(genre => genre.name)
-            .filter(Boolean);
-
     return {
         id: String(movie.id),
-        title: movie.title || movie.original_title || "Untitled",
-
-        year: movie.release_date
-            ? Number(movie.release_date.slice(0, 4))
-            : "N/A",
-
-        rating: Number(movie.vote_average || 0),
-
-        genres,
-
-        poster: movie.poster_path
-            ? `${TMDB_IMAGE_BASE}w500${movie.poster_path}`
-            : "",
-
-        backdrop: movie.backdrop_path
-            ? `${TMDB_IMAGE_BASE}original${movie.backdrop_path}`
-            : "",
-
-        description: movie.overview || "No description available."
+        title: movie.title || "Untitled",
+        year: movie.year || "N/A",
+        rating: Number(movie.rating || 0),
+        genres: Array.isArray(movie.genres) ? movie.genres : [],
+        poster: movie.poster || "",
+        backdrop: movie.backdrop || "",
+        description: movie.description || "No description available."
     };
 }
 
@@ -97,26 +55,28 @@ async function loadFeaturesTopRated() {
     `;
 
     try {
-        const response = await fetch(
-            "../04 - Homepage/tmdb_movies.php?type=top-rated"
-        );
+        const response = await fetch("../06 - Admin/admin_movies_api.php", {
+            credentials: "same-origin",
+            cache: "no-store",
+            headers: { Accept: "application/json" }
+        });
 
         let data;
 
         try {
             data = await response.json();
         } catch {
-            throw new Error("Invalid response from the movie service.");
+            throw new Error("Invalid response from the local movie catalog.");
         }
 
-        if (!response.ok || !data || data.error) {
+        if (!response.ok || !data || data.error || !Array.isArray(data.movies)) {
             throw new Error(
-                data?.error || "Unable to fetch top-rated movies."
+                data?.error || "Unable to load movies from the local catalog."
             );
         }
 
-        const movies = (data.results || [])
-            .map(normalizeTMDBMovie)
+        const movies = (data.movies || [])
+            .map(normalizeLocalMovie)
             .filter(Boolean);
 
         if (!movies.length) {

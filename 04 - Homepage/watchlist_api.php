@@ -49,15 +49,38 @@ function watchlist_clean_image($value): string
     $parts = parse_url($url);
 
     if (
+        is_array($parts)
+        && in_array($parts["scheme"] ?? "", ["https", "http"], true)
+        && filter_var($url, FILTER_VALIDATE_URL) !== false
+    ) {
+        return $url;
+    }
+
+    return !str_starts_with($url, "//")
+        && !str_contains($url, "..")
+        && preg_match('/^[a-zA-Z0-9_./ -]+\.(?:avif|gif|jpe?g|png|webp)$/i', $url)
+        ? $url
+        : "";
+}
+
+function watchlist_clean_youtube_url($value): string
+{
+    $url = watchlist_clean_text($value, 500);
+    if ($url === "") {
+        return "";
+    }
+
+    $parts = parse_url($url);
+    if (
         !is_array($parts)
         || ($parts["scheme"] ?? "") !== "https"
-        || ($parts["host"] ?? "") !== "image.tmdb.org"
-        || !str_starts_with($parts["path"] ?? "", "/t/p/")
+        || ($parts["host"] ?? "") !== "www.youtube-nocookie.com"
+        || !preg_match('#^/embed/([A-Za-z0-9_-]{11})$#', $parts["path"] ?? "", $match)
     ) {
         return "";
     }
 
-    return $url;
+    return "https://www.youtube-nocookie.com/embed/" . $match[1];
 }
 
 function watchlist_clean_string_list($value, int $limit, int $length): array
@@ -84,8 +107,8 @@ function watchlist_clean_movie($movie): ?array
         return null;
     }
 
-    $id = filter_var($movie["id"] ?? null, FILTER_VALIDATE_INT);
-    if ($id === false || $id <= 0) {
+    $id = watchlist_clean_text($movie["id"] ?? "", 80);
+    if ($id === "" || !preg_match('/^[a-zA-Z0-9_-]+$/', $id)) {
         return null;
     }
 
@@ -99,17 +122,40 @@ function watchlist_clean_movie($movie): ?array
         ? max(0, min(10, (float) $movie["rating"]))
         : 0;
 
+    $cast = [];
+    foreach (array_slice(is_array($movie["cast"] ?? null) ? $movie["cast"] : [], 0, 30) as $person) {
+        if (is_string($person)) {
+            $name = watchlist_clean_text($person, 120);
+            $photo = "";
+        } elseif (is_array($person)) {
+            $name = watchlist_clean_text($person["name"] ?? "", 120);
+            $photo = watchlist_clean_image($person["photo"] ?? "");
+        } else {
+            continue;
+        }
+
+        if ($name !== "") {
+            $cast[] = ["name" => $name, "photo" => $photo];
+        }
+    }
+
+    $poster = watchlist_clean_image($movie["poster"] ?? "");
+    $backdrop = watchlist_clean_image($movie["backdrop"] ?? "");
+    $backdropSmall = watchlist_clean_image($movie["backdropSmall"] ?? "");
+
     return [
-        "id" => (string) $id,
+        "id" => $id,
         "title" => $title,
+        "youtube_url" => watchlist_clean_youtube_url($movie["youtube_url"] ?? ""),
         "year" => $year,
         "rating" => $rating,
         "genres" => watchlist_clean_string_list($movie["genres"] ?? [], 10, 50),
         "director" => watchlist_clean_text($movie["director"] ?? "", 150),
-        "cast" => watchlist_clean_string_list($movie["cast"] ?? [], 10, 150),
-        "poster" => watchlist_clean_image($movie["poster"] ?? ""),
-        "backdrop" => watchlist_clean_image($movie["backdrop"] ?? ""),
-        "backdropSmall" => watchlist_clean_image($movie["backdropSmall"] ?? ""),
+        "director_photo" => watchlist_clean_image($movie["director_photo"] ?? ""),
+        "cast" => $cast,
+        "poster" => $poster,
+        "backdrop" => $backdrop,
+        "backdropSmall" => $backdropSmall,
         "description" => watchlist_clean_text($movie["description"] ?? "", 3000)
     ];
 }
@@ -176,6 +222,10 @@ if (($_SESSION["logged_in"] ?? false) !== true) {
     watchlist_send_json(["error" => "Please log in to access your watchlist."], 401);
 }
 
+if (($_SESSION["role"] ?? "") === "admin") {
+    watchlist_send_json(["error" => "Administrator accounts cannot access watchlists."], 403);
+}
+
 $username = $_SESSION["username"] ?? "";
 if (!is_string($username) || trim($username) === "") {
     watchlist_send_json(["error" => "Your account session is missing a username."], 401);
@@ -235,9 +285,9 @@ if ($action === "add") {
         $current[] = $movie;
     }
 } elseif ($action === "remove") {
-    $id = filter_var($input["id"] ?? null, FILTER_VALIDATE_INT);
+    $id = watchlist_clean_text($input["id"] ?? "", 80);
 
-    if ($id === false || $id <= 0) {
+    if ($id === "" || !preg_match('/^[a-zA-Z0-9_-]+$/', $id)) {
         flock($handle, LOCK_UN);
         fclose($handle);
         watchlist_send_json(["error" => "A valid movie ID is required."], 400);

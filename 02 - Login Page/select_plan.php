@@ -1,4 +1,3 @@
-
 <?php
 
 session_start();
@@ -13,6 +12,11 @@ if (
 ) {
     header("Location: login_page.html");
     exit;
+}
+
+if (($_SESSION["role"] ?? "") === "admin") {
+    http_response_code(403);
+    exit("Administrator accounts do not have subscriptions.");
 }
 
 // Only accept POST requests
@@ -94,4 +98,3 @@ $_SESSION["pending_billing_period"] = $billingPeriod;
 // Proceed to billing page
 header("Location: billing_page.php");
 exit;
-
