@@ -1610,9 +1610,10 @@ function renderMovieDetails(movie, details) {
 
     body.innerHTML = `
 
-        <h2 id="modal-title">
-            ${escapeHTML(details.title || movie.title)}
-        </h2>
+        <div class="modal-main-details">
+            <h2 id="modal-title">
+                ${escapeHTML(details.title || movie.title)}
+            </h2>
 
         <p class="modal-meta">
             ${escapeHTML(movieYear)}
@@ -1643,24 +1644,27 @@ function renderMovieDetails(movie, details) {
                 : ""}
         </div>
 
-        <div class="modal-actions">
-            ${trailerCandidates.length
-                ? ""
-                : `<span class="modal-muted">No trailer available.</span>`}
+            <div class="modal-actions">
+                ${trailerCandidates.length
+                    ? ""
+                    : `<span class="modal-muted">No trailer available.</span>`}
 
-            <button type="button" class="modal-watch"></button>
+                <button type="button" class="modal-watch"></button>
+            </div>
         </div>
 
-        ${renderPersonalRating(watchlistMovie)}
-        ${renderProviders(details.watch_providers)}
-        ${renderCast(cast)}
+        <div class="modal-lower-sections">
+            ${renderPersonalRating(watchlistMovie)}
+            ${renderProviders(details.watch_providers)}
+            ${renderCast(cast)}
 
-        ${renderReviewSection(
-            watchlistMovie.id,
-            movie.mediaType === "tv" ? "tv" : "movie"
-        )}
+            ${renderReviewSection(
+                watchlistMovie.id,
+                movie.mediaType === "tv" ? "tv" : "movie"
+            )}
 
-        ${renderRecommendations(details.recommendations?.results)}
+            ${renderRecommendations(details.recommendations?.results)}
+        </div>
     `;
 
     loadMovieReviews(

@@ -2966,6 +2966,30 @@ main {
     font-size: 11px;
 }
 
+/* In poster layouts, let the lower information sections use the full modal width. */
+.modal:not(.person-details-modal) .modal-panel:not(.has-trailer) .modal-body {
+    display: contents;
+}
+
+.modal:not(.person-details-modal) .modal-panel:not(.has-trailer) .modal-main-details {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+}
+
+.modal:not(.person-details-modal) .modal-panel:not(.has-trailer) .modal-lower-sections {
+    grid-column: 1 / -1;
+    min-width: 0;
+    width: 100%;
+}
+
+@media (max-width: 1300px) {
+    .modal:not(.person-details-modal) .modal-panel:not(.has-trailer) .modal-main-details {
+        grid-column: 1;
+        grid-row: auto;
+    }
+}
+
 .recommendation-card {
     display: flex;
     flex-direction: column;
@@ -4418,6 +4442,28 @@ body.hero-trailer-open {
 
 .modal-panel.has-trailer .modal-actions {
     margin-top: 22px;
+}
+
+/* Keep the rating, availability, and cast details in a compact sequence. */
+.modal-panel.has-trailer .modal-section {
+    margin-top: 20px;
+}
+
+.modal-panel.has-trailer .modal-cast-grid {
+    grid-template-columns: repeat(auto-fill, 84px);
+    justify-content: start;
+    gap: 12px 10px;
+    max-width: 100%;
+}
+
+.modal-panel.has-trailer .modal-cast-item p {
+    font-size: 11px;
+    line-height: 1.35;
+}
+
+.modal-panel.has-trailer .modal-cast-item span {
+    font-size: 10px;
+    line-height: 1.35;
 }
 
 /* close button: solid dark circle so it is readable over any video */
